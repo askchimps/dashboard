@@ -15,8 +15,8 @@ export default function SignInPage() {
       </div>
       <div className="hidden relative h-full w-full items-center justify-center bg-muted lg:flex">
         <Image
-          src="/signin.webp"
-          alt="Person using AskChimps on a laptop"
+          src="/auth/signin.jpeg"
+          alt="Sign in to your account"
           fill
           priority
         />
