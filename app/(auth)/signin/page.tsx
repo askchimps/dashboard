@@ -1,27 +1,26 @@
-import { Suspense } from "react";
+import Link from "next/link";
 import Image from "next/image";
-
 import SignInForm from "@/components/form/signin";
 
 export default function SignInPage() {
   return (
-    <div className="p-5 flex flex-col gap-20 h-screen">
-      {/* Logo */}
-      <div className="flex justify-center gap-4">
+    <div className="mx-auto grid w-full max-w-7xl flex-1 flex-col items-center justify-center justify-items-center overflow-hidden rounded-3xl border bg-background lg:max-h-[900px] lg:grid-cols-2">
+      <div className="flex h-full w-full flex-col justify-center gap-8 p-6 lg:p-20 lg:border-r">
+        <div className="flex flex-col items-center justify-center gap-2 lg:items-start lg:justify-start">
+          <h1 className="text-pretty text-center font-semibold text-4xl leading-[130%] tracking-tight lg:text-left">Welcome back</h1>
+          <p className="text-center text-paragraph-3 text-md leading-tight tracking-tight lg:text-left">Log in to access your account.</p>
+        </div>
+        <SignInForm />
+        <p className="w-[80%] self-center text-pretty text-center text-paragraph-3 text-sm lg:w-full" >By continuing, you agree to our <Link className="underline underline-offset-4 hover:text-primary" href="/legal/terms">Terms of Service</Link> and <Link className="underline underline-offset-4 hover:text-primary" href="/legal/privacy">Privacy Policy</Link>.</p>
+      </div>
+      <div className="hidden relative h-full w-full items-center justify-center bg-muted lg:flex">
         <Image
-          src="/logo/full-logo.svg"
-          alt="Full Askchimps Logo"
-          width={200}
-          height={48}
+          src="/signin.webp"
+          alt="Person using AskChimps on a laptop"
+          fill
           priority
         />
       </div>
-      {/* SignIn Form */}
-      <Suspense fallback={<div>Loading...</div>}>
-        <div className="w-full sm:max-w-96 sm:mx-auto">
-          <SignInForm />
-        </div>
-      </Suspense>
     </div>
   );
 }
