@@ -16,7 +16,7 @@ export default function OrganisationGrid() {
         <Link key={org.name} href={`/${org.slug}`} prefetch>
           <Card
             key={org.id}
-            className="group relative h-64 cursor-pointer overflow-hidden border-0 bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)] ring-1 ring-gray-200/60 transition-all duration-300 hover:shadow-[0_8px_25px_-5px_rgba(0,0,0,0.1)] hover:ring-gray-300/80 hover:scale-[1.02]"
+            className="group relative h-64 cursor-pointer overflow-hidden border-0 bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)] ring-1 ring-gray-200/60 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_8px_25px_-5px_rgba(0,0,0,0.1)] hover:ring-gray-300/80"
           >
             <div className="flex h-full flex-col">
               <CardHeader className="flex-none pb-4">
@@ -31,13 +31,13 @@ export default function OrganisationGrid() {
                         className="object-contain"
                       />
                     </div>
-                    <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-500 ring-2 ring-white"></div>
+                    <div className="absolute -right-1 -bottom-1 h-4 w-4 rounded-full bg-emerald-500 ring-2 ring-white"></div>
                   </div>
                   <div className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold tracking-wider text-emerald-600">
                     ORG
                   </div>
                 </div>
-                <CardTitle className="line-clamp-2 text-lg font-semibold leading-tight tracking-tight text-gray-900 group-hover:text-emerald-900">
+                <CardTitle className="line-clamp-2 text-lg leading-tight font-semibold tracking-tight text-gray-900 group-hover:text-emerald-900">
                   {org.name}
                 </CardTitle>
               </CardHeader>

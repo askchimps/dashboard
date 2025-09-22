@@ -1,7 +1,7 @@
 import { getOrganisationAction } from "@/lib/api/actions/organisation/get-organisation";
-import { getOrganisationsAction } from "@/lib/api/actions/organisation/get-organisations";
 import { getOrganisationAgentsAction } from "@/lib/api/actions/organisation/get-organisation-agents";
 import { getOrganisationUsageAction } from "@/lib/api/actions/organisation/get-organisation-usage";
+import { getOrganisationsAction } from "@/lib/api/actions/organisation/get-organisations";
 
 export const organisationKeys = {
   all: ["organisations"] as const,
@@ -34,5 +34,4 @@ export const organisationQueries = {
     queryFn: () => getOrganisationUsageAction(idOrSlug),
     staleTime: 1000 * 60 * 5, // 5 minutes
   }),
-
 };
