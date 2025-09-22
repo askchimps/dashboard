@@ -39,7 +39,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuItem>
               <SidebarMenuButton
                 tooltip={"Agents"}
-                className="cursor-pointer [&>svg]:size-5 h-10"
+                className="h-10 cursor-pointer [&>svg]:size-5"
               >
                 <Bot />
                 <span>Agents</span>
@@ -48,7 +48,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuItem>
               <SidebarMenuButton
                 tooltip={"Usage"}
-                className="cursor-pointer [&>svg]:size-5 h-10"
+                className="h-10 cursor-pointer [&>svg]:size-5"
               >
                 <PieChart />
                 <span>Usage</span>
@@ -63,7 +63,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton
               onClick={handleSignOut}
               tooltip="Sign Out"
-              className="cursor-pointer [&>svg]:size-5 h-10"
+              className="h-10 cursor-pointer [&>svg]:size-5"
             >
               <LogOut />
               <span>Sign Out</span>

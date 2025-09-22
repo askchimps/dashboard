@@ -11,16 +11,16 @@ export default function OrganisationGrid() {
   const { data: organisations } = useOrganisations();
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
       {organisations?.map((org: IOrganisation) => (
         <Link key={org.name} href={`/${org.slug}`} prefetch>
           <Card
             key={org.id}
-            className="group relative bg-white border border-gray-200/80 hover:border-gray-300 shadow-sm hover:shadow-lg transition-all duration-200 cursor-pointer"
+            className="group relative cursor-pointer border border-gray-200/80 bg-white shadow-sm transition-all duration-200 hover:border-gray-300 hover:shadow-lg"
           >
             <CardHeader>
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center">
+              <div className="mb-4 flex items-start justify-between">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-100">
                   <Image
                     src="/organisation/building.png"
                     alt="Organisation"
@@ -28,19 +28,19 @@ export default function OrganisationGrid() {
                     height={80}
                   />
                 </div>
-                <div className="text-xs text-gray-400 font-medium tracking-wide">
+                <div className="text-xs font-medium tracking-wide text-gray-400">
                   ORG
                 </div>
               </div>
-              <CardTitle className="text-lg font-medium text-gray-900 leading-tight tracking-tight">
+              <CardTitle className="text-lg leading-tight font-medium tracking-tight text-gray-900">
                 {org.name}
               </CardTitle>
             </CardHeader>
 
             <CardContent>
-              <div className="text-sm text-gray-500 font-normal">
+              <div className="text-sm font-normal text-gray-500">
                 Established{" "}
-                <span className="text-gray-800 font-medium">
+                <span className="font-medium text-gray-800">
                   {new Date(org.created_at).toLocaleDateString("en-US", {
                     month: "long",
                     year: "numeric",

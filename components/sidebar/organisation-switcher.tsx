@@ -31,6 +31,7 @@ export default function OrganisationSwitcher() {
   );
 
   useEffect(() => {
+    if (!orgSlug || !organisations) return;
     const org = organisations?.find(org => org.slug === orgSlug);
     if (org) {
       setActiveOrganisation(org);
@@ -48,14 +49,14 @@ export default function OrganisationSwitcher() {
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton size="lg" disabled>
-            <div className="bg-black/20 animate-pulse flex aspect-square size-8 items-center justify-center rounded-lg">
+            <div className="flex aspect-square size-8 animate-pulse items-center justify-center rounded-lg bg-black/20">
               <div className="size-4 rounded" />
             </div>
-            <div className="grid flex-1 text-left text-sm leading-tight gap-1">
-              <div className="bg-black/20 animate-pulse h-3 w-24 rounded" />
-              <div className="bg-black/20 animate-pulse h-3 w-16 rounded" />
+            <div className="grid flex-1 gap-1 text-left text-sm leading-tight">
+              <div className="h-3 w-24 animate-pulse rounded bg-black/20" />
+              <div className="h-3 w-16 animate-pulse rounded bg-black/20" />
             </div>
-            <div className="bg-black/20 animate-pulse w-3 h-6 rounded ml-auto" />
+            <div className="ml-auto h-6 w-3 animate-pulse rounded bg-black/20" />
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
@@ -87,19 +88,19 @@ export default function OrganisationSwitcher() {
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              className="w-(--radix-dropdown-menu-trigger-width) min-w-56 max-h-96 overflow-auto rounded-lg no-scrollbar p-0 pb-2"
+              className="no-scrollbar max-h-96 w-(--radix-dropdown-menu-trigger-width) min-w-56 overflow-auto rounded-lg p-0 pb-2"
               align="start"
               side={isMobile ? "bottom" : "right"}
               sideOffset={4}
             >
-              <DropdownMenuLabel className="text-muted-foreground text-xs sticky top-0 bg-white w-full z-20 p-3">
+              <DropdownMenuLabel className="text-muted-foreground sticky top-0 z-20 w-full bg-white p-3 text-xs">
                 Organisations
               </DropdownMenuLabel>
               {organisations?.map(organisation => (
                 <DropdownMenuItem
                   key={organisation.name}
                   onClick={() => handleOrganisationChange(organisation)}
-                  className="gap-2 p-2 cursor-pointer"
+                  className="cursor-pointer gap-2 p-2"
                 >
                   <div className="flex size-6 items-center justify-center rounded-md border">
                     <GalleryVerticalEnd className="size-3.5 shrink-0" />

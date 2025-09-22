@@ -11,10 +11,10 @@ export default async function Home() {
     return notFound();
   }
 
-  redirect(`/${organisations[0]?.slug}`);
+  return redirect(`/${organisations[0]?.slug}`);
 
   return (
-    <div className="flex flex-col p-5 gap-8">
+    <div className="flex flex-col gap-8 p-5">
       <SectionHeader label="Organisations" />
       <OrganisationGrid />
     </div>

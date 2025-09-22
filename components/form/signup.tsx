@@ -46,7 +46,7 @@ export default function SignUpForm() {
   return (
     <div className="flex flex-col gap-4">
       {accountCreated ? (
-        <div className="rounded-md pointer-events-auto flex items-center py-3 justify-between gap-x-6 px-6 text-center text-sm text-white sm:pl-4 sm:pr-3 bg-violet-600">
+        <div className="pointer-events-auto flex items-center justify-between gap-x-6 rounded-md bg-violet-600 px-6 py-3 text-center text-sm text-white sm:pr-3 sm:pl-4">
           Account created successfully! Please check your email to confirm your
           account.
         </div>
@@ -68,7 +68,7 @@ export default function SignUpForm() {
                 placeholder="John Doe"
               />
               {errors.name ? (
-                <p className="text-red-500 text-xs">{errors.name.message}</p>
+                <p className="text-xs text-red-500">{errors.name.message}</p>
               ) : null}
             </div>
             <div className="flex flex-col gap-2">
@@ -86,7 +86,7 @@ export default function SignUpForm() {
                 type="email"
               />
               {errors.email ? (
-                <p className="text-red-500 text-xs">{errors.email.message}</p>
+                <p className="text-xs text-red-500">{errors.email.message}</p>
               ) : null}
             </div>
             <div className="flex flex-col gap-2">
@@ -104,7 +104,7 @@ export default function SignUpForm() {
                 type="password"
               />
               {errors.password ? (
-                <p className="text-red-500 text-xs">
+                <p className="text-xs text-red-500">
                   {errors.password.message}
                 </p>
               ) : null}
@@ -112,7 +112,7 @@ export default function SignUpForm() {
           </div>
           <div className="flex flex-col gap-3">
             <Button
-              className="text-md w-full flex gap-2 cursor-pointer"
+              className="text-md flex w-full cursor-pointer gap-2"
               disabled={isSubmitting || isLoading || !isFormValid}
               type="submit"
               size="lg"

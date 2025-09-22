@@ -58,7 +58,7 @@ export default function SignInForm() {
                 type="email"
               />
               {errors.email ? (
-                <p className="text-red-500 text-xs">{errors.email.message}</p>
+                <p className="text-xs text-red-500">{errors.email.message}</p>
               ) : null}
             </div>
             <div className="flex flex-col gap-2">
@@ -76,7 +76,7 @@ export default function SignInForm() {
                 type="password"
               />
               {errors.password ? (
-                <p className="text-red-500 text-xs">
+                <p className="text-xs text-red-500">
                   {errors.password.message}
                 </p>
               ) : null}
@@ -84,7 +84,7 @@ export default function SignInForm() {
           </div>
           <div className="flex flex-col gap-3">
             <Button
-              className="text-md w-full flex gap-2 cursor-pointer"
+              className="text-md flex w-full cursor-pointer gap-2"
               disabled={isSubmitting || isLoading || !isFormValid}
               type="submit"
               size="lg"
