@@ -41,7 +41,7 @@ export default function OrganisationSwitcher() {
   }, [orgSlug, organisations]);
 
   function handleOrganisationChange(organisation: IOrganisation) {
-    router.push(`/${organisation.slug}`);
+    router.push(`/${organisation.slug}/agents`);
   }
 
   if (isLoading) {
