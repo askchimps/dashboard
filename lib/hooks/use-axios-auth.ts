@@ -2,15 +2,15 @@
 
 import { useEffect } from "react";
 
-import { axiosAuth } from "../axios";
-import { createClient } from "../supabase/client";
+import { axiosAuth } from "@/lib/api/axios";
+import { createClient } from "@/lib/supabase/client";
 
 const useAxiosAuth = () => {
   const supabase = createClient();
 
   useEffect(() => {
     const requestIntercept = axiosAuth.interceptors.request.use(
-      async (config) => {
+      async config => {
         const { data: session } = await supabase.auth.getSession();
         const accessToken = session?.session?.access_token;
 
@@ -19,12 +19,12 @@ const useAxiosAuth = () => {
         }
         return config;
       },
-      (error) => Promise.reject(error),
+      error => Promise.reject(error)
     );
     return () => {
       axiosAuth.interceptors.request.eject(requestIntercept);
     };
-  }, []);
+  }, [supabase.auth]);
 
   return axiosAuth;
 };

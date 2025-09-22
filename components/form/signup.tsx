@@ -1,18 +1,17 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2Icon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { redirect } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
-import { signUpAction } from "@/actions/signup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { signUpAction } from "@/lib/api/actions/auth/signup";
+import { type ISignUpForm, SignUpFormSchema } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { type ISignUpForm, SignUpFormSchema } from "@/types";
-import { Loader2Icon } from "lucide-react";
 
 export default function SignUpForm() {
   const {
@@ -52,7 +51,7 @@ export default function SignUpForm() {
           account.
         </div>
       ) : null}
-      <form onSubmit={(e) => void handleSubmit(onSubmit)(e)}>
+      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <div className="flex flex-col gap-12">
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
@@ -105,7 +104,9 @@ export default function SignUpForm() {
                 type="password"
               />
               {errors.password ? (
-                <p className="text-red-500 text-xs">{errors.password.message}</p>
+                <p className="text-red-500 text-xs">
+                  {errors.password.message}
+                </p>
               ) : null}
             </div>
           </div>
@@ -116,7 +117,8 @@ export default function SignUpForm() {
               type="submit"
               size="lg"
             >
-              {isLoading || isSubmitting && <Loader2Icon className="animate-spin" />}
+              {isLoading ||
+                (isSubmitting && <Loader2Icon className="animate-spin" />)}
               {isSubmitting || isLoading ? "Signing Up..." : "Sign Up"}
             </Button>
           </div>

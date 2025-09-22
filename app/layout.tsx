@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
+import QueryProvider from "@/components/provider/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
@@ -25,7 +26,7 @@ export default function RootLayout({
         className={`${inter.variable} ${inter.className} antialiased`}
         suppressHydrationWarning={true}
       >
-        {children}
+        <QueryProvider>{children}</QueryProvider>
         <Toaster />
       </body>
     </html>

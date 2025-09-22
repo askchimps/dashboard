@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 export const signUpAction = async (
   name: string,
   email: string,
-  password: string,
+  password: string
 ) => {
   const supabase = await createClient();
 

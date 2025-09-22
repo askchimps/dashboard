@@ -1,10 +1,23 @@
-import Header from "@/components/header/header";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
-export default function MainLayout({ children }: { children: React.ReactNode }) {
-    return (
-        <div className="flex flex-col">
-            <Header />
-            {children}
-        </div>
-    );
+import SidebarWrapper from "@/components/sidebar/sidebar-wrapper";
+import { getQueryClient } from "@/lib/get-query-client";
+import { organisationQueries } from "@/lib/query/organisation.query";
+
+export default async function MainLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const queryClient = getQueryClient();
+
+  await queryClient.prefetchQuery({
+    ...organisationQueries.all(),
+  });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <SidebarWrapper>{children}</SidebarWrapper>
+    </HydrationBoundary>
+  );
 }
