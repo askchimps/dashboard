@@ -4,6 +4,7 @@ export const DailyUsageSchema = z.object({
   date: z.string(),
   usedConversationCredits: z.number(),
   usedMessageCredits: z.number(),
+  usedCallCredits: z.number(),
 });
 
 export const AgentUsageSchema = z.object({
@@ -11,6 +12,7 @@ export const AgentUsageSchema = z.object({
   agent_name: z.string(),
   usedConversationCredits: z.number(),
   usedMessageCredits: z.number(),
+  usedCallCredits: z.number(),
 });
 
 export const DateRangeSchema = z.object({
@@ -19,13 +21,14 @@ export const DateRangeSchema = z.object({
 });
 
 export const OrganisationUsageSchema = z.object({
-  creditsPlan: z.string(),
+  creditsPlan: z.enum(["CONVERSATION", "MESSAGE"]),
   remainingConversationCredits: z.number(),
   remainingMessageCredits: z.number(),
   remainingCallCredits: z.number(),
   dateRange: DateRangeSchema,
   usedConversationCredits: z.number(),
   usedMessageCredits: z.number(),
+  usedCallCredits: z.number(),
   dailyUsage: z.array(DailyUsageSchema),
   agentUsage: z.array(AgentUsageSchema),
 });
