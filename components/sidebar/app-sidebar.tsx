@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, LogOut, PieChart } from "lucide-react";
+import { Bot, LogOut, PieChart, BarChart3, Phone, MessageCircle, Users } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import * as React from "react";
 
@@ -45,24 +45,57 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
-                tooltip={"Agents"}
+                tooltip={"Overview"}
                 className="h-10 cursor-pointer [&>svg]:size-5"
-                isActive={orgTab === "agents"}
-                onClick={() => handleTabChange("agents")}
+                isActive={orgTab === "overview"}
+                onClick={() => handleTabChange("overview")}
               >
-                <Bot />
-                <span>Agents</span>
+                <BarChart3 />
+                <span>Overview</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
-                tooltip={"Usage"}
+                tooltip={"Call Logs"}
                 className="h-10 cursor-pointer [&>svg]:size-5"
-                isActive={orgTab === "usage"}
-                onClick={() => handleTabChange("usage")}
+                isActive={orgTab === "call-logs"}
+                onClick={() => handleTabChange("call-logs")}
+              >
+                <Phone />
+                <span>Call Logs</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                tooltip={"Chat Logs"}
+                className="h-10 cursor-pointer [&>svg]:size-5"
+                isActive={orgTab === "chat-logs"}
+                onClick={() => handleTabChange("chat-logs")}
+              >
+                <MessageCircle />
+                <span>Chat Logs</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                tooltip={"Leads"}
+                className="h-10 cursor-pointer [&>svg]:size-5"
+                isActive={orgTab === "leads"}
+                onClick={() => handleTabChange("leads")}
+              >
+                <Users />
+                <span>Leads</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                tooltip={"Analytics"}
+                className="h-10 cursor-pointer [&>svg]:size-5"
+                isActive={orgTab === "analytics"}
+                onClick={() => handleTabChange("analytics")}
               >
                 <PieChart />
-                <span>Usage</span>
+                <span>Analytics</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

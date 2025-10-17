@@ -9,5 +9,5 @@ export default async function Organisation() {
     return notFound();
   }
 
-  return redirect(`/${organisations[0]?.slug}/agents`);
+  return redirect(`/${organisations[0]?.slug}/overview`);
 }

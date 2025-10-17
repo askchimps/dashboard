@@ -11,7 +11,7 @@ export default async function Home() {
     return notFound();
   }
 
-  return redirect(`/${organisations[0]?.slug}/agents`);
+  return redirect(`/${organisations[0]?.slug}/overview`);
 
   return (
     <div className="flex flex-col gap-8 p-5">

@@ -1,13 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
 import SectionHeader from "@/components/section-header/section-header";
 import {
