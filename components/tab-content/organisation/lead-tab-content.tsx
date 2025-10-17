@@ -1,32 +1,27 @@
 "use client";
 
-import { useState } from "react";
-import { format, formatDistanceToNow } from "date-fns";
-import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { format, formatDistanceToNow } from "date-fns";
 import {
   Users,
-  Search,
   Filter,
   Mail,
   Phone,
-  Calendar,
   User,
   MessageSquare,
   PhoneCall,
   ExternalLink,
-  ChevronRight,
-  Building2
+  Building2,
 } from "lucide-react";
+import { useParams } from "next/navigation";
+import { useState } from "react";
 
 import SectionHeader from "@/components/section-header/section-header";
-import { DateRangeFilter } from "@/components/ui/date-range-filter";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DateRangeFilter } from "@/components/ui/date-range-filter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -49,23 +45,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { organisationQueries } from "@/lib/query/organisation.query";
 import { LeadFilters } from "@/lib/api/actions/organisation/get-organisation-leads";
+import { organisationQueries } from "@/lib/query/organisation.query";
 
-interface LeadTabContentProps {
-  className?: string;
-}
-
-export default function LeadTabContent({ className }: LeadTabContentProps) {
+export default function LeadTabContent() {
   const params = useParams();
   const orgSlug = params.orgSlug as string;
 
-  const [selectedLead, setSelectedLead] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  // const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<LeadFilters>({
     page: 1,
     limit: 20,
-    startDate: format(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
+    startDate: format(
+      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      "yyyy-MM-dd"
+    ),
     endDate: format(new Date(), "yyyy-MM-dd"),
   });
 
@@ -78,24 +72,39 @@ export default function LeadTabContent({ className }: LeadTabContentProps) {
     setFilters(prev => ({ ...prev, startDate, endDate, page: 1 }));
   };
 
-  const handleSearch = () => {
-    setFilters(prev => ({ ...prev, search: searchQuery.trim() || undefined, page: 1 }));
-  };
+  // const handleSearch = () => {
+  //   setFilters(prev => ({
+  //     ...prev,
+  //     search: searchQuery.trim() || undefined,
+  //     page: 1,
+  //   }));
+  // };
 
-  const handleClearSearch = () => {
-    setSearchQuery("");
-    setFilters(prev => ({ ...prev, search: undefined, page: 1 }));
-  };
+  // const handleClearSearch = () => {
+  //   setSearchQuery("");
+  //   setFilters(prev => ({ ...prev, search: undefined, page: 1 }));
+  // };
 
-  const handleFilterChange = (key: keyof LeadFilters, value: string | undefined) => {
-    setFilters(prev => ({ ...prev, [key]: value === "all" ? undefined : value, page: 1 }));
+  const handleFilterChange = (
+    key: keyof LeadFilters,
+    value: string | undefined
+  ) => {
+    setFilters(prev => ({
+      ...prev,
+      [key]: value === "all" ? undefined : value,
+      page: 1,
+    }));
   };
 
   const leads = leadsData?.leads || [];
 
   // Derive unique filter options from actual data
-  const uniqueStatuses = [...new Set(leads.map(lead => lead.status).filter(Boolean))];
-  const uniqueSources = [...new Set(leads.map(lead => lead.source).filter(Boolean))];
+  const uniqueStatuses = [
+    ...new Set(leads.map(lead => lead.status).filter(Boolean)),
+  ];
+  const uniqueSources = [
+    ...new Set(leads.map(lead => lead.source).filter(Boolean)),
+  ];
 
   const formatTimeAgo = (dateString: string) => {
     try {
@@ -107,28 +116,38 @@ export default function LeadTabContent({ className }: LeadTabContentProps) {
 
   const getStatusColor = (status?: string) => {
     switch (status?.toLowerCase()) {
-      case 'qualified': return 'bg-green-100 text-green-800';
-      case 'new': return 'bg-blue-100 text-blue-800';
-      case 'contacted': return 'bg-yellow-100 text-yellow-800';
-      case 'converted': return 'bg-purple-100 text-purple-800';
-      case 'lost': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "qualified":
+        return "bg-green-100 text-green-800";
+      case "new":
+        return "bg-blue-100 text-blue-800";
+      case "contacted":
+        return "bg-yellow-100 text-yellow-800";
+      case "converted":
+        return "bg-purple-100 text-purple-800";
+      case "lost":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getSourceIcon = (source?: string) => {
     switch (source?.toLowerCase()) {
-      case 'phone': return <PhoneCall className="h-3 w-3" />;
-      case 'website': return <MessageSquare className="h-3 w-3" />;
-      case 'email': return <Mail className="h-3 w-3" />;
-      default: return <Building2 className="h-3 w-3" />;
+      case "phone":
+        return <PhoneCall className="h-3 w-3" />;
+      case "website":
+        return <MessageSquare className="h-3 w-3" />;
+      case "email":
+        return <Mail className="h-3 w-3" />;
+      default:
+        return <Building2 className="h-3 w-3" />;
     }
   };
 
   return (
     <>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3">
           <SectionHeader label="Leads" />
         </div>
@@ -143,7 +162,9 @@ export default function LeadTabContent({ className }: LeadTabContentProps) {
           <div className="flex gap-2">
             <Select
               value={filters.status || "all"}
-              onValueChange={(value: string) => handleFilterChange('status', value)}
+              onValueChange={(value: string) =>
+                handleFilterChange("status", value)
+              }
             >
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Status" />
@@ -160,7 +181,9 @@ export default function LeadTabContent({ className }: LeadTabContentProps) {
 
             <Select
               value={filters.source || "all"}
-              onValueChange={(value: string) => handleFilterChange('source', value)}
+              onValueChange={(value: string) =>
+                handleFilterChange("source", value)
+              }
             >
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Source" />
@@ -210,7 +233,7 @@ export default function LeadTabContent({ className }: LeadTabContentProps) {
       <div className="space-y-6">
         {/* Stats Cards */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             {Array.from({ length: 4 }).map((_, index) => (
               <Card key={index}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -223,56 +246,74 @@ export default function LeadTabContent({ className }: LeadTabContentProps) {
               </Card>
             ))}
           </div>
-        ) : leadsData && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Leads</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{leadsData.pagination.totalCount}</div>
-              </CardContent>
-            </Card>
+        ) : (
+          leadsData && (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Total Leads
+                  </CardTitle>
+                  <Users className="text-muted-foreground h-4 w-4" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {leadsData.pagination.totalCount}
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">This Page</CardTitle>
-                <Filter className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{leads.length}</div>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    This Page
+                  </CardTitle>
+                  <Filter className="text-muted-foreground h-4 w-4" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{leads.length}</div>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Qualified</CardTitle>
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  Q
-                </Badge>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {leads.filter(lead => lead.status === 'qualified').length}
-                </div>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Qualified
+                  </CardTitle>
+                  <Badge
+                    variant="secondary"
+                    className="bg-green-100 text-green-800"
+                  >
+                    Q
+                  </Badge>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {leads.filter(lead => lead.status === "qualified").length}
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Converted</CardTitle>
-                <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-                  C
-                </Badge>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {leads.filter(lead => lead.status === 'converted').length}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Converted
+                  </CardTitle>
+                  <Badge
+                    variant="secondary"
+                    className="bg-purple-100 text-purple-800"
+                  >
+                    C
+                  </Badge>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {leads.filter(lead => lead.status === "converted").length}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )
         )}
 
         {/* Leads Table */}
@@ -292,75 +333,78 @@ export default function LeadTabContent({ className }: LeadTabContentProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {Array.from({ length: filters.limit || 20 }).map((_, index) => (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <div className="flex items-center space-x-3">
-                          <Skeleton className="h-8 w-8 rounded-full" />
-                          <div className="space-y-2">
-                            <Skeleton className="h-4 w-32" />
-                            <Skeleton className="h-3 w-16" />
+                  {Array.from({ length: filters.limit || 20 }).map(
+                    (_, index) => (
+                      <TableRow key={index}>
+                        <TableCell>
+                          <div className="flex items-center space-x-3">
+                            <Skeleton className="h-8 w-8 rounded-full" />
+                            <div className="space-y-2">
+                              <Skeleton className="h-4 w-32" />
+                              <Skeleton className="h-3 w-16" />
+                            </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <Skeleton className="h-4 w-40" />
-                          <Skeleton className="h-4 w-32" />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Skeleton className="h-3 w-3 rounded" />
-                          <Skeleton className="h-4 w-16" />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-6 w-20 rounded-full" />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Skeleton className="h-3 w-3 rounded" />
-                          <Skeleton className="h-4 w-4" />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-20" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-8 w-8 rounded" />
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <Skeleton className="h-4 w-40" />
+                            <Skeleton className="h-4 w-32" />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Skeleton className="h-3 w-3 rounded" />
+                            <Skeleton className="h-4 w-16" />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-6 w-20 rounded-full" />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Skeleton className="h-3 w-3 rounded" />
+                            <Skeleton className="h-4 w-4" />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-4 w-20" />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-8 w-8 rounded" />
+                        </TableCell>
+                      </TableRow>
+                    )
+                  )}
                 </TableBody>
               </Table>
             ) : !leads.length ? (
-              <div className="text-center py-12 px-6">
-                <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center mb-4">
-                  <Users className="h-8 w-8 text-muted-foreground" />
+              <div className="px-6 py-12 text-center">
+                <div className="bg-muted mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+                  <Users className="text-muted-foreground h-8 w-8" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="font-medium text-foreground">
-                    {filters.search || filters.status || filters.source ? "No leads found" : "No leads yet"}
+                  <h3 className="text-foreground font-medium">
+                    {filters.search || filters.status || filters.source
+                      ? "No leads found"
+                      : "No leads yet"}
                   </h3>
-                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                  <p className="text-muted-foreground mx-auto max-w-sm text-sm">
                     {filters.search || filters.status || filters.source
                       ? "Try adjusting your search or filters to find what you're looking for"
-                      : "Leads will appear here when customers show interest in your services"
-                    }
+                      : "Leads will appear here when customers show interest in your services"}
                   </p>
                   {(filters.search || filters.status || filters.source) && (
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        setSearchQuery("");
+                        // setSearchQuery("");
                         setFilters(prev => ({
                           ...prev,
                           search: undefined,
                           status: undefined,
                           source: undefined,
-                          page: 1
+                          page: 1,
                         }));
                       }}
                       className="mt-4"
@@ -384,24 +428,24 @@ export default function LeadTabContent({ className }: LeadTabContentProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {leads.map((lead) => (
-                    <TableRow
-                      key={lead.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => setSelectedLead(lead.id.toString())}
-                    >
+                  {leads.map(lead => (
+                    <TableRow key={lead.id} className="hover:bg-muted/50">
                       <TableCell className="font-medium">
                         <div className="flex items-center space-x-3">
                           <Avatar className="h-8 w-8">
-                            <AvatarFallback className="bg-blue-100 text-blue-600 text-sm">
-                              {lead.name ? lead.name.charAt(0).toUpperCase() : <User className="h-4 w-4" />}
+                            <AvatarFallback className="bg-blue-100 text-sm text-blue-600">
+                              {lead.name ? (
+                                lead.name.charAt(0).toUpperCase()
+                              ) : (
+                                <User className="h-4 w-4" />
+                              )}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="font-medium text-sm">
-                              {lead.name || 'Unnamed Lead'}
+                            <div className="text-sm font-medium">
+                              {lead.name || "Unnamed Lead"}
                             </div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-muted-foreground text-xs">
                               ID: {lead.id}
                             </div>
                           </div>
@@ -412,18 +456,22 @@ export default function LeadTabContent({ className }: LeadTabContentProps) {
                         <div className="space-y-1">
                           {lead.email && (
                             <div className="flex items-center gap-1 text-sm">
-                              <Mail className="h-3 w-3 text-muted-foreground" />
-                              <span className="truncate max-w-[180px]">{lead.email}</span>
+                              <Mail className="text-muted-foreground h-3 w-3" />
+                              <span className="max-w-[180px] truncate">
+                                {lead.email}
+                              </span>
                             </div>
                           )}
                           {lead.phone_number && (
                             <div className="flex items-center gap-1 text-sm">
-                              <Phone className="h-3 w-3 text-muted-foreground" />
+                              <Phone className="text-muted-foreground h-3 w-3" />
                               <span>{lead.phone_number}</span>
                             </div>
                           )}
                           {!lead.email && !lead.phone_number && (
-                            <span className="text-xs text-muted-foreground">No contact info</span>
+                            <span className="text-muted-foreground text-xs">
+                              No contact info
+                            </span>
                           )}
                         </div>
                       </TableCell>
@@ -432,22 +480,28 @@ export default function LeadTabContent({ className }: LeadTabContentProps) {
                         {lead.source ? (
                           <div className="flex items-center gap-1">
                             {getSourceIcon(lead.source)}
-                            <span className="capitalize text-sm">{lead.source}</span>
+                            <span className="text-sm capitalize">
+                              {lead.source}
+                            </span>
                           </div>
                         ) : (
-                          <span className="text-xs text-muted-foreground">Unknown</span>
+                          <span className="text-muted-foreground text-xs">
+                            Unknown
+                          </span>
                         )}
                       </TableCell>
 
                       <TableCell>
-                        <Badge className={`text-xs ${getStatusColor(lead.status)}`}>
-                          {lead.status || 'Unknown'}
+                        <Badge
+                          className={`text-xs ${getStatusColor(lead.status)}`}
+                        >
+                          {lead.status || "Unknown"}
                         </Badge>
                       </TableCell>
 
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <MessageSquare className="h-3 w-3 text-muted-foreground" />
+                          <MessageSquare className="text-muted-foreground h-3 w-3" />
                           <span className="text-sm">
                             {lead.conversations.length}
                           </span>
@@ -455,7 +509,7 @@ export default function LeadTabContent({ className }: LeadTabContentProps) {
                       </TableCell>
 
                       <TableCell>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-muted-foreground text-sm">
                           {formatTimeAgo(lead.created_at)}
                         </div>
                       </TableCell>
@@ -469,18 +523,13 @@ export default function LeadTabContent({ className }: LeadTabContentProps) {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedLead(lead.id.toString());
-                              }}
-                            >
+                            <DropdownMenuItem>
                               <User className="mr-2 h-4 w-4" />
                               View Details
                             </DropdownMenuItem>
                             {lead.email && (
                               <DropdownMenuItem
-                                onClick={(e) => {
+                                onClick={e => {
                                   e.stopPropagation();
                                   window.open(`mailto:${lead.email}`);
                                 }}
@@ -491,7 +540,7 @@ export default function LeadTabContent({ className }: LeadTabContentProps) {
                             )}
                             {lead.phone_number && (
                               <DropdownMenuItem
-                                onClick={(e) => {
+                                onClick={e => {
                                   e.stopPropagation();
                                   window.open(`tel:${lead.phone_number}`);
                                 }}
@@ -502,7 +551,7 @@ export default function LeadTabContent({ className }: LeadTabContentProps) {
                             )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={(e) => {
+                              onClick={e => {
                                 e.stopPropagation();
                                 // TODO: Add export functionality
                               }}
@@ -521,24 +570,31 @@ export default function LeadTabContent({ className }: LeadTabContentProps) {
 
             {/* Pagination */}
             {leadsData && leadsData.pagination.totalPages > 1 && (
-              <div className="flex items-center justify-between p-6 border-t">
+              <div className="flex items-center justify-between border-t p-6">
                 <div className="flex items-center gap-4">
-                  <div className="text-sm text-muted-foreground">
-                    Showing {((leadsData.pagination.currentPage - 1) * leadsData.pagination.limit) + 1} to{' '}
+                  <div className="text-muted-foreground text-sm">
+                    Showing{" "}
+                    {(leadsData.pagination.currentPage - 1) *
+                      leadsData.pagination.limit +
+                      1}{" "}
+                    to{" "}
                     {Math.min(
-                      leadsData.pagination.currentPage * leadsData.pagination.limit,
+                      leadsData.pagination.currentPage *
+                        leadsData.pagination.limit,
                       leadsData.pagination.totalCount
-                    )}{' '}
+                    )}{" "}
                     of {leadsData.pagination.totalCount} leads
                   </div>
 
                   <Select
                     value={filters.limit?.toString() || "10"}
-                    onValueChange={(value: string) => setFilters(prev => ({
-                      ...prev,
-                      limit: parseInt(value),
-                      page: 1
-                    }))}
+                    onValueChange={(value: string) =>
+                      setFilters(prev => ({
+                        ...prev,
+                        limit: parseInt(value),
+                        page: 1,
+                      }))
+                    }
                   >
                     <SelectTrigger className="w-20">
                       <SelectValue />
@@ -556,22 +612,27 @@ export default function LeadTabContent({ className }: LeadTabContentProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setFilters(prev => ({ ...prev, page: prev.page! - 1 }))}
+                    onClick={() =>
+                      setFilters(prev => ({ ...prev, page: prev.page! - 1 }))
+                    }
                     disabled={!leadsData.pagination.hasPrevPage}
                   >
                     Previous
                   </Button>
 
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">
-                      Page {leadsData.pagination.currentPage} of {leadsData.pagination.totalPages}
+                    <span className="text-muted-foreground text-sm">
+                      Page {leadsData.pagination.currentPage} of{" "}
+                      {leadsData.pagination.totalPages}
                     </span>
                   </div>
 
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setFilters(prev => ({ ...prev, page: prev.page! + 1 }))}
+                    onClick={() =>
+                      setFilters(prev => ({ ...prev, page: prev.page! + 1 }))
+                    }
                     disabled={!leadsData.pagination.hasNextPage}
                   >
                     Next

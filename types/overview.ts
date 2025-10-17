@@ -12,7 +12,7 @@ export const DateRangeSchema = z.object({
 
 export const OrganisationOverviewSchema = z.object({
   conversationCount: z.number(),
-  callCount: z.number(), 
+  callCount: z.number(),
   leadCount: z.number(),
   qualifiedLeadCount: z.number(),
   dateRange: DateRangeSchema,

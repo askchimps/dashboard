@@ -1,6 +1,13 @@
 "use client";
 
-import { Bot, LogOut, PieChart, BarChart3, Phone, MessageCircle, Users } from "lucide-react";
+import {
+  LogOut,
+  PieChart,
+  BarChart3,
+  Phone,
+  MessageCircle,
+  Users,
+} from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import * as React from "react";
 

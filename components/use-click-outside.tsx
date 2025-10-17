@@ -1,10 +1,15 @@
-import { RefObject, useEffect } from "react";
+import { RefObject, useEffect, useCallback } from "react";
 
-export const useClickOutside = (ref: RefObject<any>, callback: () => void) => {
+export const useClickOutside = (
+  ref: RefObject<HTMLElement>,
+  callback: () => void
+) => {
+  const memoizedCallback = useCallback(callback, [callback]);
+
   useEffect(() => {
     function handleClickOutside(event: Event) {
       if (ref.current && !ref.current.contains(event.target as Node)) {
-        callback();
+        memoizedCallback();
       }
     }
 
@@ -15,5 +20,5 @@ export const useClickOutside = (ref: RefObject<any>, callback: () => void) => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("touchstart", handleClickOutside);
     };
-  }, [ref]);
+  }, [ref, memoizedCallback]);
 };

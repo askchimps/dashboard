@@ -1,23 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { format, subDays } from "date-fns";
-import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { 
-  MessageCircle, 
-  Phone, 
-  Users, 
-  UserCheck
-} from "lucide-react";
+import { format, subDays } from "date-fns";
+import { MessageCircle, Phone, Users, UserCheck } from "lucide-react";
+import { useParams } from "next/navigation";
+import { useState } from "react";
 
 import SectionHeader from "@/components/section-header/section-header";
-import { organisationQueries } from "@/lib/query/organisation.query";
 import { Card, CardContent } from "@/components/ui/card";
 import { DateRangeFilter } from "@/components/ui/date-range-filter";
 import KPICard from "@/components/ui/kpi-card";
 import OverviewChart from "@/components/ui/overview-chart";
 import { OverviewSkeleton } from "@/components/ui/overview-skeleton";
+import { organisationQueries } from "@/lib/query/organisation.query";
 
 export default function OverviewTabContent() {
   const params = useParams();
@@ -26,11 +21,19 @@ export default function OverviewTabContent() {
   // Initialize with last 30 days
   const [dateRange, setDateRange] = useState({
     startDate: format(subDays(new Date(), 29), "yyyy-MM-dd"),
-    endDate: format(new Date(), "yyyy-MM-dd")
+    endDate: format(new Date(), "yyyy-MM-dd"),
   });
 
-  const { data: overview, isLoading, error } = useQuery({
-    ...organisationQueries.getOverview(orgSlug, dateRange.startDate, dateRange.endDate),
+  const {
+    data: overview,
+    isLoading,
+    error,
+  } = useQuery({
+    ...organisationQueries.getOverview(
+      orgSlug,
+      dateRange.startDate,
+      dateRange.endDate
+    ),
   });
 
   const handleDateRangeApply = (startDate: string, endDate: string) => {
@@ -52,10 +55,12 @@ export default function OverviewTabContent() {
         <SectionHeader label="Overview" />
         <Card>
           <CardContent className="p-6">
-            <div className="text-center text-muted-foreground">
+            <div className="text-muted-foreground text-center">
               <p>{error ? "Error loading data" : "No data available"}</p>
-              <p className="text-sm mt-1">
-                {error ? "Please try again later" : "Unable to load overview data"}
+              <p className="mt-1 text-sm">
+                {error
+                  ? "Please try again later"
+                  : "Unable to load overview data"}
               </p>
             </div>
           </CardContent>
@@ -64,27 +69,16 @@ export default function OverviewTabContent() {
     );
   }
 
-  const formatDateRange = () => {
-    const start = new Date(overview.dateRange.startDate).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    });
-    const end = new Date(overview.dateRange.endDate).toLocaleDateString('en-US', {
-      month: 'short', 
-      day: 'numeric'
-    });
-    return `${start} - ${end}`;
-  };
-
-  const leadConversionRate = overview.leadCount > 0 
-    ? ((overview.qualifiedLeadCount / overview.leadCount) * 100).toFixed(1)
-    : '0';
+  const leadConversionRate =
+    overview.leadCount > 0
+      ? ((overview.qualifiedLeadCount / overview.leadCount) * 100).toFixed(1)
+      : "0";
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <SectionHeader label="Overview" />
-        <DateRangeFilter 
+        <DateRangeFilter
           onApply={handleDateRangeApply}
           startDate={dateRange.startDate}
           endDate={dateRange.endDate}
@@ -92,11 +86,11 @@ export default function OverviewTabContent() {
           className="w-full sm:w-auto"
         />
       </div>
-      
+
       <div className="grid gap-6">
         {/* KPI Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div className="duration-500 delay-100">
+          <div className="delay-100 duration-500">
             <KPICard
               title="Total Conversations"
               value={overview.conversationCount.toLocaleString()}
@@ -104,8 +98,8 @@ export default function OverviewTabContent() {
               icon={<MessageCircle />}
             />
           </div>
-          
-          <div className="duration-500 delay-200">
+
+          <div className="delay-200 duration-500">
             <KPICard
               title="Total Calls"
               value={overview.callCount.toLocaleString()}
@@ -113,8 +107,8 @@ export default function OverviewTabContent() {
               icon={<Phone />}
             />
           </div>
-          
-          <div className="duration-500 delay-300">
+
+          <div className="delay-300 duration-500">
             <KPICard
               title="Total Leads"
               value={overview.leadCount.toLocaleString()}
@@ -122,12 +116,16 @@ export default function OverviewTabContent() {
               icon={<Users />}
             />
           </div>
-          
-          <div className="duration-500 delay-400">
+
+          <div className="delay-400 duration-500">
             <KPICard
               title="Qualified Leads"
               value={overview.qualifiedLeadCount.toLocaleString()}
-              description={overview.leadCount > 0 ? `${leadConversionRate}% of total leads` : "No leads yet"}
+              description={
+                overview.leadCount > 0
+                  ? `${leadConversionRate}% of total leads`
+                  : "No leads yet"
+              }
               icon={<UserCheck />}
             />
           </div>
@@ -135,7 +133,7 @@ export default function OverviewTabContent() {
 
         {/* Charts */}
         <div className="grid gap-6 md:grid-cols-2">
-          <div className="duration-500 delay-500">
+          <div className="delay-500 duration-500">
             <OverviewChart
               data={overview.conversationCountPerDay}
               title="Daily Conversations"
@@ -144,8 +142,8 @@ export default function OverviewTabContent() {
               color="hsl(var(--chart-1))"
             />
           </div>
-          
-          <div className="duration-500 delay-600">
+
+          <div className="delay-600 duration-500">
             <OverviewChart
               data={overview.callCountPerDay}
               title="Daily Calls"

@@ -1,5 +1,5 @@
-import React from "react";
 import clsx from "clsx";
+import React from "react";
 
 const types = {
   base: "rounded-md shadow-border",
@@ -9,7 +9,7 @@ const types = {
   tooltip: "rounded-md shadow-tooltip",
   menu: "rounded-xl shadow-menu",
   modal: "rounded-xl shadow-modal",
-  fullscreen: "rounded-2xl shadow-fullscreen"
+  fullscreen: "rounded-2xl shadow-fullscreen",
 };
 
 interface MaterialProps {
@@ -21,14 +21,17 @@ interface MaterialProps {
   onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
 }
 
-export const Material = ({ type, children, className, ref, style, onClick }: MaterialProps) => {
+export const Material = ({
+  type,
+  children,
+  className,
+  ref,
+  style,
+  onClick,
+}: MaterialProps) => {
   return (
     <div
-      className={clsx(
-        "bg-background-100",
-        types[type],
-        className
-      )}
+      className={clsx("bg-background-100", types[type], className)}
       ref={ref}
       style={style}
       onClick={onClick}

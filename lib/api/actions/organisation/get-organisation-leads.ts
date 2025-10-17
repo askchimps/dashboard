@@ -22,7 +22,7 @@ export interface LeadAgent {
 export interface LeadConversation {
   id: number;
   name: string;
-  type: 'CALL' | 'CHAT';
+  type: "CALL" | "CHAT";
   created_at: string;
 }
 
@@ -33,8 +33,8 @@ export interface Lead {
   phone_number?: string;
   source?: string;
   status?: string;
-  additional_info?: any;
-  follow_ups?: any;
+  additional_info?: Record<string, unknown>;
+  follow_ups?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
   agents: LeadAgent[];
@@ -68,18 +68,20 @@ export const getOrganisationLeadsAction = async (
   const axios = await createAuthenticatedAxios();
 
   const params = new URLSearchParams();
-  
-  if (filters.page) params.append('page', filters.page.toString());
-  if (filters.limit) params.append('limit', filters.limit.toString());
-  if (filters.source) params.append('source', filters.source);
-  if (filters.status) params.append('status', filters.status);
-  if (filters.agent) params.append('agent', filters.agent);
-  if (filters.search) params.append('search', filters.search);
-  if (filters.startDate) params.append('startDate', filters.startDate);
-  if (filters.endDate) params.append('endDate', filters.endDate);
 
-  const queryString = params.toString() ? `?${params.toString()}` : '';
-  const response = await axios.get(`/v1/organisation/${orgSlug}/leads${queryString}`);
+  if (filters.page) params.append("page", filters.page.toString());
+  if (filters.limit) params.append("limit", filters.limit.toString());
+  if (filters.source) params.append("source", filters.source);
+  if (filters.status) params.append("status", filters.status);
+  if (filters.agent) params.append("agent", filters.agent);
+  if (filters.search) params.append("search", filters.search);
+  if (filters.startDate) params.append("startDate", filters.startDate);
+  if (filters.endDate) params.append("endDate", filters.endDate);
+
+  const queryString = params.toString() ? `?${params.toString()}` : "";
+  const response = await axios.get(
+    `/v1/organisation/${orgSlug}/leads${queryString}`
+  );
 
   return response.data.data;
 };

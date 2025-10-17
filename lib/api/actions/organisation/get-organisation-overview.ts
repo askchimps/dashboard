@@ -11,11 +11,13 @@ export const getOrganisationOverviewAction = async (
   const axios = await createAuthenticatedAxios();
 
   const params = new URLSearchParams();
-  if (startDate) params.append('startDate', startDate);
-  if (endDate) params.append('endDate', endDate);
+  if (startDate) params.append("startDate", startDate);
+  if (endDate) params.append("endDate", endDate);
 
-  const queryString = params.toString() ? `?${params.toString()}` : '';
-  const response = await axios.get(`/v1/organisation/${idOrSlug}/overview${queryString}`);
+  const queryString = params.toString() ? `?${params.toString()}` : "";
+  const response = await axios.get(
+    `/v1/organisation/${idOrSlug}/overview${queryString}`
+  );
 
   return response.data.data;
 };

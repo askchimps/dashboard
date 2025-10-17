@@ -7,14 +7,14 @@ export interface ConversationFilters {
   limit?: number;
   source?: string;
   agent?: string;
-  type?: 'CALL' | 'CHAT';
+  type?: "CALL" | "CHAT";
   startDate?: string;
   endDate?: string;
 }
 
 export interface ConversationMessage {
   id: number;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   created_at: string;
 }
@@ -28,7 +28,7 @@ export interface ConversationAgent {
 export interface Conversation {
   id: number;
   name: string;
-  type: 'CALL' | 'CHAT';
+  type: "CALL" | "CHAT";
   source: string;
   summary?: string;
   created_at: string;
@@ -50,7 +50,7 @@ export interface ConversationListResponse {
   filters: {
     source?: string;
     agent?: string;
-    type?: 'CALL' | 'CHAT';
+    type?: "CALL" | "CHAT";
     startDate?: string;
     endDate?: string;
   };
@@ -71,8 +71,8 @@ export interface ConversationDetails extends Conversation {
     phone_number?: string;
     source?: string;
     status?: string;
-    additional_info?: any;
-    follow_ups?: any;
+    additional_info?: Record<string, unknown>;
+    follow_ups?: Record<string, unknown>;
     created_at: string;
     updated_at: string;
   };
@@ -85,17 +85,19 @@ export const getOrganisationConversationsAction = async (
   const axios = await createAuthenticatedAxios();
 
   const params = new URLSearchParams();
-  
-  if (filters.page) params.append('page', filters.page.toString());
-  if (filters.limit) params.append('limit', filters.limit.toString());
-  if (filters.source) params.append('source', filters.source);
-  if (filters.agent) params.append('agent', filters.agent);
-  if (filters.type) params.append('type', filters.type);
-  if (filters.startDate) params.append('startDate', filters.startDate);
-  if (filters.endDate) params.append('endDate', filters.endDate);
 
-  const queryString = params.toString() ? `?${params.toString()}` : '';
-  const response = await axios.get(`/v1/organisation/${orgSlug}/conversations${queryString}`);
+  if (filters.page) params.append("page", filters.page.toString());
+  if (filters.limit) params.append("limit", filters.limit.toString());
+  if (filters.source) params.append("source", filters.source);
+  if (filters.agent) params.append("agent", filters.agent);
+  if (filters.type) params.append("type", filters.type);
+  if (filters.startDate) params.append("startDate", filters.startDate);
+  if (filters.endDate) params.append("endDate", filters.endDate);
+
+  const queryString = params.toString() ? `?${params.toString()}` : "";
+  const response = await axios.get(
+    `/v1/organisation/${orgSlug}/conversations${queryString}`
+  );
 
   return response.data.data;
 };
@@ -106,7 +108,9 @@ export const getOrganisationConversationDetailsAction = async (
 ): Promise<ConversationDetails> => {
   const axios = await createAuthenticatedAxios();
 
-  const response = await axios.get(`/v1/organisation/${orgSlug}/conversations/${conversationId}`);
+  const response = await axios.get(
+    `/v1/organisation/${orgSlug}/conversations/${conversationId}`
+  );
 
   return response.data.data.conversation;
 };

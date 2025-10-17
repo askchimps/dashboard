@@ -1,12 +1,7 @@
 import React from "react";
 
 const ErrorIcon = () => (
-  <svg
-    height="16"
-    strokeLinejoin="round"
-    viewBox="0 0 16 16"
-    width="16"
-  >
+  <svg height="16" strokeLinejoin="round" viewBox="0 0 16 16" width="16">
     <path
       fillRule="evenodd"
       clipRule="evenodd"
@@ -16,12 +11,7 @@ const ErrorIcon = () => (
 );
 
 const ErrorLinkIcon = () => (
-  <svg
-    height="16"
-    strokeLinejoin="round"
-    viewBox="0 0 16 16"
-    width="16"
-  >
+  <svg height="16" strokeLinejoin="round" viewBox="0 0 16 16" width="16">
     <path
       fillRule="evenodd"
       clipRule="evenodd"
@@ -43,18 +33,22 @@ interface ErrorProps {
   children?: React.ReactNode;
 }
 
-export const Error = ({ error, label, size = "medium", children }: ErrorProps) => {
+export const Error = ({
+  error,
+  label,
+  size = "medium",
+  children,
+}: ErrorProps) => {
   return (
     <div
-      className={
-        `flex items-center gap-2 text-red-900 fill-red-900 font-sans
-      ${{
+      className={`flex items-center gap-2 fill-red-900 font-sans text-red-900 ${
+        {
           small: "text-[13px] leading-5",
           medium: "text-sm",
-          large: "text-base"
-        }[size]}`
-      }
-      // @ts-ignore
+          large: "text-base",
+        }[size]
+      }`}
+      // @ts-expect-error CSS custom properties are not typed in React
       style={{ "--geist-link-color": "var(--ds-red-900)" }}
     >
       <ErrorIcon />
@@ -62,7 +56,7 @@ export const Error = ({ error, label, size = "medium", children }: ErrorProps) =
         <>
           {error.message}
           <a
-            className="font-medium flex items-center gap-0.5 -ml-1 hover:no-underline hover:opacity-60 duration-150 relative after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-full after:h-[1px] after:bg-red-900"
+            className="relative -ml-1 flex items-center gap-0.5 font-medium duration-150 after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-full after:bg-red-900 after:content-[''] hover:no-underline hover:opacity-60"
             href={error.link}
             target="_blank"
           >

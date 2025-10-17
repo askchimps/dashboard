@@ -1,21 +1,21 @@
 import { getOrganisationAction } from "@/lib/api/actions/organisation/get-organisation";
 import { getOrganisationAgentsAction } from "@/lib/api/actions/organisation/get-organisation-agents";
+import {
+  getOrganisationAnalyticsAction,
+  type AnalyticsFilters,
+} from "@/lib/api/actions/organisation/get-organisation-analytics";
+import {
+  getOrganisationConversationsAction,
+  getOrganisationConversationDetailsAction,
+  type ConversationFilters,
+} from "@/lib/api/actions/organisation/get-organisation-conversations";
+import {
+  getOrganisationLeadsAction,
+  type LeadFilters,
+} from "@/lib/api/actions/organisation/get-organisation-leads";
 import { getOrganisationOverviewAction } from "@/lib/api/actions/organisation/get-organisation-overview";
 import { getOrganisationUsageAction } from "@/lib/api/actions/organisation/get-organisation-usage";
-import { 
-  getOrganisationAnalyticsAction,
-  type AnalyticsFilters
-} from "@/lib/api/actions/organisation/get-organisation-analytics";
 import { getOrganisationsAction } from "@/lib/api/actions/organisation/get-organisations";
-import { 
-  getOrganisationConversationsAction, 
-  getOrganisationConversationDetailsAction,
-  type ConversationFilters
-} from "@/lib/api/actions/organisation/get-organisation-conversations";
-import { 
-  getOrganisationLeadsAction,
-  type LeadFilters
-} from "@/lib/api/actions/organisation/get-organisation-leads";
 
 export const organisationKeys = {
   all: ["organisations"] as const,
@@ -64,7 +64,8 @@ export const organisationQueries = {
   }),
   getConversationDetails: (orgSlug: string, conversationId: string) => ({
     queryKey: ["organisation", orgSlug, "conversation", conversationId],
-    queryFn: () => getOrganisationConversationDetailsAction(orgSlug, conversationId),
+    queryFn: () =>
+      getOrganisationConversationDetailsAction(orgSlug, conversationId),
     staleTime: 1 * 60 * 1000, // 1 minute
     gcTime: 3 * 60 * 1000, // 3 minutes,
     enabled: !!conversationId,

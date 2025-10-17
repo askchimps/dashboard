@@ -1,11 +1,11 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
 
+import AnalyticsTabContent from "@/components/tab-content/organisation/analytics-tab-content";
 import CallLogTabContent from "@/components/tab-content/organisation/call-log-tab-content";
 import ChatLogTabContent from "@/components/tab-content/organisation/chat-log-tab-content";
 import LeadTabContent from "@/components/tab-content/organisation/lead-tab-content";
 import OverviewTabContent from "@/components/tab-content/organisation/overview-tab-content";
-import AnalyticsTabContent from "@/components/tab-content/organisation/analytics-tab-content";
 import { getQueryClient } from "@/lib/get-query-client";
 import { organisationQueries } from "@/lib/query/organisation.query";
 

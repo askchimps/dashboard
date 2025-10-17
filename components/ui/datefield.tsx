@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { VariantProps } from "class-variance-authority"
+import { VariantProps } from "class-variance-authority";
 import {
   DateField as AriaDateField,
   DateFieldProps as AriaDateFieldProps,
@@ -15,20 +15,20 @@ import {
   ValidationResult as AriaValidationResult,
   composeRenderProps,
   Text,
-} from "react-aria-components"
+} from "react-aria-components";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
-import { FieldError, fieldGroupVariants, Label } from "./field"
+import { FieldError, fieldGroupVariants, Label } from "./field";
 
-const DateField = AriaDateField
+const DateField = AriaDateField;
 
-const TimeField = AriaTimeField
+const TimeField = AriaTimeField;
 
 function DateSegment({ className, ...props }: AriaDateSegmentProps) {
   return (
     <AriaDateSegment
-      className={composeRenderProps(className, (className) =>
+      className={composeRenderProps(className, className =>
         cn(
           "type-literal:px-0 inline rounded p-0.5 caret-transparent outline outline-0",
           /* Placeholder */
@@ -44,7 +44,7 @@ function DateSegment({ className, ...props }: AriaDateSegmentProps) {
       )}
       {...props}
     />
-  )
+  );
 }
 
 interface DateInputProps
@@ -58,21 +58,21 @@ function DateInput({
 }: Omit<DateInputProps, "children">) {
   return (
     <AriaDateInput
-      className={composeRenderProps(className, (className) =>
+      className={composeRenderProps(className, className =>
         cn(fieldGroupVariants({ variant }), "text-sm", className)
       )}
       {...props}
     >
-      {(segment) => <DateSegment segment={segment} />}
+      {segment => <DateSegment segment={segment} />}
     </AriaDateInput>
-  )
+  );
 }
 
 interface JollyDateFieldProps<T extends AriaDateValue>
   extends AriaDateFieldProps<T> {
-  label?: string
-  description?: string
-  errorMessage?: string | ((validation: AriaValidationResult) => string)
+  label?: string;
+  description?: string;
+  errorMessage?: string | ((validation: AriaValidationResult) => string);
 }
 
 function JollyDateField<T extends AriaDateValue>({
@@ -84,7 +84,7 @@ function JollyDateField<T extends AriaDateValue>({
 }: JollyDateFieldProps<T>) {
   return (
     <DateField
-      className={composeRenderProps(className, (className) =>
+      className={composeRenderProps(className, className =>
         cn("group flex flex-col gap-2", className)
       )}
       {...props}
@@ -92,20 +92,20 @@ function JollyDateField<T extends AriaDateValue>({
       <Label>{label}</Label>
       <DateInput />
       {description && (
-        <Text className="text-sm text-muted-foreground" slot="description">
+        <Text className="text-muted-foreground text-sm" slot="description">
           {description}
         </Text>
       )}
       <FieldError>{errorMessage}</FieldError>
     </DateField>
-  )
+  );
 }
 
 interface JollyTimeFieldProps<T extends AriaTimeValue>
   extends AriaTimeFieldProps<T> {
-  label?: string
-  description?: string
-  errorMessage?: string | ((validation: AriaValidationResult) => string)
+  label?: string;
+  description?: string;
+  errorMessage?: string | ((validation: AriaValidationResult) => string);
 }
 
 function JollyTimeField<T extends AriaTimeValue>({
@@ -117,7 +117,7 @@ function JollyTimeField<T extends AriaTimeValue>({
 }: JollyTimeFieldProps<T>) {
   return (
     <TimeField
-      className={composeRenderProps(className, (className) =>
+      className={composeRenderProps(className, className =>
         cn("group flex flex-col gap-2", className)
       )}
       {...props}
@@ -127,7 +127,7 @@ function JollyTimeField<T extends AriaTimeValue>({
       {description && <Text slot="description">{description}</Text>}
       <FieldError>{errorMessage}</FieldError>
     </TimeField>
-  )
+  );
 }
 
 export {
@@ -137,5 +137,5 @@ export {
   TimeField,
   JollyDateField,
   JollyTimeField,
-}
-export type { DateInputProps, JollyDateFieldProps, JollyTimeFieldProps }
+};
+export type { DateInputProps, JollyDateFieldProps, JollyTimeFieldProps };

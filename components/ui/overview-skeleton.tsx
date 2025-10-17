@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function OverviewSkeleton() {
@@ -15,7 +15,7 @@ export function OverviewSkeleton() {
               <Skeleton className="h-4 w-4 rounded-full" />
             </CardHeader>
             <CardContent>
-              <Skeleton className="h-8 w-20 mb-2" />
+              <Skeleton className="mb-2 h-8 w-20" />
               <Skeleton className="h-3 w-32" />
             </CardContent>
           </Card>
@@ -27,14 +27,14 @@ export function OverviewSkeleton() {
         {Array.from({ length: 2 }).map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader>
-              <div className="flex justify-between items-start">
+              <div className="flex items-start justify-between">
                 <Skeleton className="h-6 w-36" />
                 <Skeleton className="h-4 w-16" />
               </div>
               <Skeleton className="h-4 w-48" />
             </CardHeader>
             <CardContent>
-              <div className="h-[200px] relative">
+              <div className="relative h-[200px]">
                 {/* Chart skeleton with grid lines */}
                 <div className="absolute inset-0 flex flex-col justify-between">
                   {Array.from({ length: 5 }).map((_, lineIndex) => (
@@ -42,11 +42,11 @@ export function OverviewSkeleton() {
                   ))}
                 </div>
                 {/* Chart area skeleton */}
-                <div className="absolute bottom-0 left-0 right-0 h-32 flex items-end justify-between px-4">
+                <div className="absolute right-0 bottom-0 left-0 flex h-32 items-end justify-between px-4">
                   {Array.from({ length: 7 }).map((_, barIndex) => (
-                    <Skeleton 
-                      key={barIndex} 
-                      className="w-8" 
+                    <Skeleton
+                      key={barIndex}
+                      className="w-8"
                       style={{ height: `${Math.random() * 80 + 20}%` }}
                     />
                   ))}
