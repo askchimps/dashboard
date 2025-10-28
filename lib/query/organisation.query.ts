@@ -1,3 +1,4 @@
+import { getLeadDetailsAction } from "@/lib/api/actions/organisation/get-lead-details";
 import { getOrganisationAction } from "@/lib/api/actions/organisation/get-organisation";
 import { getOrganisationAgentsAction } from "@/lib/api/actions/organisation/get-organisation-agents";
 import {
@@ -13,7 +14,6 @@ import {
   getOrganisationLeadsAction,
   type LeadFilters,
 } from "@/lib/api/actions/organisation/get-organisation-leads";
-import { getLeadDetailsAction } from "@/lib/api/actions/organisation/get-lead-details";
 import { getOrganisationOverviewAction } from "@/lib/api/actions/organisation/get-organisation-overview";
 import { getOrganisationUsageAction } from "@/lib/api/actions/organisation/get-organisation-usage";
 import { getOrganisationsAction } from "@/lib/api/actions/organisation/get-organisations";

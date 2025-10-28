@@ -1,6 +1,7 @@
 "use server";
 
 import { createAuthenticatedAxios } from "@/lib/api/axios";
+
 import { Lead } from "./get-organisation-leads";
 
 export interface LeadDetailsResponse {
@@ -22,6 +23,8 @@ export const getLeadDetailsAction = async (
   leadId: string
 ): Promise<LeadDetailsResponse> => {
   const axios = await createAuthenticatedAxios();
-  const response = await axios.get(`/v1/organisation/${orgSlug}/lead/${leadId}`);
+  const response = await axios.get(
+    `/v1/organisation/${orgSlug}/lead/${leadId}`
+  );
   return response.data.data;
 };

@@ -24,6 +24,9 @@ export interface LeadConversation {
   name: string;
   type: "CALL" | "CHAT";
   created_at: string;
+  summary?: string;
+  duration?: number;
+  message_count?: number;
 }
 
 export interface Lead {
@@ -34,7 +37,7 @@ export interface Lead {
   source?: string;
   status?: string;
   additional_info?: Record<string, unknown>;
-  follow_ups?: Record<string, unknown>;
+  follow_ups?: number;
   created_at: string;
   updated_at: string;
   agents: LeadAgent[];

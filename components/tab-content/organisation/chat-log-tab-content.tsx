@@ -19,9 +19,9 @@ export default function ChatLogTabContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const orgSlug = params.orgSlug as string;
-  
+
   // Get conversation ID from query parameter
-  const conversationFromQuery = searchParams.get('conversation');
+  const conversationFromQuery = searchParams.get("conversation");
 
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
@@ -152,9 +152,12 @@ export default function ChatLogTabContent() {
                         key={conversation.id}
                         onClick={() => {
                           setSelectedConversationId(conversation.id.toString());
-                          router.push(`/${orgSlug}/chat-logs?conversation=${conversation.id}`, {
-                            scroll: false
-                          });
+                          router.push(
+                            `/${orgSlug}/chat-logs?conversation=${conversation.id}`,
+                            {
+                              scroll: false,
+                            }
+                          );
                         }}
                         className={`hover:bg-muted/50 cursor-pointer rounded-lg p-4 transition-colors ${
                           selectedConversationId === conversation.id.toString()

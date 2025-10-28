@@ -20,9 +20,9 @@ export default function CallLogTabContent() {
   const router = useRouter();
   const orgSlug = params.orgSlug as string;
   const audioRef = useRef<HTMLAudioElement>(null);
-  
+
   // Get conversation ID from query parameter
-  const conversationFromQuery = searchParams.get('conversation');
+  const conversationFromQuery = searchParams.get("conversation");
 
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
@@ -161,9 +161,12 @@ export default function CallLogTabContent() {
                         key={conversation.id}
                         onClick={() => {
                           setSelectedConversationId(conversation.id.toString());
-                          router.push(`/${orgSlug}/call-logs?conversation=${conversation.id}`, {
-                            scroll: false
-                          });
+                          router.push(
+                            `/${orgSlug}/call-logs?conversation=${conversation.id}`,
+                            {
+                              scroll: false,
+                            }
+                          );
                         }}
                         className={`hover:bg-muted/50 cursor-pointer rounded-lg p-4 transition-colors ${
                           selectedConversationId === conversation.id.toString()
@@ -180,24 +183,31 @@ export default function CallLogTabContent() {
 
                           <div className="min-w-0 flex-1 space-y-1">
                             <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
+                              <div className="min-w-0 flex-1">
                                 <h4 className="text-foreground line-clamp-1 text-sm font-medium">
                                   {conversation.name}
                                 </h4>
                                 {conversation.lead && (
-                                  <div className="flex items-center gap-2 mt-1">
+                                  <div className="mt-1 flex items-center gap-2">
                                     <span className="text-muted-foreground text-xs">
                                       {conversation.lead.name}
                                     </span>
                                     {conversation.lead.status && (
-                                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                        conversation.lead.status === "qualified" 
-                                          ? "bg-green-100 text-green-700"
-                                          : conversation.lead.status === "not_qualified"
-                                          ? "bg-red-100 text-red-700"
-                                          : "bg-gray-100 text-gray-700"
-                                      }`}>
-                                        {conversation.lead.status.replace(/_/g, ' ')}
+                                      <span
+                                        className={`rounded-full px-2 py-0.5 text-xs ${
+                                          conversation.lead.status ===
+                                          "qualified"
+                                            ? "bg-green-100 text-green-700"
+                                            : conversation.lead.status ===
+                                                "not_qualified"
+                                              ? "bg-red-100 text-red-700"
+                                              : "bg-gray-100 text-gray-700"
+                                        }`}
+                                      >
+                                        {conversation.lead.status.replace(
+                                          /_/g,
+                                          " "
+                                        )}
                                       </span>
                                     )}
                                   </div>
@@ -209,11 +219,15 @@ export default function CallLogTabContent() {
                             </div>
 
                             {conversation.summary && (
-                              <p className="text-muted-foreground line-clamp-2 text-xs leading-relaxed mt-2">
+                              <p className="text-muted-foreground mt-2 line-clamp-2 text-xs leading-relaxed">
                                 {(() => {
                                   try {
-                                    const summary = JSON.parse(conversation.summary);
-                                    return summary.brief || conversation.summary;
+                                    const summary = JSON.parse(
+                                      conversation.summary
+                                    );
+                                    return (
+                                      summary.brief || conversation.summary
+                                    );
                                   } catch {
                                     return conversation.summary;
                                   }
@@ -222,10 +236,11 @@ export default function CallLogTabContent() {
                             )}
 
                             {conversation.duration && (
-                              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-2">
+                              <div className="text-muted-foreground mt-2 flex items-center gap-3 text-xs">
                                 <span className="flex items-center gap-1">
                                   <PhoneCall className="h-3 w-3" />
-                                  {Math.floor(conversation.duration / 60)}m {Math.floor(conversation.duration % 60)}s
+                                  {Math.floor(conversation.duration / 60)}m{" "}
+                                  {Math.floor(conversation.duration % 60)}s
                                 </span>
                                 {conversation.source && (
                                   <span>• {conversation.source}</span>
@@ -358,7 +373,8 @@ export default function CallLogTabContent() {
                                 : "justify-start"
                             }`}
                           >
-                            {(message.role === "assistant" || message.role === "bot") && (
+                            {(message.role === "assistant" ||
+                              message.role === "bot") && (
                               <Avatar className="h-8 w-8 shrink-0">
                                 <AvatarFallback className="bg-blue-100 text-xs text-blue-600">
                                   AI
@@ -411,7 +427,7 @@ export default function CallLogTabContent() {
                               </span>
                               <span className="font-medium">
                                 {selectedConversationDetails.duration
-                                  ? `${Math.floor(selectedConversationDetails.duration * 60 / 60)}m ${Math.floor(selectedConversationDetails.duration * 60 % 60)}s`
+                                  ? `${Math.floor((selectedConversationDetails.duration * 60) / 60)}m ${Math.floor((selectedConversationDetails.duration * 60) % 60)}s`
                                   : "N/A"}
                               </span>
                             </div>
@@ -439,8 +455,10 @@ export default function CallLogTabContent() {
                                 Messages:
                               </span>
                               <span className="font-medium">
-                                {selectedConversationDetails.messageStats?.total ||
-                                  selectedConversationDetails.messages?.length ||
+                                {selectedConversationDetails.messageStats
+                                  ?.total ||
+                                  selectedConversationDetails.messages
+                                    ?.length ||
                                   0}
                               </span>
                             </div>
@@ -483,19 +501,23 @@ export default function CallLogTabContent() {
                                   <span className="text-muted-foreground">
                                     Email:
                                   </span>
-                                  <span className="font-medium truncate max-w-[200px]">
+                                  <span className="max-w-[200px] truncate font-medium">
                                     {selectedConversationDetails.lead.email}
                                   </span>
                                 </div>
                               )}
 
-                              {selectedConversationDetails.lead.phone_number && (
+                              {selectedConversationDetails.lead
+                                .phone_number && (
                                 <div className="flex justify-between">
                                   <span className="text-muted-foreground">
                                     Phone:
                                   </span>
                                   <span className="font-medium">
-                                    {selectedConversationDetails.lead.phone_number}
+                                    {
+                                      selectedConversationDetails.lead
+                                        .phone_number
+                                    }
                                   </span>
                                 </div>
                               )}
@@ -505,7 +527,10 @@ export default function CallLogTabContent() {
                                   Status:
                                 </span>
                                 <span className="font-medium capitalize">
-                                  {selectedConversationDetails.lead.status?.replace(/_/g, ' ')}
+                                  {selectedConversationDetails.lead.status?.replace(
+                                    /_/g,
+                                    " "
+                                  )}
                                 </span>
                               </div>
 
@@ -532,28 +557,42 @@ export default function CallLogTabContent() {
                                 Conversation Summary
                               </h4>
                             </div>
-                            <div className="bg-muted/50 rounded-lg p-4 text-sm space-y-3">
+                            <div className="bg-muted/50 space-y-3 rounded-lg p-4 text-sm">
                               {(() => {
                                 try {
-                                  const summary = JSON.parse(selectedConversationDetails.summary);
+                                  const summary = JSON.parse(
+                                    selectedConversationDetails.summary
+                                  );
                                   return (
                                     <>
                                       {summary.brief && (
                                         <div>
-                                          <h5 className="font-medium mb-1">Brief:</h5>
-                                          <p className="text-muted-foreground">{summary.brief}</p>
+                                          <h5 className="mb-1 font-medium">
+                                            Brief:
+                                          </h5>
+                                          <p className="text-muted-foreground">
+                                            {summary.brief}
+                                          </p>
                                         </div>
                                       )}
                                       {summary.detailed && (
                                         <div>
-                                          <h5 className="font-medium mb-1">Details:</h5>
-                                          <p className="text-muted-foreground">{summary.detailed}</p>
+                                          <h5 className="mb-1 font-medium">
+                                            Details:
+                                          </h5>
+                                          <p className="text-muted-foreground">
+                                            {summary.detailed}
+                                          </p>
                                         </div>
                                       )}
                                     </>
                                   );
                                 } catch {
-                                  return <p className="text-muted-foreground">{selectedConversationDetails.summary}</p>;
+                                  return (
+                                    <p className="text-muted-foreground">
+                                      {selectedConversationDetails.summary}
+                                    </p>
+                                  );
                                 }
                               })()}
                             </div>
@@ -572,20 +611,30 @@ export default function CallLogTabContent() {
                             <div className="space-y-4">
                               {(() => {
                                 try {
-                                  const analysis = JSON.parse(selectedConversationDetails.analysis);
+                                  const analysis = JSON.parse(
+                                    selectedConversationDetails.analysis
+                                  );
                                   return (
                                     <>
                                       {/* Sentiment */}
                                       {analysis.sentiment && (
                                         <div className="bg-muted/50 rounded-lg p-4">
-                                          <h5 className="font-medium mb-2">Sentiment</h5>
+                                          <h5 className="mb-2 font-medium">
+                                            Sentiment
+                                          </h5>
                                           <div className="space-y-2 text-sm">
                                             <div className="flex justify-between">
-                                              <span className="text-muted-foreground">Value:</span>
-                                              <span className="font-medium capitalize">{analysis.sentiment.value}</span>
+                                              <span className="text-muted-foreground">
+                                                Value:
+                                              </span>
+                                              <span className="font-medium capitalize">
+                                                {analysis.sentiment.value}
+                                              </span>
                                             </div>
                                             {analysis.sentiment.reason && (
-                                              <p className="text-muted-foreground mt-2">{analysis.sentiment.reason}</p>
+                                              <p className="text-muted-foreground mt-2">
+                                                {analysis.sentiment.reason}
+                                              </p>
                                             )}
                                           </div>
                                         </div>
@@ -594,16 +643,31 @@ export default function CallLogTabContent() {
                                       {/* Qualification */}
                                       {analysis.qualification && (
                                         <div className="bg-muted/50 rounded-lg p-4">
-                                          <h5 className="font-medium mb-2">Lead Qualification</h5>
+                                          <h5 className="mb-2 font-medium">
+                                            Lead Qualification
+                                          </h5>
                                           <div className="space-y-2 text-sm">
                                             <div className="flex justify-between">
-                                              <span className="text-muted-foreground">Qualified:</span>
-                                              <span className={`font-medium ${analysis.qualification.qualified?.value === "true" ? "text-green-600" : "text-red-600"}`}>
-                                                {analysis.qualification.qualified?.value === "true" ? "Yes" : "No"}
+                                              <span className="text-muted-foreground">
+                                                Qualified:
+                                              </span>
+                                              <span
+                                                className={`font-medium ${analysis.qualification.qualified?.value === "true" ? "text-green-600" : "text-red-600"}`}
+                                              >
+                                                {analysis.qualification
+                                                  .qualified?.value === "true"
+                                                  ? "Yes"
+                                                  : "No"}
                                               </span>
                                             </div>
-                                            {analysis.qualification.qualified?.reason && (
-                                              <p className="text-muted-foreground mt-2">{analysis.qualification.qualified.reason}</p>
+                                            {analysis.qualification.qualified
+                                              ?.reason && (
+                                              <p className="text-muted-foreground mt-2">
+                                                {
+                                                  analysis.qualification
+                                                    .qualified.reason
+                                                }
+                                              </p>
                                             )}
                                           </div>
                                         </div>
@@ -612,14 +676,23 @@ export default function CallLogTabContent() {
                                       {/* Call Quality */}
                                       {analysis.call_quality && (
                                         <div className="bg-muted/50 rounded-lg p-4">
-                                          <h5 className="font-medium mb-2">Call Quality</h5>
+                                          <h5 className="mb-2 font-medium">
+                                            Call Quality
+                                          </h5>
                                           <div className="space-y-2 text-sm">
                                             <div className="flex justify-between">
-                                              <span className="text-muted-foreground">Rating:</span>
-                                              <span className="font-medium">{analysis.call_quality.rating}/10</span>
+                                              <span className="text-muted-foreground">
+                                                Rating:
+                                              </span>
+                                              <span className="font-medium">
+                                                {analysis.call_quality.rating}
+                                                /10
+                                              </span>
                                             </div>
                                             {analysis.call_quality.issues && (
-                                              <p className="text-muted-foreground mt-2">{analysis.call_quality.issues}</p>
+                                              <p className="text-muted-foreground mt-2">
+                                                {analysis.call_quality.issues}
+                                              </p>
                                             )}
                                           </div>
                                         </div>
@@ -628,8 +701,12 @@ export default function CallLogTabContent() {
                                       {/* Next Steps */}
                                       {analysis.next_steps && (
                                         <div className="bg-muted/50 rounded-lg p-4">
-                                          <h5 className="font-medium mb-2">Next Steps</h5>
-                                          <p className="text-muted-foreground text-sm">{analysis.next_steps}</p>
+                                          <h5 className="mb-2 font-medium">
+                                            Next Steps
+                                          </h5>
+                                          <p className="text-muted-foreground text-sm">
+                                            {analysis.next_steps}
+                                          </p>
                                         </div>
                                       )}
                                     </>
@@ -637,7 +714,9 @@ export default function CallLogTabContent() {
                                 } catch {
                                   return (
                                     <div className="bg-muted/50 rounded-lg p-4 text-sm">
-                                      <p className="text-muted-foreground">{selectedConversationDetails.analysis}</p>
+                                      <p className="text-muted-foreground">
+                                        {selectedConversationDetails.analysis}
+                                      </p>
                                     </div>
                                   );
                                 }
@@ -656,8 +735,18 @@ export default function CallLogTabContent() {
                               </h4>
                             </div>
                             <div className="bg-muted/50 rounded-lg p-4">
-                              <audio ref={audioRef} controls className="w-full" key={selectedConversationId}>
-                                <source src={selectedConversationDetails.recording_url} type="audio/wav" />
+                              <audio
+                                ref={audioRef}
+                                controls
+                                className="w-full"
+                                key={selectedConversationId}
+                              >
+                                <source
+                                  src={
+                                    selectedConversationDetails.recording_url
+                                  }
+                                  type="audio/wav"
+                                />
                                 Your browser does not support the audio element.
                               </audio>
                             </div>

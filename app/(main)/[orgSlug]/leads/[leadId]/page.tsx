@@ -2,30 +2,21 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
-import { 
-  ArrowLeft, 
-  Mail, 
-  Phone, 
-  User, 
-  Calendar, 
-  Building2,
+import {
+  ArrowLeft,
+  Calendar,
   MessageSquare,
-  Users,
   Activity,
-  FileText,
-  PhoneCall
+  PhoneCall,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { organisationQueries } from "@/lib/query/organisation.query";
-import { LeadDetailsResponse } from "@/lib/api/actions/organisation/get-lead-details";
 
 export default function LeadDetailsPage() {
   const params = useParams();
@@ -67,17 +58,17 @@ export default function LeadDetailsPage() {
     return (
       <div className="p-6">
         {/* Header Skeleton */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="mb-6 flex items-center gap-4">
           <Skeleton className="h-10 w-10 rounded" />
           <div>
-            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="mb-2 h-8 w-48" />
             <Skeleton className="h-4 w-32" />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {/* Main Content Skeleton */}
-          <div className="md:col-span-2 space-y-6">
+          <div className="space-y-6 md:col-span-2">
             {/* Basic Information Card Skeleton */}
             <Card>
               <CardHeader>
@@ -87,7 +78,7 @@ export default function LeadDetailsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   {[...Array(6)].map((_, i) => (
                     <div key={i}>
-                      <Skeleton className="h-4 w-20 mb-2" />
+                      <Skeleton className="mb-2 h-4 w-20" />
                       <Skeleton className="h-5 w-32" />
                     </div>
                   ))}
@@ -104,8 +95,8 @@ export default function LeadDetailsPage() {
               <CardContent>
                 <div className="space-y-3">
                   {[...Array(3)].map((_, i) => (
-                    <div key={i} className="p-4 rounded-lg border">
-                      <div className="flex items-start justify-between mb-2">
+                    <div key={i} className="rounded-lg border p-4">
+                      <div className="mb-2 flex items-start justify-between">
                         <Skeleton className="h-5 w-40" />
                         <Skeleton className="h-5 w-16 rounded-full" />
                       </div>
@@ -130,7 +121,7 @@ export default function LeadDetailsPage() {
                     <div key={i} className="flex items-center gap-3">
                       <Skeleton className="h-10 w-10 rounded-full" />
                       <div>
-                        <Skeleton className="h-4 w-24 mb-1" />
+                        <Skeleton className="mb-1 h-4 w-24" />
                         <Skeleton className="h-3 w-16" />
                       </div>
                     </div>
@@ -150,7 +141,7 @@ export default function LeadDetailsPage() {
                     <div key={i} className="flex items-center gap-3">
                       <Skeleton className="h-8 w-8 rounded-full" />
                       <div>
-                        <Skeleton className="h-4 w-20 mb-1" />
+                        <Skeleton className="mb-1 h-4 w-20" />
                         <Skeleton className="h-3 w-32" />
                       </div>
                     </div>
@@ -166,11 +157,12 @@ export default function LeadDetailsPage() {
 
   if (error || !lead) {
     return (
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-semibold mb-2">Lead not found</h2>
+      <div className="mx-auto max-w-7xl p-6">
+        <div className="py-12 text-center">
+          <h2 className="mb-2 text-2xl font-semibold">Lead not found</h2>
           <p className="text-muted-foreground mb-4">
-            The lead you're looking for doesn't exist or you don't have access to it.
+            The lead you&apos;re looking for doesn&apos;t exist or you
+            don&apos;t have access to it.
           </p>
           <Button onClick={() => router.push(`/${orgSlug}/leads`)}>
             Back to Leads
@@ -181,9 +173,9 @@ export default function LeadDetailsPage() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -193,15 +185,17 @@ export default function LeadDetailsPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">{lead.name || "Unnamed Lead"}</h1>
+            <h1 className="text-2xl font-bold">
+              {lead.name || "Unnamed Lead"}
+            </h1>
             <p className="text-muted-foreground">Lead ID: {lead.id}</p>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {/* Main Content */}
-        <div className="md:col-span-2 space-y-6">
+        <div className="space-y-6 md:col-span-2">
           {/* Basic Information */}
           <Card>
             <CardHeader>
@@ -210,32 +204,49 @@ export default function LeadDetailsPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Name</label>
+                  <label className="text-muted-foreground text-sm font-medium">
+                    Name
+                  </label>
                   <p className="mt-1">{lead.name || "Not provided"}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Status</label>
+                  <label className="text-muted-foreground text-sm font-medium">
+                    Status
+                  </label>
                   <div className="mt-1">
                     <Badge className={getStatusColor(lead.status)}>
-                      {lead.status?.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) || "Unknown"}
+                      {lead.status
+                        ?.replace(/_/g, " ")
+                        .toLowerCase()
+                        .replace(/\b\w/g, l => l.toUpperCase()) || "Unknown"}
                     </Badge>
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Email</label>
+                  <label className="text-muted-foreground text-sm font-medium">
+                    Email
+                  </label>
                   <p className="mt-1">{lead.email || "Not provided"}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Phone</label>
+                  <label className="text-muted-foreground text-sm font-medium">
+                    Phone
+                  </label>
                   <p className="mt-1">{lead.phone_number || "Not provided"}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Source</label>
+                  <label className="text-muted-foreground text-sm font-medium">
+                    Source
+                  </label>
                   <p className="mt-1 capitalize">{lead.source || "Unknown"}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Follow-ups</label>
-                  <p className="mt-1">{typeof lead.follow_ups === 'number' ? lead.follow_ups : 0}</p>
+                  <label className="text-muted-foreground text-sm font-medium">
+                    Follow-ups
+                  </label>
+                  <p className="mt-1">
+                    {typeof lead.follow_ups === "number" ? lead.follow_ups : 0}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -250,37 +261,49 @@ export default function LeadDetailsPage() {
             <CardContent>
               {lead.conversations.length > 0 ? (
                 <div className="space-y-3">
-                  {lead.conversations.map((conv: any) => (
+                  {lead.conversations.map(conv => (
                     <div
                       key={conv.id}
-                      className="p-4 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
+                      className="hover:bg-muted/50 cursor-pointer rounded-lg border p-4 transition-colors"
                       onClick={() => {
-                        const tab = conv.type === "CALL" ? "call-logs" : "chat-logs";
-                        router.push(`/${orgSlug}/${tab}?conversation=${conv.id}`);
+                        const tab =
+                          conv.type === "CALL" ? "call-logs" : "chat-logs";
+                        router.push(
+                          `/${orgSlug}/${tab}?conversation=${conv.id}`
+                        );
                       }}
                     >
-                      <div className="flex items-start justify-between mb-2">
+                      <div className="mb-2 flex items-start justify-between">
                         <div className="flex items-center gap-2">
                           {conv.type === "CALL" ? (
-                            <PhoneCall className="h-4 w-4 text-muted-foreground" />
+                            <PhoneCall className="text-muted-foreground h-4 w-4" />
                           ) : (
-                            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                            <MessageSquare className="text-muted-foreground h-4 w-4" />
                           )}
-                          <span className="font-medium text-sm">{conv.name}</span>
+                          <span className="text-sm font-medium">
+                            {conv.name}
+                          </span>
                         </div>
                         <Badge variant="outline" className="text-xs">
                           {conv.type}
                         </Badge>
                       </div>
                       {conv.summary && (
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                        <p className="text-muted-foreground mb-2 line-clamp-2 text-sm">
                           {conv.summary}
                         </p>
                       )}
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>{formatDistanceToNow(new Date(conv.created_at), { addSuffix: true })}</span>
+                      <div className="text-muted-foreground flex items-center gap-4 text-xs">
+                        <span>
+                          {formatDistanceToNow(new Date(conv.created_at), {
+                            addSuffix: true,
+                          })}
+                        </span>
                         {conv.duration && (
-                          <span>• {Math.floor(conv.duration * 60 / 60)}m {Math.floor(conv.duration * 60 % 60)}s</span>
+                          <span>
+                            • {Math.floor((conv.duration * 60) / 60)}m{" "}
+                            {Math.floor((conv.duration * 60) % 60)}s
+                          </span>
                         )}
                         {conv.message_count && (
                           <span>• {conv.message_count} messages</span>
@@ -290,7 +313,7 @@ export default function LeadDetailsPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground py-8">
+                <p className="text-muted-foreground py-8 text-center">
                   No conversations yet
                 </p>
               )}
@@ -298,18 +321,19 @@ export default function LeadDetailsPage() {
           </Card>
 
           {/* Additional Information */}
-          {lead.additional_info && Object.keys(lead.additional_info).length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Additional Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <pre className="text-sm bg-muted p-4 rounded-lg overflow-x-auto">
-                  {JSON.stringify(lead.additional_info, null, 2)}
-                </pre>
-              </CardContent>
-            </Card>
-          )}
+          {lead.additional_info &&
+            Object.keys(lead.additional_info).length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Additional Information</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <pre className="bg-muted overflow-x-auto rounded-lg p-4 text-sm">
+                    {JSON.stringify(lead.additional_info, null, 2)}
+                  </pre>
+                </CardContent>
+              </Card>
+            )}
         </div>
 
         {/* Sidebar */}
@@ -322,7 +346,7 @@ export default function LeadDetailsPage() {
             <CardContent>
               {lead.agents.length > 0 ? (
                 <div className="space-y-3">
-                  {lead.agents.map((agent) => (
+                  {lead.agents.map(agent => (
                     <div key={agent.id} className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
                         <AvatarFallback className="text-xs">
@@ -331,13 +355,17 @@ export default function LeadDetailsPage() {
                       </Avatar>
                       <div className="flex-1">
                         <p className="text-sm font-medium">{agent.name}</p>
-                        <p className="text-xs text-muted-foreground">{agent.slug}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {agent.slug}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">No agents assigned</p>
+                <p className="text-muted-foreground text-sm">
+                  No agents assigned
+                </p>
               )}
             </CardContent>
           </Card>
@@ -349,25 +377,25 @@ export default function LeadDetailsPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
                   <Calendar className="h-4 w-4 text-blue-600" />
                 </div>
                 <div>
                   <p className="text-sm font-medium">Lead Created</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     {formatDateTime(lead.created_at)}
                   </p>
                 </div>
               </div>
-              
+
               {lead.updated_at !== lead.created_at && (
                 <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
                     <Activity className="h-4 w-4 text-green-600" />
                   </div>
                   <div>
                     <p className="text-sm font-medium">Last Updated</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       {formatDateTime(lead.updated_at)}
                     </p>
                   </div>

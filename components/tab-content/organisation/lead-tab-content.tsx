@@ -2,26 +2,9 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
-import {
-  Users,
-  Filter,
-  Mail,
-  Phone,
-  User,
-  MessageSquare,
-  PhoneCall,
-  ExternalLink,
-  Building2,
-} from "lucide-react";
+import { Users, User, MessageSquare, ExternalLink } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 
 import SectionHeader from "@/components/section-header/section-header";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -30,19 +13,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateRangeFilter } from "@/components/ui/date-range-filter";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -52,7 +35,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { LeadFilters } from "@/lib/api/actions/organisation/get-organisation-leads";
+import {
+  Lead,
+  LeadFilters,
+} from "@/lib/api/actions/organisation/get-organisation-leads";
 import { organisationQueries } from "@/lib/query/organisation.query";
 
 export default function LeadTabContent() {
@@ -70,7 +56,7 @@ export default function LeadTabContent() {
     ),
     endDate: format(new Date(), "yyyy-MM-dd"),
   });
-  const [selectedLead, setSelectedLead] = useState<any>(null);
+  const [selectedLead] = useState<Lead | null>(null);
   const [isLeadDetailsOpen, setIsLeadDetailsOpen] = useState(false);
 
   // API Integration
@@ -139,23 +125,23 @@ export default function LeadTabContent() {
     }
   };
 
-  const getSourceIcon = (source?: string) => {
-    switch (source?.toLowerCase()) {
-      case "ivr":
-      case "phone":
-        return <PhoneCall className="h-3 w-3" />;
-      case "zoho":
-        return <Building2 className="h-3 w-3" />;
-      case "instagram":
-        return <MessageSquare className="h-3 w-3" />;
-      case "whatsapp":
-        return <MessageSquare className="h-3 w-3" />;
-      case "email":
-        return <Mail className="h-3 w-3" />;
-      default:
-        return <Building2 className="h-3 w-3" />;
-    }
-  };
+  // const getSourceIcon = (source?: string) => {
+  //   switch (source?.toLowerCase()) {
+  //     case "ivr":
+  //     case "phone":
+  //       return <PhoneCall className="h-3 w-3" />;
+  //     case "zoho":
+  //       return <Building2 className="h-3 w-3" />;
+  //     case "instagram":
+  //       return <MessageSquare className="h-3 w-3" />;
+  //     case "whatsapp":
+  //       return <MessageSquare className="h-3 w-3" />;
+  //     case "email":
+  //       return <Mail className="h-3 w-3" />;
+  //     default:
+  //       return <Building2 className="h-3 w-3" />;
+  //   }
+  // };
 
   return (
     <>
@@ -261,7 +247,7 @@ export default function LeadTabContent() {
           </div>
         ) : (
           leadsData && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
@@ -278,9 +264,7 @@ export default function LeadTabContent() {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    New
-                  </CardTitle>
+                  <CardTitle className="text-sm font-medium">New</CardTitle>
                   <Badge
                     variant="secondary"
                     className="bg-blue-100 text-blue-800"
@@ -328,7 +312,10 @@ export default function LeadTabContent() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {leads.filter(lead => lead.status === "not_qualified").length}
+                    {
+                      leads.filter(lead => lead.status === "not_qualified")
+                        .length
+                    }
                   </div>
                 </CardContent>
               </Card>
@@ -347,9 +334,15 @@ export default function LeadTabContent() {
                       <TableHead className="w-[250px]">Lead</TableHead>
                       <TableHead>Contact Info</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="hidden md:table-cell">Source</TableHead>
-                      <TableHead className="hidden lg:table-cell">Conversations</TableHead>
-                      <TableHead className="hidden sm:table-cell">Created</TableHead>
+                      <TableHead className="hidden md:table-cell">
+                        Source
+                      </TableHead>
+                      <TableHead className="hidden lg:table-cell">
+                        Conversations
+                      </TableHead>
+                      <TableHead className="hidden sm:table-cell">
+                        Created
+                      </TableHead>
                       <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -439,10 +432,18 @@ export default function LeadTabContent() {
                       <TableRow>
                         <TableHead className="w-[250px]">Lead</TableHead>
                         <TableHead>Contact Info</TableHead>
-                        <TableHead className="hidden md:table-cell">Status</TableHead>
-                        <TableHead className="hidden md:table-cell">Source</TableHead>
-                        <TableHead className="hidden lg:table-cell">Conversations</TableHead>
-                        <TableHead className="hidden sm:table-cell">Created</TableHead>
+                        <TableHead className="hidden md:table-cell">
+                          Status
+                        </TableHead>
+                        <TableHead className="hidden md:table-cell">
+                          Source
+                        </TableHead>
+                        <TableHead className="hidden lg:table-cell">
+                          Conversations
+                        </TableHead>
+                        <TableHead className="hidden sm:table-cell">
+                          Created
+                        </TableHead>
                         <TableHead className="w-[50px]"></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -477,13 +478,20 @@ export default function LeadTabContent() {
                           <TableCell>
                             <div className="text-sm">
                               {lead.email ? (
-                                <span className="block truncate max-w-[150px]" title={lead.email}>
+                                <span
+                                  className="block max-w-[150px] truncate"
+                                  title={lead.email}
+                                >
                                   {lead.email}
                                 </span>
                               ) : lead.phone_number ? (
-                                <span className="block">{lead.phone_number}</span>
+                                <span className="block">
+                                  {lead.phone_number}
+                                </span>
                               ) : (
-                                <span className="text-muted-foreground text-xs">No contact</span>
+                                <span className="text-muted-foreground text-xs">
+                                  No contact
+                                </span>
                               )}
                             </div>
                           </TableCell>
@@ -492,12 +500,18 @@ export default function LeadTabContent() {
                             <Badge
                               className={`text-xs ${getStatusColor(lead.status)}`}
                             >
-                              {lead.status ? statusOptions.find(option => option.value === lead.status)?.label : "Unknown"}
+                              {lead.status
+                                ? statusOptions.find(
+                                    option => option.value === lead.status
+                                  )?.label
+                                : "Unknown"}
                             </Badge>
                           </TableCell>
 
                           <TableCell className="hidden md:table-cell">
-                            <span className="text-sm capitalize">{lead.source || "Unknown"}</span>
+                            <span className="text-sm capitalize">
+                              {lead.source || "Unknown"}
+                            </span>
                           </TableCell>
 
                           {/* <TableCell>
@@ -519,11 +533,17 @@ export default function LeadTabContent() {
                             <div className="space-y-1">
                               <div className="flex items-center gap-1 text-sm">
                                 <MessageSquare className="text-muted-foreground h-3 w-3" />
-                                <span>{lead.conversations.length} conversation{lead.conversations.length !== 1 ? 's' : ''}</span>
+                                <span>
+                                  {lead.conversations.length} conversation
+                                  {lead.conversations.length !== 1 ? "s" : ""}
+                                </span>
                               </div>
                               {lead.conversations.length > 0 && (
-                                <div className="text-xs text-muted-foreground">
-                                  Latest: {formatTimeAgo(lead.conversations[0].created_at)}
+                                <div className="text-muted-foreground text-xs">
+                                  Latest:{" "}
+                                  {formatTimeAgo(
+                                    lead.conversations[0].created_at
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -536,7 +556,13 @@ export default function LeadTabContent() {
                           </TableCell>
 
                           <TableCell>
-                            <Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer" onClick={() => router.push(`/${orgSlug}/leads/${lead.id}`)}>
+                            <Button
+                              variant="ghost"
+                              className="h-8 w-8 cursor-pointer p-0"
+                              onClick={() =>
+                                router.push(`/${orgSlug}/leads/${lead.id}`)
+                              }
+                            >
                               <span className="sr-only">Open menu</span>
                               <ExternalLink className="h-4 w-4" />
                             </Button>
@@ -561,7 +587,7 @@ export default function LeadTabContent() {
                     to{" "}
                     {Math.min(
                       leadsData.pagination.currentPage *
-                      leadsData.pagination.limit,
+                        leadsData.pagination.limit,
                       leadsData.pagination.totalCount
                     )}{" "}
                     of {leadsData.pagination.totalCount} leads
@@ -639,99 +665,159 @@ export default function LeadTabContent() {
             <div className="mt-6 space-y-6">
               {/* Basic Information */}
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">Basic Information</h3>
+                <h3 className="text-muted-foreground mb-3 text-sm font-medium">
+                  Basic Information
+                </h3>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Name</span>
-                    <span className="text-sm font-medium">{selectedLead.name || "Not provided"}</span>
+                    <span className="text-muted-foreground text-sm">Name</span>
+                    <span className="text-sm font-medium">
+                      {selectedLead.name || "Not provided"}
+                    </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Email</span>
-                    <span className="text-sm font-medium">{selectedLead.email || "Not provided"}</span>
+                    <span className="text-muted-foreground text-sm">Email</span>
+                    <span className="text-sm font-medium">
+                      {selectedLead.email || "Not provided"}
+                    </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Phone</span>
-                    <span className="text-sm font-medium">{selectedLead.phone_number || "Not provided"}</span>
+                    <span className="text-muted-foreground text-sm">Phone</span>
+                    <span className="text-sm font-medium">
+                      {selectedLead.phone_number || "Not provided"}
+                    </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Source</span>
-                    <span className="text-sm font-medium capitalize">{selectedLead.source || "Unknown"}</span>
+                    <span className="text-muted-foreground text-sm">
+                      Source
+                    </span>
+                    <span className="text-sm font-medium capitalize">
+                      {selectedLead.source || "Unknown"}
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Status</span>
-                    <Badge className={`text-xs ${getStatusColor(selectedLead.status)}`}>
-                      {selectedLead.status ? selectedLead.status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (l: string) => l.toUpperCase()) : "Unknown"}
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground text-sm">
+                      Status
+                    </span>
+                    <Badge
+                      className={`text-xs ${getStatusColor(selectedLead.status)}`}
+                    >
+                      {selectedLead.status
+                        ? selectedLead.status
+                            .replace(/_/g, " ")
+                            .toLowerCase()
+                            .replace(/\b\w/g, (l: string) => l.toUpperCase())
+                        : "Unknown"}
                     </Badge>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Follow-ups</span>
-                    <span className="text-sm font-medium">{selectedLead.follow_ups || 0}</span>
+                    <span className="text-muted-foreground text-sm">
+                      Follow-ups
+                    </span>
+                    <span className="text-sm font-medium">
+                      {selectedLead.follow_ups || 0}
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* Assigned Agents */}
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">Assigned Agents</h3>
+                <h3 className="text-muted-foreground mb-3 text-sm font-medium">
+                  Assigned Agents
+                </h3>
                 {selectedLead.agents && selectedLead.agents.length > 0 ? (
                   <div className="space-y-2">
-                    {selectedLead.agents.map((agent: any) => (
-                      <div key={agent.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
-                        <span className="text-sm font-medium">{agent.name}</span>
-                        <Badge variant="secondary" className="text-xs">{agent.slug}</Badge>
-                      </div>
-                    ))}
+                    {selectedLead.agents.map(
+                      (agent: { name: string; slug: string }) => (
+                        <div
+                          key={agent.slug}
+                          className="bg-muted/50 flex items-center justify-between rounded-lg p-2"
+                        >
+                          <span className="text-sm font-medium">
+                            {agent.name}
+                          </span>
+                          <Badge variant="secondary" className="text-xs">
+                            {agent.slug}
+                          </Badge>
+                        </div>
+                      )
+                    )}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No agents assigned</p>
+                  <p className="text-muted-foreground text-sm">
+                    No agents assigned
+                  </p>
                 )}
               </div>
 
               {/* Conversations */}
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">Conversations</h3>
-                {selectedLead.conversations && selectedLead.conversations.length > 0 ? (
+                <h3 className="text-muted-foreground mb-3 text-sm font-medium">
+                  Conversations
+                </h3>
+                {selectedLead.conversations &&
+                selectedLead.conversations.length > 0 ? (
                   <div className="space-y-2">
-                    {selectedLead.conversations.map((conv: any) => (
-                      <div key={conv.id} className="p-3 rounded-lg bg-muted/50 space-y-1">
+                    {selectedLead.conversations.map(conv => (
+                      <div
+                        key={conv.id}
+                        className="bg-muted/50 space-y-1 rounded-lg p-3"
+                      >
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">{conv.name}</span>
+                          <span className="text-sm font-medium">
+                            {conv.name}
+                          </span>
                           <Badge variant="outline" className="text-xs">
                             {conv.type}
                           </Badge>
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                           Created {formatTimeAgo(conv.created_at)}
                         </p>
                       </div>
                     ))}
                     <Button
                       variant="outline"
-                      className="w-full mt-2"
+                      className="mt-2 w-full"
                       onClick={() => {
                         setIsLeadDetailsOpen(false);
-                        router.push(`/${orgSlug}/chat-logs?lead=${selectedLead.id}`);
+                        router.push(
+                          `/${orgSlug}/chat-logs?lead=${selectedLead.id}`
+                        );
                       }}
                     >
                       View All Conversations
                     </Button>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No conversations yet</p>
+                  <p className="text-muted-foreground text-sm">
+                    No conversations yet
+                  </p>
                 )}
               </div>
 
               {/* Timestamps */}
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">Timeline</h3>
+                <h3 className="text-muted-foreground mb-3 text-sm font-medium">
+                  Timeline
+                </h3>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Created</span>
-                    <span className="text-sm">{formatTimeAgo(selectedLead.created_at)}</span>
+                    <span className="text-muted-foreground text-sm">
+                      Created
+                    </span>
+                    <span className="text-sm">
+                      {formatTimeAgo(selectedLead.created_at)}
+                    </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Last Updated</span>
-                    <span className="text-sm">{formatTimeAgo(selectedLead.updated_at)}</span>
+                    <span className="text-muted-foreground text-sm">
+                      Last Updated
+                    </span>
+                    <span className="text-sm">
+                      {formatTimeAgo(selectedLead.updated_at)}
+                    </span>
                   </div>
                 </div>
               </div>

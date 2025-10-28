@@ -35,7 +35,7 @@ export interface ConversationLead {
   phone_number?: string;
   source?: string;
   status?: string;
-  additional_info?: any;
+  additional_info?: Record<string, unknown>;
   follow_ups?: number;
   created_at: string;
   updated_at: string;
@@ -88,7 +88,7 @@ export interface ConversationListResponse {
   };
 }
 
-export interface ConversationDetails extends Omit<Conversation, 'agent'> {
+export interface ConversationDetails extends Omit<Conversation, "agent"> {
   agent?: ConversationAgent & {
     phone_number?: string;
     image_url?: string;
@@ -96,7 +96,7 @@ export interface ConversationDetails extends Omit<Conversation, 'agent'> {
     initial_prompt?: string;
     analysis_prompt?: string;
   };
-  topics?: any[];
+  topics?: Record<string, unknown>[];
 }
 
 export const getOrganisationConversationsAction = async (

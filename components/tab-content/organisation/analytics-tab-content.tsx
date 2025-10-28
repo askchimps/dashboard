@@ -365,9 +365,7 @@ export default function AnalyticsTabContent() {
                   1
                 )}
               </div>
-              <p className="text-muted-foreground text-xs">
-                Messages per chat
-              </p>
+              <p className="text-muted-foreground text-xs">Messages per chat</p>
             </CardContent>
           </Card>
 
@@ -415,8 +413,15 @@ export default function AnalyticsTabContent() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {Math.floor(analyticsData.conversationAnalytics.averageCallLength)}m{" "}
-                {Math.floor((analyticsData.conversationAnalytics.averageCallLength % 1) * 60)}s
+                {Math.floor(
+                  analyticsData.conversationAnalytics.averageCallLength
+                )}
+                m{" "}
+                {Math.floor(
+                  (analyticsData.conversationAnalytics.averageCallLength % 1) *
+                    60
+                )}
+                s
               </div>
               <p className="text-muted-foreground text-xs">Average duration</p>
             </CardContent>
