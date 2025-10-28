@@ -41,6 +41,16 @@ export interface Lead {
   conversations: LeadConversation[];
 }
 
+export interface StatusOption {
+  label: string;
+  value: string;
+}
+
+export interface SourceOption {
+  label: string;
+  value: string;
+}
+
 export interface LeadListResponse {
   leads: Lead[];
   pagination: {
@@ -59,6 +69,8 @@ export interface LeadListResponse {
     startDate?: string;
     endDate?: string;
   };
+  sources?: SourceOption[];
+  status?: StatusOption[];
 }
 
 export const getOrganisationLeadsAction = async (

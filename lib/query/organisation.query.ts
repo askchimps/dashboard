@@ -13,6 +13,7 @@ import {
   getOrganisationLeadsAction,
   type LeadFilters,
 } from "@/lib/api/actions/organisation/get-organisation-leads";
+import { getLeadDetailsAction } from "@/lib/api/actions/organisation/get-lead-details";
 import { getOrganisationOverviewAction } from "@/lib/api/actions/organisation/get-organisation-overview";
 import { getOrganisationUsageAction } from "@/lib/api/actions/organisation/get-organisation-usage";
 import { getOrganisationsAction } from "@/lib/api/actions/organisation/get-organisations";
@@ -82,5 +83,12 @@ export const organisationQueries = {
     staleTime: 3 * 60 * 1000, // 3 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
+  }),
+  getLeadDetails: (orgSlug: string, leadId: string) => ({
+    queryKey: ["organisation", orgSlug, "lead", leadId],
+    queryFn: () => getLeadDetailsAction(orgSlug, leadId),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!leadId,
   }),
 };

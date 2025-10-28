@@ -27,6 +27,11 @@ export interface DailyAnalyticsBreakdown {
   leads: number;
 }
 
+export interface FilterOption {
+  label: string;
+  value: string;
+}
+
 export interface AnalyticsResponse {
   creditsPlan: string;
   remainingConversationCredits: number;
@@ -44,6 +49,9 @@ export interface AnalyticsResponse {
     source?: string;
     type?: CONVERSATION_TYPE;
   };
+  types?: FilterOption[];
+  sources?: FilterOption[];
+  agents?: FilterOption[];
 }
 
 export async function getOrganisationAnalyticsAction(

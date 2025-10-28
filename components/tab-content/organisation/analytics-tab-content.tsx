@@ -212,18 +212,10 @@ export default function AnalyticsTabContent() {
     );
   }
 
-  // Derive unique filter options from actual data (similar to leads component)
-  const uniqueSources = [
-    ...new Set(
-      analyticsData.dailyBreakdown.flatMap(() => [
-        "website",
-        "phone",
-        "email",
-        "referral",
-      ])
-    ),
-  ];
-  const uniqueAgents = ["agent1", "agent2"]; // Would come from actual agents data
+  // Use filter options from API response
+  const typeOptions = analyticsData?.types || [];
+  const sourceOptions = analyticsData?.sources || [];
+  const agentOptions = analyticsData?.agents || [];
 
   return (
     <>
@@ -256,8 +248,11 @@ export default function AnalyticsTabContent() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="CHAT">Chat</SelectItem>
-                <SelectItem value="CALL">Call</SelectItem>
+                {typeOptions.map(type => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -272,9 +267,9 @@ export default function AnalyticsTabContent() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Sources</SelectItem>
-                {uniqueSources.map(source => (
-                  <SelectItem key={source} value={source}>
-                    {source.charAt(0).toUpperCase() + source.slice(1)}
+                {sourceOptions.map(source => (
+                  <SelectItem key={source.value} value={source.value}>
+                    {source.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -291,9 +286,9 @@ export default function AnalyticsTabContent() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Agents</SelectItem>
-                {uniqueAgents.map(agent => (
-                  <SelectItem key={agent} value={agent}>
-                    {agent}
+                {agentOptions.map(agent => (
+                  <SelectItem key={agent.value} value={agent.value}>
+                    {agent.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -360,7 +355,7 @@ export default function AnalyticsTabContent() {
           <Card>
             <CardHeader className="flex flex-grow flex-row items-start justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Avg Conversation Length
+                Avg Chat Length
               </CardTitle>
               <Clock className="text-muted-foreground h-4 w-4" />
             </CardHeader>
@@ -371,7 +366,7 @@ export default function AnalyticsTabContent() {
                 )}
               </div>
               <p className="text-muted-foreground text-xs">
-                Messages per conversation
+                Messages per chat
               </p>
             </CardContent>
           </Card>
@@ -420,11 +415,10 @@ export default function AnalyticsTabContent() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {analyticsData.conversationAnalytics.averageCallLength.toFixed(
-                  1
-                )}
+                {Math.floor(analyticsData.conversationAnalytics.averageCallLength)}m{" "}
+                {Math.floor((analyticsData.conversationAnalytics.averageCallLength % 1) * 60)}s
               </div>
-              <p className="text-muted-foreground text-xs">Minutes per call</p>
+              <p className="text-muted-foreground text-xs">Average duration</p>
             </CardContent>
           </Card>
 

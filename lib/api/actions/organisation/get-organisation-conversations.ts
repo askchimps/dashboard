@@ -14,9 +14,12 @@ export interface ConversationFilters {
 
 export interface ConversationMessage {
   id: number;
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "bot";
   content: string;
+  prompt_tokens?: number;
+  completion_tokens?: number;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface ConversationAgent {
@@ -25,16 +28,45 @@ export interface ConversationAgent {
   slug: string;
 }
 
+export interface ConversationLead {
+  id: number;
+  name: string;
+  email?: string;
+  phone_number?: string;
+  source?: string;
+  status?: string;
+  additional_info?: any;
+  follow_ups?: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Conversation {
   id: number;
   name: string;
   type: "CALL" | "CHAT";
+  organisation_id?: number;
+  agent_id?: number;
   source: string;
+  lead_id?: number;
   summary?: string;
+  analysis?: string;
+  recording_url?: string;
+  duration?: number;
+  prompt_tokens?: number;
+  completion_tokens?: number;
+  is_disabled?: number;
+  is_deleted?: number;
   created_at: string;
   updated_at: string;
   agent?: ConversationAgent;
-  messages: ConversationMessage[];
+  lead?: ConversationLead;
+  messages?: ConversationMessage[];
+  messageStats?: {
+    total: number;
+    userMessages: number;
+    assistantMessages: number;
+  };
 }
 
 export interface ConversationListResponse {
@@ -56,7 +88,7 @@ export interface ConversationListResponse {
   };
 }
 
-export interface ConversationDetails extends Conversation {
+export interface ConversationDetails extends Omit<Conversation, 'agent'> {
   agent?: ConversationAgent & {
     phone_number?: string;
     image_url?: string;
@@ -64,18 +96,7 @@ export interface ConversationDetails extends Conversation {
     initial_prompt?: string;
     analysis_prompt?: string;
   };
-  lead?: {
-    id: number;
-    name?: string;
-    email?: string;
-    phone_number?: string;
-    source?: string;
-    status?: string;
-    additional_info?: Record<string, unknown>;
-    follow_ups?: Record<string, unknown>;
-    created_at: string;
-    updated_at: string;
-  };
+  topics?: any[];
 }
 
 export const getOrganisationConversationsAction = async (

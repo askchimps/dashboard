@@ -3,8 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import { MessageSquare, MessageCircle, User, Activity } from "lucide-react";
-import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
 import SectionHeader from "@/components/section-header/section-header";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -16,11 +16,16 @@ import { organisationQueries } from "@/lib/query/organisation.query";
 
 export default function ChatLogTabContent() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const orgSlug = params.orgSlug as string;
+  
+  // Get conversation ID from query parameter
+  const conversationFromQuery = searchParams.get('conversation');
 
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
-  >(null);
+  >(conversationFromQuery);
   const [activeTab, setActiveTab] = useState("chat");
   const [filters, setFilters] = useState<ConversationFilters>({
     page: 1,
@@ -32,6 +37,13 @@ export default function ChatLogTabContent() {
     ),
     endDate: format(new Date(), "yyyy-MM-dd"),
   });
+
+  // Update selected conversation when query parameter changes
+  useEffect(() => {
+    if (conversationFromQuery) {
+      setSelectedConversationId(conversationFromQuery);
+    }
+  }, [conversationFromQuery]);
 
   // API Integration
   const { data: conversationsData, isLoading } = useQuery({
@@ -138,9 +150,12 @@ export default function ChatLogTabContent() {
                     {conversations.map(conversation => (
                       <div
                         key={conversation.id}
-                        onClick={() =>
-                          setSelectedConversationId(conversation.id.toString())
-                        }
+                        onClick={() => {
+                          setSelectedConversationId(conversation.id.toString());
+                          router.push(`/${orgSlug}/chat-logs?conversation=${conversation.id}`, {
+                            scroll: false
+                          });
+                        }}
                         className={`hover:bg-muted/50 cursor-pointer rounded-lg p-4 transition-colors ${
                           selectedConversationId === conversation.id.toString()
                             ? "bg-muted border-border border"
