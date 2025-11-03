@@ -7,6 +7,7 @@ import {
   Phone,
   MessageCircle,
   Users,
+  PhoneCall,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import * as React from "react";
@@ -92,6 +93,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               >
                 <Users />
                 <span>Leads</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                tooltip={"Test Calls"}
+                className="h-10 cursor-pointer [&>svg]:size-5"
+                isActive={orgTab === "test-calls"}
+                onClick={() => handleTabChange("test-calls")}
+              >
+                <PhoneCall />
+                <span>Test Calls</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>

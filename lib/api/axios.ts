@@ -19,6 +19,8 @@ export async function createAuthenticatedAxios() {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
+      "x-api-key":
+        "askchimps-api-7xN9mK2pQ8vR3wE6yT1uI4oP0sA5zX8cV7bN2mK9pQ3wE6yT1uI4oP0sA5zX8cV7bN2mK9pQ3wE6yT1uI4oP0sA5z",
     },
   });
 }

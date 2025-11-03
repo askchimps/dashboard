@@ -6,6 +6,7 @@ import CallLogTabContent from "@/components/tab-content/organisation/call-log-ta
 import ChatLogTabContent from "@/components/tab-content/organisation/chat-log-tab-content";
 import LeadTabContent from "@/components/tab-content/organisation/lead-tab-content";
 import OverviewTabContent from "@/components/tab-content/organisation/overview-tab-content";
+import TestCallsTabContent from "@/components/tab-content/organisation/test-calls-tab-content";
 import { getQueryClient } from "@/lib/get-query-client";
 import { organisationQueries } from "@/lib/query/organisation.query";
 
@@ -51,6 +52,8 @@ export default async function OrganisationTab({
         return <LeadTabContent />;
       case "analytics":
         return <AnalyticsTabContent />;
+      case "test-calls":
+        return <TestCallsTabContent />;
       default:
         return notFound();
     }
