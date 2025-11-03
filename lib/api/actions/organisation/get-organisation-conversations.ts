@@ -26,39 +26,69 @@ export interface ConversationAgent {
   id: number;
   name: string;
   slug: string;
+  phone_number?: string | null;
+  image_url?: string | null;
+  base_prompt?: string;
+  initial_prompt?: string | null;
+  analysis_prompt?: string | null;
 }
 
 export interface ConversationLead {
   id: number;
-  name: string;
+  first_name?: string;
+  last_name?: string;
   email?: string;
   phone_number?: string;
   source?: string;
   status?: string;
-  additional_info?: Record<string, unknown>;
-  follow_ups?: number;
+  is_indian: number;
+  additional_info?: Record<string, unknown> | null;
+  logs?: Record<string, unknown> | null;
+  follow_ups: number;
   created_at: string;
   updated_at: string;
+  next_follow_up?: string | null;
+  in_process: number;
+  // Zoho CRM fields
+  zoho_id?: string | null;
+  zoho_lead_owner?: string | null;
+  zoho_lead_owner_id?: string | null;
+  zoho_first_name?: string | null;
+  zoho_last_name?: string | null;
+  zoho_mobile?: string | null;
+  zoho_email?: string | null;
+  zoho_status?: string | null;
+  zoho_lead_disposition?: string | null;
+  zoho_lead_source?: string | null;
+  zoho_country?: string | null;
+  zoho_state?: string | null;
+  zoho_city?: string | null;
+  zoho_street?: string | null;
+  zoho_description?: string | null;
+  // Legacy field for backward compatibility
+  name?: string;
 }
 
 export interface Conversation {
   id: number;
   name: string;
   type: "CALL" | "CHAT";
-  organisation_id?: number;
-  agent_id?: number;
+  organisation_id: number;
+  agent_id: number;
   source: string;
-  lead_id?: number;
-  summary?: string;
-  analysis?: string;
-  recording_url?: string;
-  duration?: number;
-  prompt_tokens?: number;
-  completion_tokens?: number;
-  is_disabled?: number;
-  is_deleted?: number;
+  lead_id?: number | null;
+  summary?: string | null;
+  analysis?: string | null;
+  recording_url?: string | null;
+  call_ended_reason?: string | null;
+  duration?: number | null;
+  prompt_tokens: number;
+  completion_tokens: number;
+  is_disabled: number;
+  is_deleted: number;
   created_at: string;
   updated_at: string;
+  total_cost?: number | null;
   agent?: ConversationAgent;
   lead?: ConversationLead;
   messages?: ConversationMessage[];
@@ -67,6 +97,7 @@ export interface Conversation {
     userMessages: number;
     assistantMessages: number;
   };
+  topics?: Record<string, unknown>[];
 }
 
 export interface ConversationListResponse {
@@ -86,17 +117,6 @@ export interface ConversationListResponse {
     startDate?: string;
     endDate?: string;
   };
-}
-
-export interface ConversationDetails extends Omit<Conversation, "agent"> {
-  agent?: ConversationAgent & {
-    phone_number?: string;
-    image_url?: string;
-    base_prompt?: string;
-    initial_prompt?: string;
-    analysis_prompt?: string;
-  };
-  topics?: Record<string, unknown>[];
 }
 
 export const getOrganisationConversationsAction = async (
@@ -126,7 +146,7 @@ export const getOrganisationConversationsAction = async (
 export const getOrganisationConversationDetailsAction = async (
   orgSlug: string,
   conversationId: string
-): Promise<ConversationDetails> => {
+): Promise<Conversation> => {
   const axios = await createAuthenticatedAxios();
 
   const response = await axios.get(

@@ -466,7 +466,7 @@ export default function LeadTabContent() {
                               </Avatar>
                               <div>
                                 <div className="text-sm font-medium">
-                                  {lead.name || "Unnamed Lead"}
+                                  {`${lead.first_name} ${lead.last_name}`}
                                 </div>
                                 <div className="text-muted-foreground text-xs">
                                   ID: {lead.id}

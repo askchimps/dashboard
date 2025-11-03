@@ -8,10 +8,10 @@ import {
   MessageSquare,
   Activity,
   PhoneCall,
+  User,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -185,10 +185,12 @@ export default function LeadDetailsPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">
-              {lead.name || "Unnamed Lead"}
+            <h1 className="text-2xl font-bold text-gray-900">
+              {lead.first_name && lead.last_name
+                ? `${lead.first_name} ${lead.last_name}`
+                : lead.name || "Unnamed Lead"}
             </h1>
-            <p className="text-muted-foreground">Lead ID: {lead.id}</p>
+            <p className="text-gray-500">Lead ID: {lead.id}</p>
           </div>
         </div>
       </div>
@@ -197,66 +199,173 @@ export default function LeadDetailsPage() {
         {/* Main Content */}
         <div className="space-y-6 md:col-span-2">
           {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+          <Card className="shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg">Lead Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-muted-foreground text-sm font-medium">
-                    Name
-                  </label>
-                  <p className="mt-1">{lead.name || "Not provided"}</p>
-                </div>
-                <div>
-                  <label className="text-muted-foreground text-sm font-medium">
-                    Status
-                  </label>
-                  <div className="mt-1">
-                    <Badge className={getStatusColor(lead.status)}>
-                      {lead.status
-                        ?.replace(/_/g, " ")
-                        .toLowerCase()
-                        .replace(/\b\w/g, l => l.toUpperCase()) || "Unknown"}
-                    </Badge>
+            <CardContent>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">
+                      Name
+                    </label>
+                    <p className="mt-1 font-medium text-gray-900">
+                      {lead.first_name && lead.last_name
+                        ? `${lead.first_name} ${lead.last_name}`
+                        : lead.name || "Not provided"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">
+                      Email
+                    </label>
+                    <p className="mt-1 text-gray-900">
+                      {lead.email || "Not provided"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">
+                      Phone Number
+                    </label>
+                    <p className="mt-1 text-gray-900">
+                      {lead.phone_number || "Not provided"}
+                    </p>
                   </div>
                 </div>
-                <div>
-                  <label className="text-muted-foreground text-sm font-medium">
-                    Email
-                  </label>
-                  <p className="mt-1">{lead.email || "Not provided"}</p>
-                </div>
-                <div>
-                  <label className="text-muted-foreground text-sm font-medium">
-                    Phone
-                  </label>
-                  <p className="mt-1">{lead.phone_number || "Not provided"}</p>
-                </div>
-                <div>
-                  <label className="text-muted-foreground text-sm font-medium">
-                    Source
-                  </label>
-                  <p className="mt-1 capitalize">{lead.source || "Unknown"}</p>
-                </div>
-                <div>
-                  <label className="text-muted-foreground text-sm font-medium">
-                    Follow-ups
-                  </label>
-                  <p className="mt-1">
-                    {typeof lead.follow_ups === "number" ? lead.follow_ups : 0}
-                  </p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">
+                      Status
+                    </label>
+                    <div className="mt-1">
+                      <Badge className={getStatusColor(lead.status)}>
+                        {lead.status
+                          ?.replace(/_/g, " ")
+                          .toLowerCase()
+                          .replace(/\b\w/g, l => l.toUpperCase()) || "Unknown"}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">
+                      Source
+                    </label>
+                    <p className="mt-1 text-gray-900 capitalize">
+                      {lead.source || "Unknown"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">
+                      Follow-ups
+                    </label>
+                    <p className="mt-1 text-gray-900">
+                      {typeof lead.follow_ups === "number"
+                        ? lead.follow_ups
+                        : 0}
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
+          {/* Zoho Information */}
+          {(lead.zoho_id || lead.zoho_lead_owner || lead.zoho_status) && (
+            <Card className="shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">Zoho CRM Data</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="space-y-4">
+                    {lead.zoho_id && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">
+                          Zoho ID
+                        </label>
+                        <p className="mt-1 font-mono text-sm text-gray-900">
+                          {lead.zoho_id}
+                        </p>
+                      </div>
+                    )}
+                    {lead.zoho_lead_owner && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">
+                          Lead Owner
+                        </label>
+                        <p className="mt-1 text-gray-900">
+                          {lead.zoho_lead_owner}
+                        </p>
+                      </div>
+                    )}
+                    {lead.zoho_status && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">
+                          Zoho Status
+                        </label>
+                        <p className="mt-1 text-gray-900">{lead.zoho_status}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-4">
+                    {lead.zoho_lead_disposition && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">
+                          Disposition
+                        </label>
+                        <p className="mt-1 text-gray-900">
+                          {lead.zoho_lead_disposition}
+                        </p>
+                      </div>
+                    )}
+                    {lead.zoho_lead_source && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">
+                          Zoho Source
+                        </label>
+                        <p className="mt-1 text-gray-900">
+                          {lead.zoho_lead_source}
+                        </p>
+                      </div>
+                    )}
+                    {(lead.zoho_city ||
+                      lead.zoho_state ||
+                      lead.zoho_country) && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">
+                          Location
+                        </label>
+                        <p className="mt-1 text-gray-900">
+                          {[lead.zoho_city, lead.zoho_state, lead.zoho_country]
+                            .filter(Boolean)
+                            .join(", ") || "Not provided"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {lead.zoho_description && (
+                  <div className="mt-4 border-t border-gray-200 pt-4">
+                    <label className="text-sm font-medium text-gray-600">
+                      Description
+                    </label>
+                    <p className="mt-1 text-sm leading-relaxed text-gray-900">
+                      {lead.zoho_description}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Conversations */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Conversations</CardTitle>
-              <Badge variant="secondary">{lead.conversations.length}</Badge>
+          <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-4">
+              <CardTitle className="text-lg">Conversations</CardTitle>
+              <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                {lead.conversations.length}
+              </Badge>
             </CardHeader>
             <CardContent>
               {lead.conversations.length > 0 ? (
@@ -264,7 +373,7 @@ export default function LeadDetailsPage() {
                   {lead.conversations.map(conv => (
                     <div
                       key={conv.id}
-                      className="hover:bg-muted/50 cursor-pointer rounded-lg border p-4 transition-colors"
+                      className="cursor-pointer rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
                       onClick={() => {
                         const tab =
                           conv.type === "CALL" ? "call-logs" : "chat-logs";
@@ -273,27 +382,34 @@ export default function LeadDetailsPage() {
                         );
                       }}
                     >
-                      <div className="mb-2 flex items-start justify-between">
-                        <div className="flex items-center gap-2">
+                      <div className="mb-3 flex items-start justify-between">
+                        <div className="flex items-center gap-3">
                           {conv.type === "CALL" ? (
-                            <PhoneCall className="text-muted-foreground h-4 w-4" />
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
+                              <PhoneCall className="h-4 w-4 text-blue-600" />
+                            </div>
                           ) : (
-                            <MessageSquare className="text-muted-foreground h-4 w-4" />
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
+                              <MessageSquare className="h-4 w-4 text-green-600" />
+                            </div>
                           )}
-                          <span className="text-sm font-medium">
+                          <span className="text-sm font-medium text-gray-900">
                             {conv.name}
                           </span>
                         </div>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge
+                          variant="outline"
+                          className="border-gray-300 text-xs text-gray-600"
+                        >
                           {conv.type}
                         </Badge>
                       </div>
                       {conv.summary && (
-                        <p className="text-muted-foreground mb-2 line-clamp-2 text-sm">
+                        <p className="mb-3 line-clamp-2 text-sm leading-relaxed text-gray-600">
                           {conv.summary}
                         </p>
                       )}
-                      <div className="text-muted-foreground flex items-center gap-4 text-xs">
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span>
                           {formatDistanceToNow(new Date(conv.created_at), {
                             addSuffix: true,
@@ -301,8 +417,8 @@ export default function LeadDetailsPage() {
                         </span>
                         {conv.duration && (
                           <span>
-                            • {Math.floor((conv.duration * 60) / 60)}m{" "}
-                            {Math.floor((conv.duration * 60) % 60)}s
+                            • {Math.floor(conv.duration / 60)}m{" "}
+                            {Math.floor(conv.duration % 60)}s
                           </span>
                         )}
                         {conv.message_count && (
@@ -313,9 +429,12 @@ export default function LeadDetailsPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground py-8 text-center">
-                  No conversations yet
-                </p>
+                <div className="py-8 text-center">
+                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-50">
+                    <MessageSquare className="h-6 w-6 text-gray-400" />
+                  </div>
+                  <p className="text-sm text-gray-500">No conversations yet</p>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -323,14 +442,18 @@ export default function LeadDetailsPage() {
           {/* Additional Information */}
           {lead.additional_info &&
             Object.keys(lead.additional_info).length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Additional Information</CardTitle>
+              <Card className="shadow-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg">
+                    Additional Information
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <pre className="bg-muted overflow-x-auto rounded-lg p-4 text-sm">
-                    {JSON.stringify(lead.additional_info, null, 2)}
-                  </pre>
+                  <div className="overflow-x-auto rounded-lg bg-gray-50 p-4">
+                    <pre className="text-sm whitespace-pre-wrap text-gray-700">
+                      {JSON.stringify(lead.additional_info, null, 2)}
+                    </pre>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -339,8 +462,8 @@ export default function LeadDetailsPage() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Assigned Agents */}
-          <Card>
-            <CardHeader>
+          <Card className="shadow-sm">
+            <CardHeader className="pb-4">
               <CardTitle className="text-base">Assigned Agents</CardTitle>
             </CardHeader>
             <CardContent>
@@ -348,57 +471,119 @@ export default function LeadDetailsPage() {
                 <div className="space-y-3">
                   {lead.agents.map(agent => (
                     <div key={agent.id} className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="text-xs">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
+                        <span className="text-xs font-medium text-blue-600">
                           {agent.name.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+                        </span>
+                      </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium">{agent.name}</p>
-                        <p className="text-muted-foreground text-xs">
-                          {agent.slug}
+                        <p className="text-sm font-medium text-gray-900">
+                          {agent.name}
                         </p>
+                        <p className="text-xs text-gray-500">@{agent.slug}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground text-sm">
-                  No agents assigned
-                </p>
+                <div className="py-4 text-center">
+                  <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-gray-50">
+                    <User className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <p className="text-sm text-gray-500">No agents assigned</p>
+                </div>
               )}
             </CardContent>
           </Card>
 
           {/* Activity Timeline */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Activity Timeline</CardTitle>
+          <Card className="shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base">Timeline</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
+            <CardContent className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
                   <Calendar className="h-4 w-4 text-blue-600" />
                 </div>
-                <div>
-                  <p className="text-sm font-medium">Lead Created</p>
-                  <p className="text-muted-foreground text-xs">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-900">
+                    Lead Created
+                  </p>
+                  <p className="text-xs text-gray-500">
                     {formatDateTime(lead.created_at)}
                   </p>
                 </div>
               </div>
 
               {lead.updated_at !== lead.created_at && (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
                     <Activity className="h-4 w-4 text-green-600" />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium">Last Updated</p>
-                    <p className="text-muted-foreground text-xs">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900">
+                      Last Updated
+                    </p>
+                    <p className="text-xs text-gray-500">
                       {formatDateTime(lead.updated_at)}
                     </p>
                   </div>
+                </div>
+              )}
+
+              {lead.next_follow_up && (
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-orange-100">
+                    <Calendar className="h-4 w-4 text-orange-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900">
+                      Next Follow-up
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {formatDateTime(lead.next_follow_up)}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Lead Stats */}
+          <Card className="shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base">Statistics</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Conversations</span>
+                <span className="font-medium text-gray-900">
+                  {lead.conversations.length}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Follow-ups</span>
+                <span className="font-medium text-gray-900">
+                  {lead.follow_ups || 0}
+                </span>
+              </div>
+              {lead.is_indian !== undefined && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Region</span>
+                  <span className="font-medium text-gray-900">
+                    {lead.is_indian ? "Indian" : "International"}
+                  </span>
+                </div>
+              )}
+              {lead.in_process !== undefined && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">In Process</span>
+                  <span
+                    className={`font-medium ${lead.in_process ? "text-orange-600" : "text-gray-900"}`}
+                  >
+                    {lead.in_process ? "Yes" : "No"}
+                  </span>
                 </div>
               )}
             </CardContent>

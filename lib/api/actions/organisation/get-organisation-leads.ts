@@ -32,14 +32,38 @@ export interface LeadConversation {
 export interface Lead {
   id: number;
   name?: string;
+  first_name?: string;
+  last_name?: string;
   email?: string;
   phone_number?: string;
   source?: string;
   status?: string;
+  is_indian?: number;
   additional_info?: Record<string, unknown>;
+  logs?: Record<string, unknown>;
   follow_ups?: number;
+  next_follow_up?: string;
+  in_process?: number;
   created_at: string;
   updated_at: string;
+
+  // Zoho CRM fields
+  zoho_id?: string;
+  zoho_lead_owner?: string;
+  zoho_lead_owner_id?: string;
+  zoho_first_name?: string;
+  zoho_last_name?: string;
+  zoho_mobile?: string;
+  zoho_email?: string;
+  zoho_status?: string;
+  zoho_lead_disposition?: string;
+  zoho_lead_source?: string;
+  zoho_country?: string;
+  zoho_state?: string;
+  zoho_city?: string;
+  zoho_street?: string;
+  zoho_description?: string;
+
   agents: LeadAgent[];
   conversations: LeadConversation[];
 }
