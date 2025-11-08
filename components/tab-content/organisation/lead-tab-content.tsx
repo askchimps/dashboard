@@ -56,13 +56,19 @@ export default function LeadTabContent() {
     ),
     endDate: format(new Date(), "yyyy-MM-dd"),
   });
-  const [selectedLead] = useState<Lead | null>(null);
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isLeadDetailsOpen, setIsLeadDetailsOpen] = useState(false);
 
   // API Integration
   const { data: leadsData, isLoading } = useQuery({
     ...organisationQueries.getLeads(orgSlug, filters),
   });
+
+  const { data: selectedLeadDetails, isLoading: isLoadingLeadDetails } =
+    useQuery({
+      ...organisationQueries.getLeadDetails(orgSlug, selectedLeadId || ""),
+      enabled: !!selectedLeadId,
+    });
 
   const handleDateRangeApply = (startDate: string, endDate: string) => {
     setFilters(prev => ({ ...prev, startDate, endDate, page: 1 }));
@@ -257,7 +263,7 @@ export default function LeadTabContent() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {leadsData.pagination.totalCount}
+                    {leadsData.stats.total_leads}
                   </div>
                 </CardContent>
               </Card>
@@ -274,7 +280,7 @@ export default function LeadTabContent() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {leads.filter(lead => lead.status === "new").length}
+                    {leadsData.stats.new_leads}
                   </div>
                 </CardContent>
               </Card>
@@ -293,7 +299,7 @@ export default function LeadTabContent() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {leads.filter(lead => lead.status === "qualified").length}
+                    {leadsData.stats.qualified_leads}
                   </div>
                 </CardContent>
               </Card>
@@ -301,21 +307,18 @@ export default function LeadTabContent() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
-                    Not Qualified
+                    Junk Leads
                   </CardTitle>
                   <Badge
                     variant="secondary"
                     className="bg-red-100 text-red-800"
                   >
-                    NQ
+                    Junk
                   </Badge>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {
-                      leads.filter(lead => lead.status === "not_qualified")
-                        .length
-                    }
+                    {leadsData.stats.junk_leads}
                   </div>
                 </CardContent>
               </Card>
@@ -452,13 +455,19 @@ export default function LeadTabContent() {
                         <TableRow
                           key={lead.id}
                           className="hover:bg-muted/50 cursor-pointer"
+                          onClick={() => {
+                            setSelectedLeadId(lead.id.toString());
+                            setIsLeadDetailsOpen(true);
+                          }}
                         >
                           <TableCell className="font-medium">
                             <div className="flex items-center space-x-3">
                               <Avatar className="h-8 w-8">
                                 <AvatarFallback className="bg-blue-100 text-sm text-blue-600">
-                                  {lead.name ? (
-                                    lead.name.charAt(0).toUpperCase()
+                                  {lead.full_name || lead.first_name ? (
+                                    (lead.full_name || lead.first_name)
+                                      ?.charAt(0)
+                                      .toUpperCase()
                                   ) : (
                                     <User className="h-4 w-4" />
                                   )}
@@ -466,7 +475,12 @@ export default function LeadTabContent() {
                               </Avatar>
                               <div>
                                 <div className="text-sm font-medium">
-                                  {`${lead.first_name} ${lead.last_name}`}
+                                  {lead.full_name ||
+                                    (lead.first_name && lead.last_name
+                                      ? `${lead.first_name} ${lead.last_name}`
+                                      : lead.first_name ||
+                                        lead.email ||
+                                        "Unknown")}
                                 </div>
                                 <div className="text-muted-foreground text-xs">
                                   ID: {lead.id}
@@ -534,16 +548,35 @@ export default function LeadTabContent() {
                               <div className="flex items-center gap-1 text-sm">
                                 <MessageSquare className="text-muted-foreground h-3 w-3" />
                                 <span>
-                                  {lead.conversations.length} conversation
-                                  {lead.conversations.length !== 1 ? "s" : ""}
+                                  {(lead.total_calls || 0) +
+                                    (lead.total_chats || 0)}{" "}
+                                  conversation
+                                  {(lead.total_calls || 0) +
+                                    (lead.total_chats || 0) !==
+                                  1
+                                    ? "s"
+                                    : ""}
                                 </span>
                               </div>
-                              {lead.conversations.length > 0 && (
+                              {(lead.latest_call || lead.latest_chat) && (
                                 <div className="text-muted-foreground text-xs">
                                   Latest:{" "}
-                                  {formatTimeAgo(
-                                    lead.conversations[0].created_at
-                                  )}
+                                  {lead.latest_call && lead.latest_chat
+                                    ? formatTimeAgo(
+                                        new Date(lead.latest_call.started_at) >
+                                          new Date(lead.latest_chat.created_at)
+                                          ? lead.latest_call.started_at
+                                          : lead.latest_chat.created_at
+                                      )
+                                    : lead.latest_call
+                                      ? formatTimeAgo(
+                                          lead.latest_call.started_at
+                                        )
+                                      : lead.latest_chat
+                                        ? formatTimeAgo(
+                                            lead.latest_chat.created_at
+                                          )
+                                        : "N/A"}
                                 </div>
                               )}
                             </div>
@@ -576,21 +609,21 @@ export default function LeadTabContent() {
             </div>
 
             {/* Pagination */}
-            {leadsData && leadsData.pagination.totalPages > 1 && (
+            {leadsData && leadsData.pagination.total_pages > 1 && (
               <div className="flex items-center justify-between border-t p-6">
                 <div className="flex items-center gap-4">
                   <div className="text-muted-foreground text-sm">
                     Showing{" "}
-                    {(leadsData.pagination.currentPage - 1) *
-                      leadsData.pagination.limit +
+                    {(leadsData.pagination.current_page - 1) *
+                      leadsData.pagination.per_page +
                       1}{" "}
                     to{" "}
                     {Math.min(
-                      leadsData.pagination.currentPage *
-                        leadsData.pagination.limit,
-                      leadsData.pagination.totalCount
+                      leadsData.pagination.current_page *
+                        leadsData.pagination.per_page,
+                      leadsData.pagination.total
                     )}{" "}
-                    of {leadsData.pagination.totalCount} leads
+                    of {leadsData.pagination.total} leads
                   </div>
 
                   <Select
@@ -622,15 +655,15 @@ export default function LeadTabContent() {
                     onClick={() =>
                       setFilters(prev => ({ ...prev, page: prev.page! - 1 }))
                     }
-                    disabled={!leadsData.pagination.hasPrevPage}
+                    disabled={leadsData.pagination.current_page === 1}
                   >
                     Previous
                   </Button>
 
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground text-sm">
-                      Page {leadsData.pagination.currentPage} of{" "}
-                      {leadsData.pagination.totalPages}
+                      Page {leadsData.pagination.current_page} of{" "}
+                      {leadsData.pagination.total_pages}
                     </span>
                   </div>
 
@@ -640,7 +673,10 @@ export default function LeadTabContent() {
                     onClick={() =>
                       setFilters(prev => ({ ...prev, page: prev.page! + 1 }))
                     }
-                    disabled={!leadsData.pagination.hasNextPage}
+                    disabled={
+                      leadsData.pagination.current_page ===
+                      leadsData.pagination.total_pages
+                    }
                   >
                     Next
                   </Button>
@@ -650,181 +686,6 @@ export default function LeadTabContent() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Lead Details Sheet */}
-      <Sheet open={isLeadDetailsOpen} onOpenChange={setIsLeadDetailsOpen}>
-        <SheetContent className="w-[600px] sm:max-w-[600px]">
-          <SheetHeader>
-            <SheetTitle>Lead Details</SheetTitle>
-            <SheetDescription>
-              Comprehensive information about the lead
-            </SheetDescription>
-          </SheetHeader>
-
-          {selectedLead && (
-            <div className="mt-6 space-y-6">
-              {/* Basic Information */}
-              <div>
-                <h3 className="text-muted-foreground mb-3 text-sm font-medium">
-                  Basic Information
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground text-sm">Name</span>
-                    <span className="text-sm font-medium">
-                      {selectedLead.name || "Not provided"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground text-sm">Email</span>
-                    <span className="text-sm font-medium">
-                      {selectedLead.email || "Not provided"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground text-sm">Phone</span>
-                    <span className="text-sm font-medium">
-                      {selectedLead.phone_number || "Not provided"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground text-sm">
-                      Source
-                    </span>
-                    <span className="text-sm font-medium capitalize">
-                      {selectedLead.source || "Unknown"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground text-sm">
-                      Status
-                    </span>
-                    <Badge
-                      className={`text-xs ${getStatusColor(selectedLead.status)}`}
-                    >
-                      {selectedLead.status
-                        ? selectedLead.status
-                            .replace(/_/g, " ")
-                            .toLowerCase()
-                            .replace(/\b\w/g, (l: string) => l.toUpperCase())
-                        : "Unknown"}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground text-sm">
-                      Follow-ups
-                    </span>
-                    <span className="text-sm font-medium">
-                      {selectedLead.follow_ups || 0}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Assigned Agents */}
-              <div>
-                <h3 className="text-muted-foreground mb-3 text-sm font-medium">
-                  Assigned Agents
-                </h3>
-                {selectedLead.agents && selectedLead.agents.length > 0 ? (
-                  <div className="space-y-2">
-                    {selectedLead.agents.map(
-                      (agent: { name: string; slug: string }) => (
-                        <div
-                          key={agent.slug}
-                          className="bg-muted/50 flex items-center justify-between rounded-lg p-2"
-                        >
-                          <span className="text-sm font-medium">
-                            {agent.name}
-                          </span>
-                          <Badge variant="secondary" className="text-xs">
-                            {agent.slug}
-                          </Badge>
-                        </div>
-                      )
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm">
-                    No agents assigned
-                  </p>
-                )}
-              </div>
-
-              {/* Conversations */}
-              <div>
-                <h3 className="text-muted-foreground mb-3 text-sm font-medium">
-                  Conversations
-                </h3>
-                {selectedLead.conversations &&
-                selectedLead.conversations.length > 0 ? (
-                  <div className="space-y-2">
-                    {selectedLead.conversations.map(conv => (
-                      <div
-                        key={conv.id}
-                        className="bg-muted/50 space-y-1 rounded-lg p-3"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">
-                            {conv.name}
-                          </span>
-                          <Badge variant="outline" className="text-xs">
-                            {conv.type}
-                          </Badge>
-                        </div>
-                        <p className="text-muted-foreground text-xs">
-                          Created {formatTimeAgo(conv.created_at)}
-                        </p>
-                      </div>
-                    ))}
-                    <Button
-                      variant="outline"
-                      className="mt-2 w-full"
-                      onClick={() => {
-                        setIsLeadDetailsOpen(false);
-                        router.push(
-                          `/${orgSlug}/chat-logs?lead=${selectedLead.id}`
-                        );
-                      }}
-                    >
-                      View All Conversations
-                    </Button>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm">
-                    No conversations yet
-                  </p>
-                )}
-              </div>
-
-              {/* Timestamps */}
-              <div>
-                <h3 className="text-muted-foreground mb-3 text-sm font-medium">
-                  Timeline
-                </h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground text-sm">
-                      Created
-                    </span>
-                    <span className="text-sm">
-                      {formatTimeAgo(selectedLead.created_at)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground text-sm">
-                      Last Updated
-                    </span>
-                    <span className="text-sm">
-                      {formatTimeAgo(selectedLead.updated_at)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
     </>
   );
 }

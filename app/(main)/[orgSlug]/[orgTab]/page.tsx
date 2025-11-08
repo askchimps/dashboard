@@ -31,11 +31,11 @@ export default async function OrganisationTab({
         ...organisationQueries.getOverview(orgSlug),
       });
       break;
-    case "analytics":
-      await queryClient.prefetchQuery({
-        ...organisationQueries.getAnalytics(orgSlug),
-      });
-      break;
+    // case "analytics":
+    //   await queryClient.prefetchQuery({
+    //     ...organisationQueries.getAnalytics(orgSlug),
+    //   });
+    //   break;
   }
 
   async function getTabContent() {
@@ -50,10 +50,10 @@ export default async function OrganisationTab({
         return <ChatLogTabContent />;
       case "leads":
         return <LeadTabContent />;
-      case "analytics":
-        return <AnalyticsTabContent />;
-      case "test-calls":
-        return <TestCallsTabContent />;
+      // case "analytics":
+      //   return <AnalyticsTabContent />;
+      // case "test-calls":
+      //   return <TestCallsTabContent />;
       default:
         return notFound();
     }

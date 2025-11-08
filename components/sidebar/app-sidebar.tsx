@@ -95,7 +95,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <span>Leads</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
+            {/* <SidebarMenuItem>
               <SidebarMenuButton
                 tooltip={"Test Calls"}
                 className="h-10 cursor-pointer [&>svg]:size-5"
@@ -105,8 +105,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <PhoneCall />
                 <span>Test Calls</span>
               </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
+            </SidebarMenuItem> */}
+            {/* <SidebarMenuItem>
               <SidebarMenuButton
                 tooltip={"Analytics"}
                 className="h-10 cursor-pointer [&>svg]:size-5"
@@ -116,7 +116,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <PieChart />
                 <span>Analytics</span>
               </SidebarMenuButton>
-            </SidebarMenuItem>
+            </SidebarMenuItem> */}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>

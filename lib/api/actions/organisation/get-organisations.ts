@@ -6,7 +6,7 @@ import { IOrganisation } from "@/types/organisation";
 export const getOrganisationsAction = async (): Promise<IOrganisation[]> => {
   const axios = await createAuthenticatedAxios();
 
-  const response = await axios.get(`/v1/organisation/all`);
+  const response = await axios.get(`/v1/organisation`);
 
   return response.data.data;
 };

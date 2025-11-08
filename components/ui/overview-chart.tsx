@@ -27,10 +27,10 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { IDailyCount } from "@/types/overview";
+import { IDailyStats } from "@/types/overview";
 
 interface OverviewChartProps {
-  data: IDailyCount[];
+  data: Array<{ date: string; count: number }>;
   title: string;
   description?: string;
   dataKey: string;
@@ -56,7 +56,9 @@ export default function OverviewChart({
   color = "hsl(var(--chart-1))",
 }: OverviewChartProps) {
   // Create a complete date range with all dates (fill missing dates with count: 0)
-  const createCompleteDataRange = (data: IDailyCount[]) => {
+  const createCompleteDataRange = (
+    data: Array<{ date: string; count: number }>
+  ) => {
     if (data.length === 0) return [];
 
     const sortedData = [...data].sort(
@@ -122,7 +124,7 @@ export default function OverviewChart({
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent>
-        {data.length === 0 ? (
+        {!data || data.length === 0 ? (
           <div className="text-muted-foreground flex h-[200px] items-center justify-center">
             <div className="text-center">
               <div className="mb-2 text-2xl">📊</div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { format, subDays } from "date-fns";
+import { format } from "date-fns";
 import { MessageCircle, Phone, Users, UserCheck } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -18,10 +18,12 @@ export default function OverviewTabContent() {
   const params = useParams();
   const orgSlug = params.orgSlug as string;
 
-  // Initialize with last 30 days
+  // Initialize with current month (from start of month to today)
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const [dateRange, setDateRange] = useState({
-    startDate: format(subDays(new Date(), 29), "yyyy-MM-dd"),
-    endDate: format(new Date(), "yyyy-MM-dd"),
+    startDate: format(startOfMonth, "yyyy-MM-dd"),
+    endDate: format(now, "yyyy-MM-dd"),
   });
 
   const {
@@ -70,9 +72,49 @@ export default function OverviewTabContent() {
   }
 
   const leadConversionRate =
-    overview.leadCount > 0
-      ? ((overview.qualifiedLeadCount / overview.leadCount) * 100).toFixed(1)
+    overview.overview.totalLeads > 0
+      ? (
+          (overview.overview.qualifiedLeads / overview.overview.totalLeads) *
+          100
+        ).toFixed(1)
       : "0";
+
+  // Transform daily stats for charts
+  const generateEmptyDataIfNeeded = (
+    data: Array<{ date: string; count: number }>
+  ) => {
+    if (data && data.length > 0) return data;
+
+    // Generate empty data for current date range if no data exists
+    const start = new Date(dateRange.startDate);
+    const end = new Date(dateRange.endDate);
+    const emptyData = [];
+
+    const currentDate = new Date(start);
+    while (currentDate <= end) {
+      emptyData.push({
+        date: format(currentDate, "yyyy-MM-dd"),
+        count: 0,
+      });
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return emptyData;
+  };
+
+  const chatData = generateEmptyDataIfNeeded(
+    overview.dailyStats?.map(stat => ({
+      date: stat.date,
+      count: stat.chatCount,
+    })) || []
+  );
+
+  const callData = generateEmptyDataIfNeeded(
+    overview.dailyStats?.map(stat => ({
+      date: stat.date,
+      count: stat.callCount,
+    })) || []
+  );
 
   return (
     <>
@@ -92,8 +134,8 @@ export default function OverviewTabContent() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div className="delay-100 duration-500">
             <KPICard
-              title="Total Conversations"
-              value={overview.conversationCount.toLocaleString()}
+              title="Total Chats"
+              value={overview.overview.totalChats.toLocaleString()}
               description="Chat conversations in period"
               icon={<MessageCircle />}
             />
@@ -102,7 +144,7 @@ export default function OverviewTabContent() {
           <div className="delay-200 duration-500">
             <KPICard
               title="Total Calls"
-              value={overview.callCount.toLocaleString()}
+              value={overview.overview.totalCalls.toLocaleString()}
               description="Voice calls in period"
               icon={<Phone />}
             />
@@ -111,7 +153,7 @@ export default function OverviewTabContent() {
           <div className="delay-300 duration-500">
             <KPICard
               title="Total Leads"
-              value={overview.leadCount.toLocaleString()}
+              value={overview.overview.totalLeads.toLocaleString()}
               description="Leads generated"
               icon={<Users />}
             />
@@ -120,9 +162,9 @@ export default function OverviewTabContent() {
           <div className="delay-400 duration-500">
             <KPICard
               title="Qualified Leads"
-              value={overview.qualifiedLeadCount.toLocaleString()}
+              value={overview.overview.qualifiedLeads.toLocaleString()}
               description={
-                overview.leadCount > 0
+                overview.overview.totalLeads > 0
                   ? `${leadConversionRate}% of total leads`
                   : "No leads yet"
               }
@@ -135,20 +177,20 @@ export default function OverviewTabContent() {
         <div className="grid gap-6 md:grid-cols-2">
           <div className="delay-500 duration-500">
             <OverviewChart
-              data={overview.conversationCountPerDay}
-              title="Daily Conversations"
+              data={chatData}
+              title="Daily Chats"
               description="Chat conversations over time"
-              dataKey="conversations"
+              dataKey="count"
               color="hsl(var(--chart-1))"
             />
           </div>
 
           <div className="delay-600 duration-500">
             <OverviewChart
-              data={overview.callCountPerDay}
+              data={callData}
               title="Daily Calls"
               description="Voice calls over time"
-              dataKey="calls"
+              dataKey="count"
               color="hsl(var(--chart-2))"
             />
           </div>

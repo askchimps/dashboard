@@ -25,11 +25,11 @@ export default function LeadDetailsPage() {
   const leadId = params.leadId as string;
 
   // Fetch lead details
-  const { data, isLoading, error } = useQuery(
-    organisationQueries.getLeadDetails(orgSlug, leadId)
-  );
-
-  const lead = data?.lead;
+  const {
+    data: lead,
+    isLoading,
+    error,
+  } = useQuery(organisationQueries.getLeadDetails(orgSlug, leadId));
 
   const getStatusColor = (status?: string) => {
     switch (status?.toLowerCase()) {
@@ -186,9 +186,10 @@ export default function LeadDetailsPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              {lead.first_name && lead.last_name
-                ? `${lead.first_name} ${lead.last_name}`
-                : lead.name || "Unnamed Lead"}
+              {lead.full_name ||
+                (lead.first_name && lead.last_name
+                  ? `${lead.first_name} ${lead.last_name}`
+                  : lead.first_name || "Unnamed Lead")}
             </h1>
             <p className="text-gray-500">Lead ID: {lead.id}</p>
           </div>
@@ -211,9 +212,10 @@ export default function LeadDetailsPage() {
                       Name
                     </label>
                     <p className="mt-1 font-medium text-gray-900">
-                      {lead.first_name && lead.last_name
-                        ? `${lead.first_name} ${lead.last_name}`
-                        : lead.name || "Not provided"}
+                      {lead.full_name ||
+                        (lead.first_name && lead.last_name
+                          ? `${lead.first_name} ${lead.last_name}`
+                          : lead.first_name || "Not provided")}
                     </p>
                   </div>
                   <div>
@@ -260,9 +262,7 @@ export default function LeadDetailsPage() {
                       Follow-ups
                     </label>
                     <p className="mt-1 text-gray-900">
-                      {typeof lead.follow_ups === "number"
-                        ? lead.follow_ups
-                        : 0}
+                      {lead.follow_up_count || 0}
                     </p>
                   </div>
                 </div>
@@ -271,7 +271,7 @@ export default function LeadDetailsPage() {
           </Card>
 
           {/* Zoho Information */}
-          {(lead.zoho_id || lead.zoho_lead_owner || lead.zoho_status) && (
+          {lead.zoho_lead && (
             <Card className="shadow-sm">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg">Zoho CRM Data</CardTitle>
@@ -279,65 +279,68 @@ export default function LeadDetailsPage() {
               <CardContent>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-4">
-                    {lead.zoho_id && (
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">
-                          Zoho ID
-                        </label>
-                        <p className="mt-1 font-mono text-sm text-gray-900">
-                          {lead.zoho_id}
-                        </p>
-                      </div>
-                    )}
-                    {lead.zoho_lead_owner && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">
+                        Zoho ID
+                      </label>
+                      <p className="mt-1 font-mono text-sm text-gray-900">
+                        {lead.zoho_lead.id}
+                      </p>
+                    </div>
+                    {lead.zoho_lead.lead_owner && (
                       <div>
                         <label className="text-sm font-medium text-gray-600">
                           Lead Owner
                         </label>
                         <p className="mt-1 text-gray-900">
-                          {lead.zoho_lead_owner}
+                          {lead.zoho_lead.lead_owner.first_name}{" "}
+                          {lead.zoho_lead.lead_owner.last_name}
                         </p>
                       </div>
                     )}
-                    {lead.zoho_status && (
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">
-                          Zoho Status
-                        </label>
-                        <p className="mt-1 text-gray-900">{lead.zoho_status}</p>
-                      </div>
-                    )}
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">
+                        Zoho Status
+                      </label>
+                      <p className="mt-1 text-gray-900">
+                        {lead.zoho_lead.status}
+                      </p>
+                    </div>
                   </div>
                   <div className="space-y-4">
-                    {lead.zoho_lead_disposition && (
+                    {lead.zoho_lead.disposition && (
                       <div>
                         <label className="text-sm font-medium text-gray-600">
                           Disposition
                         </label>
                         <p className="mt-1 text-gray-900">
-                          {lead.zoho_lead_disposition}
+                          {lead.zoho_lead.disposition}
                         </p>
                       </div>
                     )}
-                    {lead.zoho_lead_source && (
+                    {lead.zoho_lead.source && (
                       <div>
                         <label className="text-sm font-medium text-gray-600">
                           Zoho Source
                         </label>
                         <p className="mt-1 text-gray-900">
-                          {lead.zoho_lead_source}
+                          {lead.zoho_lead.source}
                         </p>
                       </div>
                     )}
-                    {(lead.zoho_city ||
-                      lead.zoho_state ||
-                      lead.zoho_country) && (
+                    {(lead.zoho_lead.city ||
+                      lead.zoho_lead.state ||
+                      lead.zoho_lead.country) && (
                       <div>
                         <label className="text-sm font-medium text-gray-600">
                           Location
                         </label>
                         <p className="mt-1 text-gray-900">
-                          {[lead.zoho_city, lead.zoho_state, lead.zoho_country]
+                          {[
+                            lead.zoho_lead.city,
+                            lead.zoho_lead.state,
+                            lead.zoho_lead.country,
+                          ]
                             .filter(Boolean)
                             .join(", ") || "Not provided"}
                         </p>
@@ -345,85 +348,109 @@ export default function LeadDetailsPage() {
                     )}
                   </div>
                 </div>
-                {lead.zoho_description && (
-                  <div className="mt-4 border-t border-gray-200 pt-4">
-                    <label className="text-sm font-medium text-gray-600">
-                      Description
-                    </label>
-                    <p className="mt-1 text-sm leading-relaxed text-gray-900">
-                      {lead.zoho_description}
-                    </p>
-                  </div>
-                )}
               </CardContent>
             </Card>
           )}
 
-          {/* Conversations */}
+          {/* Activity */}
           <Card className="shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between pb-4">
-              <CardTitle className="text-lg">Conversations</CardTitle>
+              <CardTitle className="text-lg">Recent Activity</CardTitle>
               <Badge variant="secondary" className="bg-gray-100 text-gray-700">
-                {lead.conversations.length}
+                {(lead.calls?.length || 0) + (lead.chats?.length || 0)}
               </Badge>
             </CardHeader>
             <CardContent>
-              {lead.conversations.length > 0 ? (
+              {lead.calls?.length > 0 || lead.chats?.length > 0 ? (
                 <div className="space-y-3">
-                  {lead.conversations.map(conv => (
+                  {/* Recent Calls */}
+                  {lead.calls?.slice(0, 5).map(call => (
                     <div
-                      key={conv.id}
+                      key={`call-${call.id}`}
                       className="cursor-pointer rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
                       onClick={() => {
-                        const tab =
-                          conv.type === "CALL" ? "call-logs" : "chat-logs";
-                        router.push(
-                          `/${orgSlug}/${tab}?conversation=${conv.id}`
-                        );
+                        router.push(`/${orgSlug}/call-logs?call=${call.id}`);
                       }}
                     >
                       <div className="mb-3 flex items-start justify-between">
                         <div className="flex items-center gap-3">
-                          {conv.type === "CALL" ? (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
-                              <PhoneCall className="h-4 w-4 text-blue-600" />
-                            </div>
-                          ) : (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
-                              <MessageSquare className="h-4 w-4 text-green-600" />
-                            </div>
-                          )}
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
+                            <PhoneCall className="h-4 w-4 text-blue-600" />
+                          </div>
                           <span className="text-sm font-medium text-gray-900">
-                            {conv.name}
+                            {call.agent.name}
                           </span>
                         </div>
                         <Badge
                           variant="outline"
                           className="border-gray-300 text-xs text-gray-600"
                         >
-                          {conv.type}
+                          {call.status}
                         </Badge>
                       </div>
-                      {conv.summary && (
+                      {call.summary && (
                         <p className="mb-3 line-clamp-2 text-sm leading-relaxed text-gray-600">
-                          {conv.summary}
+                          {(() => {
+                            try {
+                              const parsed = JSON.parse(call.summary);
+                              return (
+                                parsed.short || parsed.detailed || call.summary
+                              );
+                            } catch {
+                              return call.summary;
+                            }
+                          })()}
                         </p>
                       )}
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span>
-                          {formatDistanceToNow(new Date(conv.created_at), {
+                          {formatDistanceToNow(new Date(call.started_at), {
                             addSuffix: true,
                           })}
                         </span>
-                        {conv.duration && (
+                        {call.duration && (
                           <span>
-                            • {Math.floor(conv.duration / 60)}m{" "}
-                            {Math.floor(conv.duration % 60)}s
+                            • {Math.floor(call.duration / 60)}m{" "}
+                            {Math.floor(call.duration % 60)}s
                           </span>
                         )}
-                        {conv.message_count && (
-                          <span>• {conv.message_count} messages</span>
-                        )}
+                        <span>• {call.direction}</span>
+                        <span>• {call.source}</span>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Recent Chats */}
+                  {lead.chats?.slice(0, 3).map(chat => (
+                    <div
+                      key={`chat-${chat.id}`}
+                      className="cursor-pointer rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
+                      onClick={() => {
+                        router.push(`/${orgSlug}/chat-logs?chat=${chat.id}`);
+                      }}
+                    >
+                      <div className="mb-3 flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
+                            <MessageSquare className="h-4 w-4 text-green-600" />
+                          </div>
+                          <span className="text-sm font-medium text-gray-900">
+                            Chat Session
+                          </span>
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className="border-gray-300 text-xs text-gray-600"
+                        >
+                          {chat.status}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <span>
+                          {formatDistanceToNow(new Date(chat.created_at), {
+                            addSuffix: true,
+                          })}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -431,45 +458,55 @@ export default function LeadDetailsPage() {
               ) : (
                 <div className="py-8 text-center">
                   <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-50">
-                    <MessageSquare className="h-6 w-6 text-gray-400" />
+                    <Activity className="h-6 w-6 text-gray-400" />
                   </div>
-                  <p className="text-sm text-gray-500">No conversations yet</p>
+                  <p className="text-sm text-gray-500">No activity yet</p>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Additional Information */}
-          {lead.additional_info &&
-            Object.keys(lead.additional_info).length > 0 && (
-              <Card className="shadow-sm">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg">
-                    Additional Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto rounded-lg bg-gray-50 p-4">
-                    <pre className="text-sm whitespace-pre-wrap text-gray-700">
-                      {JSON.stringify(lead.additional_info, null, 2)}
-                    </pre>
+          {/* Activity Statistics */}
+          {/* {lead.stats && (
+            <Card className="shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">Activity Statistics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-900">{lead.stats.total_calls}</div>
+                    <div className="text-sm text-gray-500">Total Calls</div>
+                    <div className="text-xs text-gray-400 mt-1">Cost: ₹{lead.stats.total_call_cost}</div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-900">{lead.stats.total_chats}</div>
+                    <div className="text-sm text-gray-500">Total Chats</div>
+                    <div className="text-xs text-gray-400 mt-1">Cost: ₹{lead.stats.total_chat_cost}</div>
+                  </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Total Cost:</span>
+                    <span className="font-semibold text-gray-900">₹{lead.stats.total_cost}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )} */}
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Assigned Agents */}
-          <Card className="shadow-sm">
+          {/* <Card className="shadow-sm">
             <CardHeader className="pb-4">
               <CardTitle className="text-base">Assigned Agents</CardTitle>
             </CardHeader>
             <CardContent>
-              {lead.agents.length > 0 ? (
+              {lead.assigned_agents && lead.assigned_agents.length > 0 ? (
                 <div className="space-y-3">
-                  {lead.agents.map(agent => (
+                  {lead.assigned_agents.map(agent => (
                     <div key={agent.id} className="flex items-center gap-3">
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
                         <span className="text-xs font-medium text-blue-600">
@@ -480,7 +517,7 @@ export default function LeadDetailsPage() {
                         <p className="text-sm font-medium text-gray-900">
                           {agent.name}
                         </p>
-                        <p className="text-xs text-gray-500">@{agent.slug}</p>
+                        <p className="text-xs text-gray-500">{agent.type}</p>
                       </div>
                     </div>
                   ))}
@@ -494,7 +531,7 @@ export default function LeadDetailsPage() {
                 </div>
               )}
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Activity Timeline */}
           <Card className="shadow-sm">
@@ -553,19 +590,25 @@ export default function LeadDetailsPage() {
           {/* Lead Stats */}
           <Card className="shadow-sm">
             <CardHeader className="pb-4">
-              <CardTitle className="text-base">Statistics</CardTitle>
+              <CardTitle className="text-base">Lead Statistics</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Conversations</span>
+                <span className="text-sm text-gray-600">Total Activity</span>
                 <span className="font-medium text-gray-900">
-                  {lead.conversations.length}
+                  {(lead.calls?.length || 0) + (lead.chats?.length || 0)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Follow-ups</span>
                 <span className="font-medium text-gray-900">
-                  {lead.follow_ups || 0}
+                  {lead.follow_up_count || 0}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Reschedules</span>
+                <span className="font-medium text-gray-900">
+                  {lead.reschedule_count || 0}
                 </span>
               </div>
               {lead.is_indian !== undefined && (
@@ -576,14 +619,80 @@ export default function LeadDetailsPage() {
                   </span>
                 </div>
               )}
-              {lead.in_process !== undefined && (
+              {lead.call_active !== undefined && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">In Process</span>
+                  <span className="text-sm text-gray-600">Active Call</span>
                   <span
-                    className={`font-medium ${lead.in_process ? "text-orange-600" : "text-gray-900"}`}
+                    className={`font-medium ${lead.call_active ? "text-green-600" : "text-gray-900"}`}
                   >
-                    {lead.in_process ? "Yes" : "No"}
+                    {lead.call_active ? "Yes" : "No"}
                   </span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Timeline */}
+          <Card className="shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base">Timeline</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
+                  <Calendar className="h-4 w-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-600">Created</p>
+                  <p className="text-sm text-gray-900">
+                    {formatDateTime(lead.created_at)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
+                  <Activity className="h-4 w-4 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-600">
+                    Last Updated
+                  </p>
+                  <p className="text-sm text-gray-900">
+                    {formatDateTime(lead.updated_at)}
+                  </p>
+                </div>
+              </div>
+
+              {lead.last_follow_up && (
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-100">
+                    <PhoneCall className="h-4 w-4 text-yellow-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-600">
+                      Last Follow-up
+                    </p>
+                    <p className="text-sm text-gray-900">
+                      {formatDateTime(lead.last_follow_up)}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {lead.next_follow_up && (
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100">
+                    <Calendar className="h-4 w-4 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-600">
+                      Next Follow-up
+                    </p>
+                    <p className="text-sm text-gray-900">
+                      {formatDateTime(lead.next_follow_up)}
+                    </p>
+                  </div>
                 </div>
               )}
             </CardContent>

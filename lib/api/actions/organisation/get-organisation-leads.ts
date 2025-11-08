@@ -19,6 +19,41 @@ export interface LeadAgent {
   slug: string;
 }
 
+export interface ZohoLead {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  status: string;
+  source: string;
+  disposition: string;
+  country: string;
+  state: string;
+  city: string;
+  requires_human_action: number;
+  is_handled_by_human: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LatestCall {
+  id: number;
+  status: string;
+  direction: string;
+  started_at: string;
+  ended_at: string;
+  duration: number | null;
+}
+
+export interface LatestChat {
+  id: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  message_count?: number;
+}
+
 export interface LeadConversation {
   id: number;
   name: string;
@@ -31,41 +66,30 @@ export interface LeadConversation {
 
 export interface Lead {
   id: number;
-  name?: string;
   first_name?: string;
   last_name?: string;
+  full_name?: string;
   email?: string;
   phone_number?: string;
   source?: string;
   status?: string;
   is_indian?: number;
-  additional_info?: Record<string, unknown>;
-  logs?: Record<string, unknown>;
-  follow_ups?: number;
-  next_follow_up?: string;
-  in_process?: number;
+  follow_up_count?: number;
+  reschedule_count?: number;
+  last_follow_up?: string;
+  next_follow_up?: string | null;
+  call_active?: number;
   created_at: string;
   updated_at: string;
+  zoho_lead?: ZohoLead;
+  latest_call?: LatestCall;
+  latest_chat?: LatestChat | null;
+  total_calls?: number;
+  total_chats?: number;
 
-  // Zoho CRM fields
-  zoho_id?: string;
-  zoho_lead_owner?: string;
-  zoho_lead_owner_id?: string;
-  zoho_first_name?: string;
-  zoho_last_name?: string;
-  zoho_mobile?: string;
-  zoho_email?: string;
-  zoho_status?: string;
-  zoho_lead_disposition?: string;
-  zoho_lead_source?: string;
-  zoho_country?: string;
-  zoho_state?: string;
-  zoho_city?: string;
-  zoho_street?: string;
-  zoho_description?: string;
-
-  agents: LeadAgent[];
-  conversations: LeadConversation[];
+  // Legacy fields for backward compatibility
+  agents?: LeadAgent[];
+  conversations?: LeadConversation[];
 }
 
 export interface StatusOption {
@@ -80,15 +104,19 @@ export interface SourceOption {
 
 export interface LeadListResponse {
   leads: Lead[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalCount: number;
-    limit: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
+  stats: {
+    total_leads: number;
+    new_leads: number;
+    qualified_leads: number;
+    junk_leads: number;
   };
-  filters: {
+  pagination: {
+    current_page: number;
+    per_page: number;
+    total: number;
+    total_pages: number;
+  };
+  filters?: {
     source?: string;
     status?: string;
     agent?: string;
@@ -114,8 +142,8 @@ export const getOrganisationLeadsAction = async (
   if (filters.status) params.append("status", filters.status);
   if (filters.agent) params.append("agent", filters.agent);
   if (filters.search) params.append("search", filters.search);
-  if (filters.startDate) params.append("startDate", filters.startDate);
-  if (filters.endDate) params.append("endDate", filters.endDate);
+  if (filters.startDate) params.append("start_date", filters.startDate);
+  if (filters.endDate) params.append("end_date", filters.endDate);
 
   const queryString = params.toString() ? `?${params.toString()}` : "";
   const response = await axios.get(

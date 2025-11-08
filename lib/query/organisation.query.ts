@@ -1,3 +1,4 @@
+import { getCallDetailsAction } from "@/lib/api/actions/organisation/get-call-details";
 import { getLeadDetailsAction } from "@/lib/api/actions/organisation/get-lead-details";
 import { getOrganisationAction } from "@/lib/api/actions/organisation/get-organisation";
 import { getOrganisationAgentsAction } from "@/lib/api/actions/organisation/get-organisation-agents";
@@ -5,6 +6,10 @@ import {
   getOrganisationAnalyticsAction,
   type AnalyticsFilters,
 } from "@/lib/api/actions/organisation/get-organisation-analytics";
+import {
+  getOrganisationCallsAction,
+  type CallFilters,
+} from "@/lib/api/actions/organisation/get-organisation-calls";
 import {
   getOrganisationConversationsAction,
   getOrganisationConversationDetailsAction,
@@ -90,5 +95,18 @@ export const organisationQueries = {
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!leadId,
+  }),
+  getCalls: (orgSlug: string, filters: CallFilters) => ({
+    queryKey: ["organisation", orgSlug, "calls", filters],
+    queryFn: () => getOrganisationCallsAction(orgSlug, filters),
+    staleTime: 1 * 60 * 1000, // 1 minute
+    gcTime: 3 * 60 * 1000, // 3 minutes
+  }),
+  getCallDetails: (orgSlug: string, callId: string) => ({
+    queryKey: ["organisation", orgSlug, "call", callId],
+    queryFn: () => getCallDetailsAction(orgSlug, callId),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!callId,
   }),
 };

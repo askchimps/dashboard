@@ -92,7 +92,7 @@ export function DateRangeFilter({
 }: DateRangeFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Get initial applied date range from props or default to last 30 days
+  // Get initial applied date range from props or default to current month
   const getInitialAppliedRange = (): DateRange => {
     if (startDate && endDate) {
       return {
@@ -100,9 +100,11 @@ export function DateRangeFilter({
         to: new Date(endDate),
       };
     }
+    // Default to current month (from start of month to today)
+    const today = startOfToday();
     return {
-      from: subDays(startOfToday(), 29),
-      to: startOfToday(),
+      from: startOfMonth(today),
+      to: today,
     };
   };
 
