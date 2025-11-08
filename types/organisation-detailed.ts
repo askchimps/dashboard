@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { OrganisationSchema } from "./organisation";
 
 // Extended organization schema with all fields from the API response
@@ -10,31 +11,37 @@ export const OrganisationDetailedSchema = OrganisationSchema.extend({
   active_international_calls: z.number(),
   available_indian_channels: z.number(),
   available_international_channels: z.number(),
-  users: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    email: z.string().email(),
-    is_super_admin: z.number(),
-    created_at: z.string(),
-  })),
-  agents: z.array(z.object({
-    id: z.number(),
-    name: z.string(),
-    slug: z.string(),
-    type: z.string(),
-    image_url: z.string().nullable(),
-    is_disabled: z.number(),
-    created_at: z.string(),
-    updated_at: z.string(),
-  })),
-  recent_credit_history: z.array(z.object({
-    id: z.number(),
-    change_amount: z.number(),
-    change_type: z.enum(["increment", "decrement"]),
-    change_field: z.enum(["call_credits", "chat_credits"]),
-    reason: z.string(),
-    created_at: z.string(),
-  })),
+  users: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      email: z.string().email(),
+      is_super_admin: z.number(),
+      created_at: z.string(),
+    })
+  ),
+  agents: z.array(
+    z.object({
+      id: z.number(),
+      name: z.string(),
+      slug: z.string(),
+      type: z.string(),
+      image_url: z.string().nullable(),
+      is_disabled: z.number(),
+      created_at: z.string(),
+      updated_at: z.string(),
+    })
+  ),
+  recent_credit_history: z.array(
+    z.object({
+      id: z.number(),
+      change_amount: z.number(),
+      change_type: z.enum(["increment", "decrement"]),
+      change_field: z.enum(["call_credits", "chat_credits"]),
+      reason: z.string(),
+      created_at: z.string(),
+    })
+  ),
   stats: z.object({
     total_leads: z.number(),
     total_calls: z.number(),

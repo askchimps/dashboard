@@ -1,8 +1,8 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { PhoneCall, MessageSquare } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,10 +20,12 @@ interface CreditsNavbarDisplayProps {
   className?: string;
 }
 
-export default function CreditsNavbarDisplay({ className }: CreditsNavbarDisplayProps) {
+export default function CreditsNavbarDisplay({
+  className,
+}: CreditsNavbarDisplayProps) {
   const params = useParams();
   const orgSlug = params.orgSlug as string;
-  
+
   const { data: organization, isLoading } = useQuery({
     ...organisationQueries.getOne(orgSlug),
     enabled: !!orgSlug,
@@ -78,9 +80,9 @@ export default function CreditsNavbarDisplay({ className }: CreditsNavbarDisplay
           <TooltipTrigger asChild>
             <Badge
               variant="secondary"
-              className="flex cursor-default items-center gap-1.5 border bg-background/50 px-2.5 py-1 text-md transition-colors hover:bg-secondary/80"
+              className="bg-background/50 text-md hover:bg-secondary/80 flex cursor-default items-center gap-1.5 border px-2.5 py-1 transition-colors"
             >
-              <MessageSquare className="h-4 w-4 text-muted-foreground mr-1" />
+              <MessageSquare className="text-muted-foreground mr-1 h-4 w-4" />
               <span
                 className={cn(
                   "font-medium",
@@ -93,10 +95,8 @@ export default function CreditsNavbarDisplay({ className }: CreditsNavbarDisplay
           </TooltipTrigger>
           <TooltipContent>
             <p className="text-md">
-              <span className="font-medium">
-                {chatCredits.toFixed(2)}
-              </span>{" "}
-              Chat Credits
+              <span className="font-medium">{chatCredits.toFixed(2)}</span> Chat
+              Credits
             </p>
           </TooltipContent>
         </Tooltip>
@@ -106,9 +106,9 @@ export default function CreditsNavbarDisplay({ className }: CreditsNavbarDisplay
           <TooltipTrigger asChild>
             <Badge
               variant="secondary"
-              className="flex cursor-default items-center gap-1.5 border bg-background/50 px-2.5 py-1 text-md transition-colors hover:bg-secondary/80"
+              className="bg-background/50 text-md hover:bg-secondary/80 flex cursor-default items-center gap-1.5 border px-2.5 py-1 transition-colors"
             >
-              <PhoneCall className="h-4 w-4 text-muted-foreground mr-1" />
+              <PhoneCall className="text-muted-foreground mr-1 h-4 w-4" />
               <span
                 className={cn(
                   "font-medium",
@@ -121,10 +121,8 @@ export default function CreditsNavbarDisplay({ className }: CreditsNavbarDisplay
           </TooltipTrigger>
           <TooltipContent>
             <p className="text-md">
-              <span className="font-medium">
-                {callCredits.toFixed(2)}
-              </span>{" "}
-              Call Credits
+              <span className="font-medium">{callCredits.toFixed(2)}</span> Call
+              Credits
             </p>
           </TooltipContent>
         </Tooltip>

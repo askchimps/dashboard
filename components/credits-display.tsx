@@ -22,7 +22,7 @@ interface CreditsDisplayProps {
 export default function CreditsDisplay({ className }: CreditsDisplayProps) {
   const params = useParams();
   const orgSlug = params.orgSlug as string;
-  
+
   const { data: usage, isLoading, refetch } = useOrganisationUsage(orgSlug);
 
   // Refetch usage data every 2 minutes to keep it fresh
@@ -97,9 +97,9 @@ export default function CreditsDisplay({ className }: CreditsDisplayProps) {
           <TooltipTrigger asChild>
             <Badge
               variant="secondary"
-              className="flex cursor-default items-center gap-1.5 border bg-background px-3 py-1.5 transition-colors hover:bg-secondary/80"
+              className="bg-background hover:bg-secondary/80 flex cursor-default items-center gap-1.5 border px-3 py-1.5 transition-colors"
             >
-              <primaryCredits.icon className="h-3.5 w-3.5 text-muted-foreground" />
+              <primaryCredits.icon className="text-muted-foreground h-3.5 w-3.5" />
               <span
                 className={cn(
                   "text-sm font-medium",
@@ -125,9 +125,9 @@ export default function CreditsDisplay({ className }: CreditsDisplayProps) {
           <TooltipTrigger asChild>
             <Badge
               variant="secondary"
-              className="flex cursor-default items-center gap-1.5 border bg-background px-3 py-1.5 transition-colors hover:bg-secondary/80"
+              className="bg-background hover:bg-secondary/80 flex cursor-default items-center gap-1.5 border px-3 py-1.5 transition-colors"
             >
-              <callCredits.icon className="h-3.5 w-3.5 text-muted-foreground" />
+              <callCredits.icon className="text-muted-foreground h-3.5 w-3.5" />
               <span
                 className={cn(
                   "text-sm font-medium",
