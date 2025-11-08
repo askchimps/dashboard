@@ -1,11 +1,11 @@
 "use server";
 
 import { createAuthenticatedAxios } from "@/lib/api/axios";
-import { IOrganisation } from "@/types/organisation";
+import { IOrganisationDetailed } from "@/types/organisation-detailed";
 
 export const getOrganisationAction = async (
   idOrSlug: string
-): Promise<IOrganisation | undefined> => {
+): Promise<IOrganisationDetailed | undefined> => {
   const axios = await createAuthenticatedAxios();
 
   const response = await axios.get(`/v1/organisation/${idOrSlug}`);
