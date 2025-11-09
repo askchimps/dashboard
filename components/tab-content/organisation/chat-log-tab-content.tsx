@@ -2,17 +2,29 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
-import { MessageSquare, MessageCircle, User, Activity } from "lucide-react";
+import {
+  MessageSquare,
+  MessageCircle,
+  User,
+  Activity,
+  CheckCircle2,
+  Clock,
+  MessageSquareText,
+} from "lucide-react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 import SectionHeader from "@/components/section-header/section-header";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateRangeFilter } from "@/components/ui/date-range-filter";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ConversationFilters } from "@/lib/api/actions/organisation/get-organisation-conversations";
-import { organisationQueries } from "@/lib/query/organisation.query";
+import { ChatFilters } from "@/lib/api/actions/chat/get-chats";
+import { chatQueries } from "@/lib/query/organisation.query";
+import { useChatSocket } from "@/lib/hooks/use-chat-socket";
+import { createClient } from "@/lib/supabase/client";
 
 export default function ChatLogTabContent() {
   const params = useParams();
@@ -20,17 +32,19 @@ export default function ChatLogTabContent() {
   const router = useRouter();
   const orgSlug = params.orgSlug as string;
 
-  // Get conversation ID from query parameter
-  const conversationFromQuery = searchParams.get("conversation");
+  // Get chat ID from query parameter
+  const chatFromQuery = searchParams.get("chat");
 
-  const [selectedConversationId, setSelectedConversationId] = useState<
-    string | null
-  >(conversationFromQuery);
-  const [activeTab, setActiveTab] = useState("chat");
-  const [filters, setFilters] = useState<ConversationFilters>({
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(
+    chatFromQuery
+  );
+  const [activeTab, setActiveTab] = useState("messages");
+  const [userId, setUserId] = useState<string | null>(null);
+  const [localChats, setLocalChats] = useState<any[]>([]);
+  const [lastWebSocketUpdate, setLastWebSocketUpdate] = useState<number>(0);
+  const [filters, setFilters] = useState<ChatFilters>({
     page: 1,
     limit: 50,
-    type: "CHAT" as const,
     startDate: format(
       new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       "yyyy-MM-dd"
@@ -38,32 +52,122 @@ export default function ChatLogTabContent() {
     endDate: format(new Date(), "yyyy-MM-dd"),
   });
 
-  // Update selected conversation when query parameter changes
+  // Get user ID from Supabase
   useEffect(() => {
-    if (conversationFromQuery) {
-      setSelectedConversationId(conversationFromQuery);
+    const getUserId = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getUserId();
+  }, []);
+
+  // Update selected chat when query parameter changes
+  useEffect(() => {
+    if (chatFromQuery) {
+      setSelectedChatId(chatFromQuery);
     }
-  }, [conversationFromQuery]);
+  }, [chatFromQuery]);
 
   // API Integration
-  const { data: conversationsData, isLoading } = useQuery({
-    ...organisationQueries.getConversations(orgSlug, filters),
+  const { data: chatsData, isLoading } = useQuery({
+    ...chatQueries.getChats(orgSlug, filters),
   });
 
-  const { data: selectedConversationDetails, isLoading: isLoadingDetails } =
-    useQuery({
-      ...organisationQueries.getConversationDetails(
-        orgSlug,
-        selectedConversationId || ""
-      ),
-      enabled: !!selectedConversationId,
-    });
+  const { data: selectedChatDetails, isLoading: isLoadingDetails } = useQuery({
+    ...chatQueries.getChatDetails(orgSlug, selectedChatId || ""),
+    enabled: !!selectedChatId,
+  });
+
+  // WebSocket Integration for real-time updates
+  const organisationId = chatsData?.organisation?.id || null;
+  const { isConnected, markChatAsRead } = useChatSocket(organisationId, userId, !!organisationId);
+
+  // Sync local chats with API data
+  useEffect(() => {
+    if (chatsData?.chats) {
+      setLocalChats(chatsData.chats);
+    }
+  }, [chatsData]);
+
+  // Create a custom WebSocket handler that updates local state
+  const handleWebSocketMessage = useCallback((data: any) => {
+    if (data.type === 'new-message' && data.chatId && data.message?.action === 'created') {
+      setLocalChats(prevChats => {
+        const updatedChats = prevChats.map(chat => {
+          if (chat.id === data.chatId) {
+            const newUnreadCount = data.message.chat?.unread_count || (chat.unread_count || 0) + 1;
+            
+            return {
+              ...chat,
+              unread_count: newUnreadCount,
+              updated_at: data.message.created_at,
+            };
+          }
+          return chat;
+        });
+        
+        setLastWebSocketUpdate(Date.now());
+        
+        // Check if the message is for the currently selected chat
+        if (selectedChatId && data.chatId.toString() === selectedChatId) {
+          // Show unread count briefly, then mark as read after 1 second
+          setTimeout(() => {
+            if (markChatAsRead) {
+              markChatAsRead(data.chatId);
+            }
+          }, 1000);
+        }
+        
+        return updatedChats;
+      });
+    }
+    
+    if (data.type === 'chat-read' && data.chatId) {
+      setLocalChats(prevChats => 
+        prevChats.map(chat => 
+          chat.id === data.chatId 
+            ? { ...chat, unread_count: 0 }
+            : chat
+        )
+      );
+      setLastWebSocketUpdate(Date.now());
+    }
+  }, [selectedChatId, markChatAsRead]);
+
+  // Listen for WebSocket events via window events (we'll emit these from the hook)
+  useEffect(() => {
+    const handleMessage = (event: CustomEvent) => {
+      handleWebSocketMessage(event.detail);
+    };
+
+    window.addEventListener('chat-socket-update' as any, handleMessage);
+    
+    return () => {
+      window.removeEventListener('chat-socket-update' as any, handleMessage);
+    };
+  }, [handleWebSocketMessage]);
+
+  // Mark chat as read when selected
+  useEffect(() => {
+    if (selectedChatId && markChatAsRead) {
+      markChatAsRead(parseInt(selectedChatId));
+    }
+  }, [selectedChatId, markChatAsRead]);
 
   const handleDateRangeApply = (startDate: string, endDate: string) => {
-    setFilters(prev => ({ ...prev, startDate, endDate, page: 1 }));
+    setFilters((prev) => ({
+      ...prev,
+      startDate: startDate,
+      endDate: endDate,
+      page: 1,
+    }));
+    setSelectedChatId(null);
   };
 
-  const conversations = conversationsData?.conversations || [];
+  const chats = localChats.length > 0 ? localChats : (chatsData?.chats || []);
 
   const formatTimeAgo = (dateString: string) => {
     try {
@@ -81,12 +185,27 @@ export default function ChatLogTabContent() {
     }
   };
 
+  const getSourceBadgeColor = (source: string) => {
+    const lowerSource = source?.toLowerCase() || "";
+    if (lowerSource.includes("whatsapp")) return "bg-green-100 text-green-800";
+    if (lowerSource.includes("instagram")) return "bg-pink-100 text-pink-800";
+    if (lowerSource.includes("facebook")) return "bg-blue-100 text-blue-800";
+    if (lowerSource.includes("telegram")) return "bg-cyan-100 text-cyan-800";
+    return "bg-gray-100 text-gray-800";
+  };
+
   return (
-    <>
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3">
           <SectionHeader label="Chat Logs" />
+          {isConnected && (
+            <Badge variant="secondary" className="bg-green-100 text-green-800">
+              <div className="mr-1.5 h-2 w-2 rounded-full bg-green-600"></div>
+              Live
+            </Badge>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <DateRangeFilter
@@ -98,16 +217,108 @@ export default function ChatLogTabContent() {
         </div>
       </div>
 
+      {/* Stats Cards */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Card key={index}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-12" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        chatsData && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Chats
+                </CardTitle>
+                <MessageSquare className="text-muted-foreground h-4 w-4" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {chatsData.summary.totalChats}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Open Chats
+                </CardTitle>
+                <Badge
+                  variant="secondary"
+                  className="bg-blue-100 text-blue-800"
+                >
+                  <Clock className="h-3 w-3" />
+                </Badge>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {chatsData.summary.openChats}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  With Lead
+                </CardTitle>
+                <Badge
+                  variant="secondary"
+                  className="bg-green-100 text-green-800"
+                >
+                  <CheckCircle2 className="h-3 w-3" />
+                </Badge>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {chatsData.summary.chatsWithLead}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Without Lead
+                </CardTitle>
+                <Badge
+                  variant="secondary"
+                  className="bg-gray-100 text-gray-800"
+                >
+                  <MessageSquareText className="h-3 w-3" />
+                </Badge>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {chatsData.summary.chatsWithoutLead}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )
+      )}
+
       {/* Main Layout */}
-      <div className="flex h-[calc(100vh-200px)] flex-col gap-6 lg:flex-row">
-        {/* Left Panel - Conversations List */}
+      <div className="flex h-[calc(100vh-100px)] flex-col gap-6 lg:flex-row">
+        {/* Left Panel - Chats List */}
         <div className="h-80 w-full lg:h-full lg:w-80 lg:flex-shrink-0">
           <div className="border-border flex h-full flex-col rounded-lg border bg-white">
             <div className="flex-1 overflow-hidden">
               <div className="h-full overflow-y-auto">
                 {isLoading ? (
                   <div className="space-y-1 p-2">
-                    {/* Skeleton loading for conversation list */}
+                    {/* Skeleton loading for chat list */}
                     {Array.from({ length: 6 }).map((_, index) => (
                       <div
                         key={index}
@@ -128,7 +339,7 @@ export default function ChatLogTabContent() {
                       </div>
                     ))}
                   </div>
-                ) : !conversations.length ? (
+                ) : !chats.length ? (
                   <div className="flex h-full items-center justify-center p-6 text-center">
                     <div className="space-y-4">
                       <div className="bg-muted mx-auto flex h-16 w-16 items-center justify-center rounded-full">
@@ -147,40 +358,57 @@ export default function ChatLogTabContent() {
                   </div>
                 ) : (
                   <div className="space-y-1 p-2">
-                    {conversations.map(conversation => (
+                    {chats.map((chat) => (
                       <div
-                        key={conversation.id}
+                        key={chat.id}
                         onClick={() => {
-                          setSelectedConversationId(conversation.id.toString());
-                          router.push(
-                            `/${orgSlug}/chat-logs?conversation=${conversation.id}`,
-                            {
-                              scroll: false,
-                            }
-                          );
+                          setSelectedChatId(chat.id.toString());
+                          router.push(`/${orgSlug}/chat-logs?chat=${chat.id}`, {
+                            scroll: false,
+                          });
                         }}
-                        className={`hover:bg-muted/50 cursor-pointer rounded-lg p-4 transition-colors ${
-                          selectedConversationId === conversation.id.toString()
-                            ? "bg-muted border-border border"
-                            : "border border-transparent"
-                        }`}
+                        className={`hover:bg-muted/70 cursor-pointer rounded-xl p-5 mb-2 transition-all duration-200 hover:shadow-sm ${selectedChatId === chat.id.toString()
+                          ? "bg-muted border-border border shadow-sm ring-1 ring-blue-100"
+                          : "hover:border-muted border border-transparent"
+                          }`}
                       >
-                        <div className="flex items-start gap-3">
-                          <div className="min-w-0 flex-1 space-y-1">
-                            <div className="flex flex-col items-start justify-between gap-2">
-                              <div className="flex items-center gap-2">
-                                <h4 className="text-foreground truncate text-sm font-medium">
-                                  {conversation.name}
-                                </h4>
+                        <div className="flex items-start gap-4">
+                          <div className="min-w-0 flex-1 space-y-2">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="text-foreground line-clamp-1 text-sm font-semibold leading-tight">
+                                    {chat.name || chat.lead?.phone_number || "Unknown User"}
+                                  </h4>
+                                </div>
+                                <div className="mt-3 flex items-center gap-2">
+                                  <Badge
+                                    variant="secondary"
+                                    className={`text-xs font-semibold ${getSourceBadgeColor(chat.source)}`}
+                                  >
+                                    {chat.source}
+                                  </Badge>
+                                </div>
                               </div>
-                              <span className="text-muted-foreground shrink-0 text-xs">
-                                {formatTimeAgo(conversation.created_at)}
-                              </span>
+                              <div className="flex flex-col gap-3 items-end">
+                                <span className="text-muted-foreground shrink-0 text-xs font-medium">
+                                  {formatTimeAgo(chat.updated_at)}
+                                </span>
+                                {(() => {
+                                  const unreadCount = Number(chat.unread_count);
+                                  const shouldShow = chat.unread_count && unreadCount > 0;
+                                  
+                                  return shouldShow ? (
+                                    <Badge className="bg-red-500 text-white px-2 py-0.5 text-xs font-bold hover:bg-red-600">
+                                      {chat.unread_count}
+                                    </Badge>
+                                  ) : null;
+                                })()}
+                              </div>
                             </div>
-
-                            {conversation.summary && (
-                              <p className="text-muted-foreground line-clamp-2 text-xs leading-relaxed">
-                                {conversation.summary}
+                            {chat.summary && (
+                              <p className="text-muted-foreground mt-2.5 line-clamp-2 text-xs leading-relaxed">
+                                {chat.summary}
                               </p>
                             )}
                           </div>
@@ -194,10 +422,10 @@ export default function ChatLogTabContent() {
           </div>
         </div>
 
-        {/* Right Panel - Chat Interface */}
+        {/* Right Panel - Chat Details Interface */}
         <div className="min-h-0 min-w-0 flex-1">
           <div className="border-border flex h-full flex-col rounded-lg border bg-white">
-            {selectedConversationId && isLoadingDetails ? (
+            {selectedChatId && isLoadingDetails ? (
               <div className="flex h-full flex-col">
                 {/* Header Skeleton */}
                 <div className="border-border border-b p-6">
@@ -245,23 +473,34 @@ export default function ChatLogTabContent() {
                   </div>
                 </div>
               </div>
-            ) : selectedConversationId && selectedConversationDetails ? (
+            ) : selectedChatId && selectedChatDetails ? (
               <div className="flex h-full flex-col">
                 {/* Header */}
-                <div className="border-border border-b p-6">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-green-100 text-sm text-green-600">
-                        AI
+                <div className="border-border border-b p-7">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-12 w-12">
+                      <AvatarFallback className="bg-gradient-to-br from-green-100 to-green-200 text-base font-semibold text-green-700">
+                        {selectedChatDetails.lead?.first_name?.[0] ||
+                          selectedChatDetails.lead?.last_name?.[0] ||
+                          "U"}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <h3 className="text-foreground font-semibold">
-                        {selectedConversationDetails.agent?.name ||
-                          "AI Assistant"}
+                    <div className="space-y-1">
+                      <h3 className="text-foreground text-lg font-bold">
+                        {selectedChatDetails.lead?.first_name ||
+                          selectedChatDetails.lead?.last_name
+                          ? `${selectedChatDetails.lead.first_name ?? ""} ${selectedChatDetails.lead.last_name ?? ""}`
+                          : selectedChatDetails.lead?.phone_number ||
+                          "Unknown User"}
                       </h3>
-                      <p className="text-muted-foreground text-sm">
-                        {selectedConversationDetails.source || "Website"} • Chat
+                      <p className="text-muted-foreground flex items-center gap-2 text-sm font-medium">
+                        <Badge
+                          variant="secondary"
+                          className={`text-xs ${getSourceBadgeColor(selectedChatDetails.chat.source)}`}
+                        >
+                          {selectedChatDetails.chat.source}
+                        </Badge>
+                        • Chat Session
                       </p>
                     </div>
                   </div>
@@ -270,141 +509,268 @@ export default function ChatLogTabContent() {
                 <Separator />
 
                 {/* Tabs */}
-                <div className="flex border-b px-6">
+                <div className="flex border-b bg-gray-50/50 px-7">
                   <button
-                    onClick={() => setActiveTab("chat")}
-                    className={`border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
-                      activeTab === "chat"
-                        ? "border-primary text-primary"
-                        : "text-muted-foreground hover:text-foreground border-transparent"
-                    }`}
+                    onClick={() => setActiveTab("messages")}
+                    className={`border-b-2 px-5 py-4 text-sm font-semibold transition-all duration-200 ${activeTab === "messages"
+                      ? "border-primary text-primary -mb-px bg-white"
+                      : "text-muted-foreground hover:text-foreground border-transparent hover:bg-white/50"
+                      }`}
                   >
-                    <MessageCircle className="mr-2 inline h-4 w-4" />
-                    Chat
+                    <MessageCircle className="mr-2.5 inline h-4 w-4" />
+                    Messages
                   </button>
                   <button
                     onClick={() => setActiveTab("details")}
-                    className={`border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
-                      activeTab === "details"
-                        ? "border-primary text-primary"
-                        : "text-muted-foreground hover:text-foreground border-transparent"
-                    }`}
+                    className={`border-b-2 px-5 py-4 text-sm font-semibold transition-all duration-200 ${activeTab === "details"
+                      ? "border-primary text-primary -mb-px bg-white"
+                      : "text-muted-foreground hover:text-foreground border-transparent hover:bg-white/50"
+                      }`}
                   >
-                    <Activity className="mr-2 inline h-4 w-4" />
-                    Details
+                    <Activity className="mr-2.5 inline h-4 w-4" />
+                    Details & Analysis
                   </button>
                 </div>
 
                 {/* Tab Content */}
                 <div className="flex-1 overflow-hidden">
-                  {activeTab === "chat" ? (
-                    <div className="h-full p-6">
-                      <div className="h-full space-y-4 overflow-y-auto px-1">
-                        {selectedConversationDetails.messages?.map(message => (
-                          <div
-                            key={message.id}
-                            className={`flex gap-3 ${
-                              message.role === "user"
+                  {activeTab === "messages" ? (
+                    <div className="h-full p-7">
+                      {!selectedChatDetails.messages ||
+                        selectedChatDetails.messages.length === 0 ? (
+                        <div className="flex h-full items-center justify-center text-center">
+                          <div className="space-y-4">
+                            <div className="bg-muted mx-auto flex h-16 w-16 items-center justify-center rounded-full">
+                              <MessageCircle className="text-muted-foreground h-8 w-8" />
+                            </div>
+                            <div className="space-y-2">
+                              <h3 className="text-foreground font-medium">
+                                No messages yet
+                              </h3>
+                              <p className="text-muted-foreground max-w-sm text-sm">
+                                No messages found for this chat. The conversation
+                                may not have started yet.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="h-full space-y-6 overflow-y-auto px-1">
+                          {selectedChatDetails.messages.map((message) => (
+                            <div
+                              key={message.id}
+                              className={`flex gap-4 ${message.role === "user"
                                 ? "justify-end"
                                 : "justify-start"
-                            }`}
-                          >
-                            {message.role === "assistant" && (
-                              <Avatar className="h-8 w-8 shrink-0">
-                                <AvatarFallback className="bg-green-100 text-xs text-green-600">
-                                  AI
-                                </AvatarFallback>
-                              </Avatar>
-                            )}
-
-                            <div
-                              className={`max-w-[80%] rounded-lg px-4 py-3 text-sm ${
-                                message.role === "user"
-                                  ? "bg-green-600 text-white"
-                                  : "bg-gray-100 text-gray-900"
-                              }`}
+                                }`}
                             >
-                              <div className="break-words whitespace-pre-wrap">
-                                {message.content}
-                              </div>
-                              <div className="mt-2 text-xs opacity-70">
-                                {formatTimeAgo(message.created_at)}
-                              </div>
-                            </div>
+                              {(message.role === "assistant" ||
+                                message.role === "bot") && (
+                                  <Avatar className="h-9 w-9 shrink-0">
+                                    <AvatarFallback className="bg-green-100 text-sm font-medium text-green-700">
+                                      AI
+                                    </AvatarFallback>
+                                  </Avatar>
+                                )}
 
-                            {message.role === "user" && (
-                              <Avatar className="h-8 w-8 shrink-0">
-                                <AvatarFallback className="bg-blue-100 text-blue-600">
-                                  <User className="h-4 w-4" />
-                                </AvatarFallback>
-                              </Avatar>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                              <div
+                                className={`max-w-[80%] rounded-xl px-5 py-4 text-sm shadow-sm ${message.role === "user"
+                                  ? "bg-green-600 text-white"
+                                  : "border border-gray-100 bg-gray-50 text-gray-900"
+                                  }`}
+                              >
+                                <div className="break-words whitespace-pre-wrap font-medium leading-relaxed">
+                                  {message.content}
+                                </div>
+                                <div className="mt-2.5 text-xs font-medium opacity-70">
+                                  {formatTimeAgo(message.created_at)}
+                                </div>
+                              </div>
+
+                              {message.role === "user" && (
+                                <Avatar className="h-9 w-9 shrink-0">
+                                  <AvatarFallback className="bg-blue-100 font-medium text-blue-700">
+                                    <User className="h-4 w-4" />
+                                  </AvatarFallback>
+                                </Avatar>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <div className="h-full overflow-y-auto p-6">
-                      <div className="space-y-6">
+                    <div className="h-full overflow-y-auto p-7">
+                      <div className="space-y-8">
+                        {/* Chat Information */}
                         <div>
-                          <div className="mb-4 flex items-center gap-2">
-                            <Activity className="h-4 w-4" />
-                            <h4 className="text-muted-foreground text-sm font-medium tracking-wide uppercase">
-                              General Details
+                          <div className="mb-5 flex items-center gap-3">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100">
+                              <MessageSquare className="h-4 w-4 text-blue-700" />
+                            </div>
+                            <h4 className="text-foreground text-sm font-bold tracking-tight">
+                              Chat Information
                             </h4>
                           </div>
 
-                          <div className="space-y-3 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">
-                                Source:
-                              </span>
-                              <span className="font-medium">
-                                {selectedConversationDetails.source ||
-                                  "Website"}
-                              </span>
-                            </div>
-
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">
-                                Type:
-                              </span>
-                              <span className="font-medium">Chat</span>
-                            </div>
-
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">
-                                Messages:
-                              </span>
-                              <span className="font-medium">
-                                {selectedConversationDetails.messages?.length ||
-                                  0}
-                              </span>
-                            </div>
-
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">
-                                Created:
-                              </span>
-                              <span className="font-medium">
-                                {formatDateTime(
-                                  selectedConversationDetails.created_at
-                                )}
-                              </span>
+                          <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-5">
+                            <div className="space-y-4 text-sm">
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground font-medium">
+                                  Source:
+                                </span>
+                                <Badge
+                                  variant="secondary"
+                                  className={getSourceBadgeColor(
+                                    selectedChatDetails.chat.source
+                                  )}
+                                >
+                                  {selectedChatDetails.chat.source}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground font-medium">
+                                  Status:
+                                </span>
+                                <span className="text-foreground font-semibold capitalize">
+                                  {selectedChatDetails.chat.status}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground font-medium">
+                                  Messages:
+                                </span>
+                                <span className="text-foreground font-semibold">
+                                  {selectedChatDetails.messages?.length || 0}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground font-medium">
+                                  Started:
+                                </span>
+                                <span className="text-foreground font-semibold">
+                                  {formatDateTime(selectedChatDetails.chat.created_at)}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground font-medium">
+                                  Last Updated:
+                                </span>
+                                <span className="text-foreground font-semibold">
+                                  {formatDateTime(selectedChatDetails.chat.updated_at)}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
 
-                        {selectedConversationDetails.summary && (
+                        {/* Lead Information */}
+                        {selectedChatDetails.lead && (
                           <div>
-                            <div className="mb-4 flex items-center gap-2">
-                              <MessageCircle className="h-4 w-4" />
-                              <h4 className="text-muted-foreground text-sm font-medium tracking-wide uppercase">
-                                Summary
+                            <div className="mb-5 flex items-center gap-3">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100">
+                                <User className="h-4 w-4 text-green-700" />
+                              </div>
+                              <h4 className="text-foreground text-sm font-bold tracking-tight">
+                                Lead Information
                               </h4>
                             </div>
-                            <div className="bg-muted/50 rounded-lg p-4 text-sm">
-                              {selectedConversationDetails.summary}
+                            <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-5">
+                              <div className="space-y-4 text-sm">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-muted-foreground font-medium">
+                                    Name:
+                                  </span>
+                                  <span className="text-foreground font-semibold">
+                                    {selectedChatDetails.lead.first_name ||
+                                      selectedChatDetails.lead.last_name
+                                      ? `${selectedChatDetails.lead.first_name ?? ""} ${selectedChatDetails.lead.last_name ?? ""}`
+                                      : selectedChatDetails.lead.phone_number ||
+                                      "Unknown"}
+                                  </span>
+                                </div>
+                                {selectedChatDetails.lead.email && (
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-muted-foreground font-medium">
+                                      Email:
+                                    </span>
+                                    <span className="text-foreground max-w-[200px] truncate font-semibold">
+                                      {selectedChatDetails.lead.email}
+                                    </span>
+                                  </div>
+                                )}
+                                {selectedChatDetails.lead.phone_number && (
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-muted-foreground font-medium">
+                                      Phone:
+                                    </span>
+                                    <span className="text-foreground font-semibold">
+                                      {selectedChatDetails.lead.phone_number}
+                                    </span>
+                                  </div>
+                                )}
+                                {selectedChatDetails.lead.status && (
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-muted-foreground font-medium">
+                                      Status:
+                                    </span>
+                                    <span className="text-foreground font-semibold capitalize">
+                                      {selectedChatDetails.lead.status.replace(
+                                        /_/g,
+                                        " "
+                                      )}
+                                    </span>
+                                  </div>
+                                )}
+                                {selectedChatDetails.lead.source && (
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-muted-foreground font-medium">
+                                      Lead Source:
+                                    </span>
+                                    <span className="text-foreground font-semibold">
+                                      {selectedChatDetails.lead.source}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Summary */}
+                        {selectedChatDetails.chat.summary && (
+                          <div>
+                            <div className="mb-5 flex items-center gap-3">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100">
+                                <MessageCircle className="h-4 w-4 text-purple-700" />
+                              </div>
+                              <h4 className="text-foreground text-sm font-bold tracking-tight">
+                                Chat Summary
+                              </h4>
+                            </div>
+                            <div className="rounded-xl border border-purple-100 bg-gradient-to-br from-purple-50/50 to-blue-50/50 p-6">
+                              <p className="text-muted-foreground text-sm font-medium leading-relaxed">
+                                {selectedChatDetails.chat.summary}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Analysis */}
+                        {selectedChatDetails.chat.analysis && (
+                          <div>
+                            <div className="mb-5 flex items-center gap-3">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100">
+                                <Activity className="h-4 w-4 text-orange-700" />
+                              </div>
+                              <h4 className="text-foreground text-sm font-bold tracking-tight">
+                                Chat Analysis
+                              </h4>
+                            </div>
+                            <div className="rounded-xl border border-orange-100 bg-gradient-to-br from-orange-50/50 to-yellow-50/50 p-6">
+                              <p className="text-muted-foreground text-sm font-medium leading-relaxed">
+                                {selectedChatDetails.chat.analysis}
+                              </p>
                             </div>
                           </div>
                         )}
@@ -425,7 +791,7 @@ export default function ChatLogTabContent() {
                     </h3>
                     <p className="text-muted-foreground text-sm">
                       Choose a chat log from the list to see the conversation
-                      details and chat history
+                      history, lead information, and chat analysis
                     </p>
                   </div>
                 </div>
@@ -434,6 +800,6 @@ export default function ChatLogTabContent() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
