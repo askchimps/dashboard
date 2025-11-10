@@ -211,6 +211,25 @@ export default function ChatLogTabContent() {
           console.log('✅ Updated chats state with read status');
           return updatedChats;
         });
+      } else if (data.type === 'chat-updated' && data?.chatId) {
+        console.log('✅ Processing chat updated event');
+        console.log('💬 Chat details:', data.updateData.chat);
+
+        setLocalChats(prevChats => {
+          const updatedChats = prevChats.map(chat => {
+            if (chat.id === data.chatId) {
+              console.log(`🔄 Updating chat ${chat.id}`);
+              return {
+                ...chat,
+                ...data.updateData.chat,
+              };
+            }
+            return chat;
+          });
+
+          console.log('✅ Updated chats state with new chat details');
+          return updatedChats;
+        });
       }
     } catch (error) {
       console.error('❌ Error processing WebSocket message:', error);
@@ -313,7 +332,7 @@ export default function ChatLogTabContent() {
       // Only scroll if we're near the bottom and not actively scrolling
       setTimeout(() => {
         scrollToBottom(false);
-      }, 100);
+      }, 20);
     } else {
       console.log('❌ Auto-scroll conditions not met');
     }
@@ -583,7 +602,7 @@ export default function ChatLogTabContent() {
                         className={`hover:bg-muted/70 cursor-pointer rounded-xl p-5 mb-2 transition-all duration-200 hover:shadow-sm ${selectedChatId === chat.id?.toString()
                           ? "bg-muted border-border border shadow-sm ring-1 ring-blue-100"
                           : "hover:border-muted border border-transparent"
-                          }`}
+                          }${chat.human_handled ? "border border-red-500" : " "}`}
                       >
                         <div className="flex items-start gap-4">
                           <div className="min-w-0 flex-1 space-y-2">
@@ -787,6 +806,9 @@ export default function ChatLogTabContent() {
                           {/* Message Input */}
                           <MessageInput
                             chatId={selectedChatId}
+                            chatSource={selectedChatDetails?.chat?.source}
+                            chatInstagramId={selectedChatDetails?.chat?.instagram_id}
+                            chatWhatsAppId={selectedChatDetails?.chat?.whatsapp_id}
                             onMessageSent={handleMessageSent}
                             placeholder="Type your message..."
                           />

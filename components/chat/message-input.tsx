@@ -35,6 +35,9 @@ export type MessageType = 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE' | 'GIF';
 
 interface MessageInputProps {
   chatId: string;
+  chatSource?: string; // Chat source (e.g., "INSTAGRAM", "WHATSAPP", etc.)
+  chatInstagramId?: string; // Instagram chat ID
+  chatWhatsAppId?: string; // WhatsApp chat ID
   onMessageSent?: () => void; // Callback after successful message send
   disabled?: boolean;
   placeholder?: string;
@@ -44,6 +47,9 @@ interface MessageInputProps {
 
 export function MessageInput({
   chatId,
+  chatSource,
+  chatInstagramId,
+  chatWhatsAppId,
   onMessageSent,
   disabled = false,
   placeholder = "Type a message...",
@@ -76,6 +82,16 @@ export function MessageInput({
       return false;
     }
 
+    // Check for Instagram source restrictions
+    if (chatSource?.toUpperCase() === "INSTAGRAM") {
+      if (file.type !== 'image/png') {
+        toast.error(`For Instagram chats, only PNG images are allowed. Please select a PNG file.`);
+        return false;
+      }
+      return true;
+    }
+
+    // Default allowed file types for other sources
     const allowedTypes = [
       // Images
       'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
@@ -171,7 +187,9 @@ export function MessageInput({
       const result = await sendMessageWithFilesAction(
         chatId,
         content.trim(),
-        attachedFiles
+        attachedFiles,
+        chatInstagramId,
+        chatSource
       );
 
       if (!result.success) {
@@ -251,7 +269,7 @@ export function MessageInput({
               ref={fileInputRef}
               type="file"
               multiple
-              accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.xls,.xlsx"
+              accept={chatSource?.toUpperCase() === "INSTAGRAM" ? ".png,image/png" : "image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.xls,.xlsx"}
               onChange={handleFileSelect}
               className="hidden"
             />

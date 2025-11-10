@@ -34,6 +34,7 @@ interface ChatUpdateEvent {
     action: "created" | "updated" | "deleted";
     chat?: any;
     chatId?: number;
+    wasHumanHandledUpdated?: boolean;
   };
   timestamp: string;
 }
@@ -54,9 +55,8 @@ export function useChatSocket(
 
     try {
       // Use manual WebSocket server for testing
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4022";
-      const wsUrl = backendUrl.replace(':4022', ':4023');
-      
+      const wsUrl = process.env.NEXT_PUBLIC_BACKEND_WS_URL || "ws://localhost:4023";
+
       // Get access token from Supabase
       const supabase = createClient();
       const { data: session } = await supabase.auth.getSession();
@@ -112,7 +112,7 @@ export function useChatSocket(
               }
             }));
           }
-          
+
           // Optimistically update chat list to immediately show new unread count
           queryClient.setQueryData(
             ["organisation", "chats"],
@@ -123,7 +123,7 @@ export function useChatSocket(
               const newChats = oldData.chats.map((chat: any) => {
                 if (chat.id === chatId) {
                   const newUnreadCount = message.chat.unread_count || (chat.unread_count || 0) + 1;
-                  
+
                   return {
                     ...chat,
                     unread_count: newUnreadCount,
@@ -132,13 +132,13 @@ export function useChatSocket(
                   };
                 }
                 return { ...chat }; // Create new object even for unchanged chats
-              });              const updatedData = {
+              }); const updatedData = {
                 ...oldData,
                 chats: newChats,
                 // Add timestamp to force change detection
                 _cacheUpdated: Date.now()
               };
-              
+
               return updatedData;
             }
           );
@@ -165,7 +165,7 @@ export function useChatSocket(
                   updated_at: message.created_at,
                 },
               };
-              
+
               return updatedDetails;
             }
           );
@@ -223,13 +223,13 @@ export function useChatSocket(
               }
             }));
           }
-          
+
           // Add new chat to the beginning of the chat list
           queryClient.setQueryData(
             ["organisation", "chats"],
             (oldData: any) => {
               if (!oldData) return oldData;
-              
+
               return {
                 ...oldData,
                 chats: [chat, ...oldData.chats],
@@ -257,25 +257,122 @@ export function useChatSocket(
             queryKey: ["organisation", "chats"],
           });
         } else if (updateData.action === "updated") {
-          // Update chat in list and details
-          queryClient.invalidateQueries({
-            queryKey: ["organisation", "chats"],
-          });
+          // Emit custom event for component to listen to
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('chat-socket-update', {
+              detail: {
+                type: 'chat-updated',
+                chatId,
+                updateData,
+                wasHumanHandledUpdated: updateData.wasHumanHandledUpdated || false,
+                timestamp: Date.now()
+              }
+            }));
+          }
 
-          queryClient.setQueryData(
-            ["chat", "details", chatId.toString()],
-            (oldData: any) => {
-              if (!oldData) return oldData;
+          // Check if chat list data exists before trying to update it
+          const currentChatData = queryClient.getQueryData(["organisation", "chats"]);
+          console.log("📊 Current chat data in cache:", currentChatData);
+          
+          if (currentChatData) {
+            // Only update if we have existing data
+            queryClient.setQueryData(
+              ["organisation", "chats"],
+              (oldData: any) => {
+                console.log("🔄 Optimistically updating chat list for chatId:", chatId, "with existing data");
+                if (!oldData?.chats) {
+                  console.log("⚠️ No chats array found, skipping optimistic update");
+                  return oldData;
+                }
+                
+                console.log("📋 Current chat list:", oldData.chats);
+                const newChats = oldData.chats.map((chat: any) => {
+                  console.log("🔍 Checking chat:", chat.id);
+                  if (chat.id === chatId) {
+                    console.log(`🔄 Updating chat ${chatId} in list with:`, updateData.chat);
+                    const updatedChat = {
+                      ...chat,
+                      ...updateData.chat,
+                      _lastUpdated: Date.now()
+                    };
 
-              return {
-                ...oldData,
-                chat: {
-                  ...oldData.chat,
-                  ...updateData.chat,
-                },
-              };
+                    // Ensure human_handled field is properly updated for red border display
+                    if (updateData.chat && updateData.chat.human_handled !== undefined) {
+                      console.log(`🔴 Chat ${chatId} human_handled updated from ${chat.human_handled} to ${updateData.chat.human_handled}`);
+                      updatedChat.human_handled = updateData.chat.human_handled;
+                    }
+
+                    return updatedChat;
+                  }
+                  return { ...chat };
+                });
+
+                return {
+                  ...oldData,
+                  chats: newChats,
+                  _cacheUpdated: Date.now()
+                };
+              }
+            );
+          } else {
+            console.log("📭 No chat data in cache, triggering refetch instead of optimistic update");
+            // If no cached data exists, trigger a refetch to get fresh data
+            queryClient.invalidateQueries({
+              queryKey: ["organisation", "chats"],
+              refetchType: 'active'
+            });
+          }
+
+          // Update chat details if available
+          const currentChatDetailsData = queryClient.getQueryData(["chat", "details", chatId.toString()]);
+          if (currentChatDetailsData) {
+            queryClient.setQueryData(
+              ["chat", "details", chatId.toString()],
+              (oldData: any) => {
+                if (!oldData) return oldData;
+
+                console.log(`🔄 Updating chat ${chatId} details with:`, updateData.chat);
+                const updatedChatDetails = {
+                  ...oldData,
+                  chat: {
+                    ...oldData.chat,
+                    ...updateData.chat,
+                  },
+                };
+
+                // Ensure human_handled field is properly updated in details too
+                if (updateData.chat && updateData.chat.human_handled !== undefined) {
+                  updatedChatDetails.chat.human_handled = updateData.chat.human_handled;
+                }
+
+                return updatedChatDetails;
+              }
+            );
+          } else {
+            console.log(`📭 No chat details in cache for chat ${chatId}`);
+          }
+
+          // Special handling for human_handled field updates
+          if (updateData.wasHumanHandledUpdated) {
+            console.log(`👨‍💼 Human handled status updated for chat ${chatId}:`, updateData.chat?.human_handled);
+
+            // Always trigger a refetch for human_handled changes to ensure UI updates
+            queryClient.invalidateQueries({
+              queryKey: ["organisation", "chats"],
+              refetchType: 'active',
+              exact: true
+            });
+          } else {
+            // For other updates, only invalidate cache markers without refetch if we have data
+            if (currentChatData) {
+              queryClient.invalidateQueries({
+                queryKey: ["organisation", "chats"],
+                refetchType: 'none',
+                exact: true
+              });
             }
-          );
+          }
+
         } else if (updateData.action === "deleted") {
           // Remove chat from list
           queryClient.invalidateQueries({
@@ -315,7 +412,7 @@ export function useChatSocket(
               }
             }));
           }
-          
+
           // Optimistically update chat list to immediately reset unread count
           queryClient.setQueryData(
             ["organisation", "chats"],
@@ -424,16 +521,10 @@ export function useChatSocket(
     (chatId: number) => {
       console.log("📖 markChatAsRead called with chatId:", chatId, "userId:", userId);
       console.log("📖 Socket connected:", !!socketRef.current?.connected);
-      
-      if (socketRef.current && userId) {
-        console.log("📤 Emitting mark-chat-read event:", { chatId, userId });
-        socketRef.current.emit("mark-chat-read", { chatId, userId });
-      } else {
-        console.warn("❌ Cannot mark chat as read - socket or userId missing:", {
-          socket: !!socketRef.current,
-          socketConnected: !!socketRef.current?.connected,
-          userId: userId
-        });
+
+      if (socketRef.current) {
+        console.log("📤 Emitting mark-chat-read event:", { chatId });
+        socketRef.current.emit("mark-chat-read", { chatId });
       }
     },
     [userId]

@@ -62,8 +62,10 @@ export interface Chat {
   id: number;
   status: string;
   source: string;
-  summary?: string | null;
-  analysis?: string | null;
+  instagram_id?: string;
+  whatsapp_id?: string;
+  summary?: string;
+  analysis?: string;
   prompt_tokens: number;
   completion_tokens: number;
   total_cost?: number | null;

@@ -11,6 +11,18 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'lookaside.fbsbx.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'media3.giphy.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   async redirects() {

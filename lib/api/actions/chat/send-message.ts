@@ -7,6 +7,14 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidateTag } from "next/cache";
 import axios from "axios";
 
+// Helper function to determine attachment type for Instagram webhook
+function getAttachmentTypeForInstagram(fileType: string): string {
+  if (fileType.startsWith('image/')) return 'image';
+  if (fileType.startsWith('video/')) return 'video';
+  if (fileType.startsWith('audio/')) return 'audio';
+  return 'file';
+}
+
 // Create axios instance specifically for file uploads
 async function createFileUploadAxios() {
   const supabase = await createClient();
@@ -55,6 +63,8 @@ export interface CreateMessageData {
   prompt_tokens?: number;
   completion_tokens?: number;
   total_cost?: number;
+  instagram_id?: string;
+  source?: string;
 }
 
 export interface SendMediaMessageData {
@@ -65,6 +75,8 @@ export interface SendMediaMessageData {
   prompt_tokens?: number;
   completion_tokens?: number;
   total_cost?: number;
+  instagram_id?: string;
+  source?: string;
 }
 
 export interface MessageUploadResult {
@@ -152,10 +164,56 @@ export const sendTextMessageAction = async (
   try {
     const axios = await createAuthenticatedAxios();
 
-    const response = await axios.post(`/v1/chat/${chatId}/message`, messageData);
+    const { instagram_id, source, ...rest } = messageData;
+
+    const response = await axios.post(`/v1/chat/${chatId}/message`, rest);
 
     // Revalidate chat details to reflect new message
     revalidateTag(`chat-details-${chatId}`);
+
+    // Call Instagram webhook if this is an Instagram chat and we have an Instagram ID
+    if (messageData.source?.toUpperCase() === "INSTAGRAM" && messageData.instagram_id) {
+      try {
+        // Create webhook body based on whether message has attachments or not
+        const webhookBody = {
+          recipient: {
+            id: messageData.instagram_id
+          },
+          message: messageData.attachments && messageData.attachments.length > 0 
+            ? {
+                attachments: messageData.attachments.map(attachment => ({
+                  type: getAttachmentTypeForInstagram(attachment.file_type),
+                  payload: {
+                    url: attachment.file_url
+                  }
+                }))
+              }
+            : {
+                text: messageData.content || ""
+              }
+        };
+
+        const webhookResponse = await fetch(
+          'https://www.ai.askchimps.com/webhook/askchimps/sunrooof/dashboard-instagram',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(webhookBody),
+          }
+        );
+
+        if (!webhookResponse.ok) {
+          console.error('Instagram webhook call failed:', webhookResponse.status, webhookResponse.statusText);
+        } else {
+          console.log('Instagram webhook call successful');
+        }
+      } catch (webhookError) {
+        console.error('Failed to call Instagram webhook:', webhookError);
+        // Don't fail the message creation if webhook fails
+      }
+    }
 
     return {
       success: true,
@@ -202,6 +260,8 @@ export const sendMediaMessageAction = async (
       prompt_tokens: messageData.prompt_tokens,
       completion_tokens: messageData.completion_tokens,
       total_cost: messageData.total_cost,
+      instagram_id: messageData.instagram_id,
+      source: messageData.source,
     };
 
     return await sendTextMessageAction(chatId, createMessageData);
@@ -218,7 +278,9 @@ export const sendMediaMessageAction = async (
 export const sendMessageWithFilesAction = async (
   chatId: string,
   content: string,
-  files: File[]
+  files: File[],
+  instagram_id?: string,
+  source?: string
 ): Promise<{ success: boolean; data?: any; message?: string }> => {
   try {
     if (files.length === 0) {
@@ -227,6 +289,8 @@ export const sendMessageWithFilesAction = async (
         role: 'assistant',
         content,
         message_type: 'TEXT',
+        instagram_id,
+        source,
       });
     }
 
@@ -247,6 +311,8 @@ export const sendMessageWithFilesAction = async (
       content,
       message_type: messageType,
       files,
+      instagram_id,
+      source,
     });
   } catch (error: any) {
     console.error('Failed to send message with files:', error);
