@@ -1,6 +1,10 @@
+/* eslint-disable import/order */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable object-shorthand */
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import {
   MessageSquare,
@@ -12,7 +16,7 @@ import {
   MessageSquareText,
 } from "lucide-react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 import SectionHeader from "@/components/section-header/section-header";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -25,11 +29,14 @@ import { ChatFilters } from "@/lib/api/actions/chat/get-chats";
 import { chatQueries } from "@/lib/query/organisation.query";
 import { useChatSocket } from "@/lib/hooks/use-chat-socket";
 import { createClient } from "@/lib/supabase/client";
+import { MessageItem, type EnhancedMessage } from "@/components/chat/message-item";
+import { MessageInput } from "@/components/chat/message-input";
 
 export default function ChatLogTabContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const orgSlug = params.orgSlug as string;
 
   // Get chat ID from query parameter
@@ -51,6 +58,12 @@ export default function ChatLogTabContent() {
     ),
     endDate: format(new Date(), "yyyy-MM-dd"),
   });
+
+  // Refs for scroll management
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const [isNearBottom, setIsNearBottom] = useState(true);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get user ID from Supabase
   useEffect(() => {
@@ -83,7 +96,11 @@ export default function ChatLogTabContent() {
 
   // WebSocket Integration for real-time updates
   const organisationId = chatsData?.organisation?.id || null;
+  console.log('🏢 Organisation ID for WebSocket:', organisationId);
+  console.log('👤 User ID for WebSocket:', userId);
+  
   const { isConnected, markChatAsRead } = useChatSocket(organisationId, userId, !!organisationId);
+  console.log('🔌 WebSocket connected:', isConnected);
 
   // Sync local chats with API data
   useEffect(() => {
@@ -94,68 +111,216 @@ export default function ChatLogTabContent() {
 
   // Create a custom WebSocket handler that updates local state
   const handleWebSocketMessage = useCallback((data: any) => {
-    if (data.type === 'new-message' && data.chatId && data.message?.action === 'created') {
-      setLocalChats(prevChats => {
-        const updatedChats = prevChats.map(chat => {
-          if (chat.id === data.chatId) {
-            const newUnreadCount = data.message.chat?.unread_count || (chat.unread_count || 0) + 1;
-            
-            return {
-              ...chat,
-              unread_count: newUnreadCount,
-              updated_at: data.message.created_at,
-            };
-          }
-          return chat;
-        });
-        
-        setLastWebSocketUpdate(Date.now());
-        
-        // Check if the message is for the currently selected chat
-        if (selectedChatId && data.chatId.toString() === selectedChatId) {
-          // Show unread count briefly, then mark as read after 1 second
-          setTimeout(() => {
-            if (markChatAsRead) {
-              markChatAsRead(data.chatId);
-            }
-          }, 1000);
-        }
-        
-        return updatedChats;
-      });
-    }
+    console.log('🔌 WebSocket message received:', data);
+    console.log('🔌 Message type:', data?.type);
+    console.log('🔌 Chat ID:', data?.chatId);
+    console.log('🔌 Current selected chat ID:', selectedChatId);
     
-    if (data.type === 'chat-read' && data.chatId) {
-      setLocalChats(prevChats => 
-        prevChats.map(chat => 
-          chat.id === data.chatId 
-            ? { ...chat, unread_count: 0 }
-            : chat
-        )
-      );
-      setLastWebSocketUpdate(Date.now());
+    try {
+      if (data?.type === 'new-message' && data?.chatId && data?.message?.action === 'created') {
+        console.log('✅ Processing new message');
+        console.log('📝 Message details:', data.message);
+        
+        setLocalChats(prevChats => {
+          console.log('📊 Previous chats count:', prevChats.length);
+          const updatedChats = prevChats.map(chat => {
+            if (chat?.id === data.chatId) {
+              console.log(`🔄 Updating chat ${chat.id} with new message`);
+              const newUnreadCount = data.message?.chat?.unread_count || (chat?.unread_count || 0) + 1;
+              
+              return {
+                ...chat,
+                unread_count: newUnreadCount,
+                updated_at: data.message?.created_at || chat.updated_at,
+              };
+            }
+            return chat;
+          });
+          
+          setLastWebSocketUpdate(Date.now());
+          console.log('⏰ Set lastWebSocketUpdate to:', Date.now());
+          
+          // Check if the message is for the currently selected chat
+          if (selectedChatId && data.chatId?.toString() === selectedChatId) {
+            console.log('🎯 Message is for current chat, refreshing chat details...');
+            // Refresh the chat details to get the new message
+            queryClient.invalidateQueries({
+              queryKey: chatQueries.getChatDetails(orgSlug, selectedChatId).queryKey,
+            });
+            console.log('🔄 Query invalidated for chat:', selectedChatId);
+            
+            // Show unread count briefly, then mark as read after 1 second
+            setTimeout(() => {
+              if (markChatAsRead) {
+                console.log('✅ Marking chat as read:', data.chatId);
+                markChatAsRead(data.chatId);
+              }
+            }, 1000);
+          } else {
+            console.log('❌ Message is NOT for current chat');
+            console.log('   - selectedChatId:', selectedChatId);
+            console.log('   - message chatId:', data.chatId?.toString());
+          }
+          
+          return updatedChats;
+        });
+      } else {
+        console.log('❌ Message does not match new-message criteria');
+        console.log('   - Type check:', data?.type === 'new-message');
+        console.log('   - ChatId check:', !!data?.chatId);
+        console.log('   - Action check:', data?.message?.action === 'created');
+      }
+      
+      if (data?.type === 'chat-read' && data?.chatId) {
+        console.log('👁️ Processing chat-read event for chat:', data.chatId);
+        setLocalChats(prevChats => 
+          prevChats.map(chat => 
+            chat?.id === data.chatId 
+              ? { ...chat, unread_count: 0 }
+              : chat
+          )
+        );
+        setLastWebSocketUpdate(Date.now());
+      }
+    } catch (error) {
+      console.error('❌ Error handling WebSocket message:', error);
     }
-  }, [selectedChatId, markChatAsRead]);
+  }, [selectedChatId, markChatAsRead, queryClient, orgSlug]);
 
   // Listen for WebSocket events via window events (we'll emit these from the hook)
   useEffect(() => {
+    console.log('🔗 Setting up WebSocket event listener');
+    
     const handleMessage = (event: CustomEvent) => {
+      console.log('📨 Window event received:', event);
+      console.log('📨 Event detail:', event.detail);
       handleWebSocketMessage(event.detail);
     };
 
     window.addEventListener('chat-socket-update' as any, handleMessage);
+    console.log('✅ WebSocket event listener added');
     
     return () => {
+      console.log('🔇 Removing WebSocket event listener');
       window.removeEventListener('chat-socket-update' as any, handleMessage);
     };
   }, [handleWebSocketMessage]);
 
   // Mark chat as read when selected
   useEffect(() => {
+    console.log("🎯 Chat selection effect triggered:", { selectedChatId, markChatAsReadAvailable: !!markChatAsRead });
     if (selectedChatId && markChatAsRead) {
+      console.log("📖 Calling markChatAsRead for selected chat:", selectedChatId);
       markChatAsRead(parseInt(selectedChatId));
     }
   }, [selectedChatId, markChatAsRead]);
+
+  // Scroll utility functions (moved before useEffects that use them)
+  const scrollToBottom = useCallback((force = false) => {
+    if (messagesContainerRef.current) {
+      if (force || isNearBottom) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    }
+  }, [isNearBottom]);
+
+  const checkScrollPosition = useCallback(() => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const threshold = 150; // pixels from bottom
+      const isNear = scrollHeight - (scrollTop + clientHeight) <= threshold;
+      setIsNearBottom(isNear);
+    }
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    checkScrollPosition();
+    
+    // Only set user scrolling if they scroll away from the bottom
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const threshold = 150;
+      const isNear = scrollHeight - (scrollTop + clientHeight) <= threshold;
+      
+      if (!isNear) {
+        setIsUserScrolling(true);
+        
+        // Clear existing timeout
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
+        
+        // Set user scrolling to false after 3 seconds of no scrolling
+        scrollTimeoutRef.current = setTimeout(() => {
+          setIsUserScrolling(false);
+        }, 3000);
+      } else {
+        // If user scrolled back to bottom, allow auto-scroll again
+        setIsUserScrolling(false);
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
+      }
+    }
+  }, [checkScrollPosition]);
+
+  // Auto-scroll when chat is first opened
+  useEffect(() => {
+    if (selectedChatDetails?.messages && selectedChatDetails.messages.length > 0) {
+      // Always scroll to bottom when opening a chat (only when chatId changes)
+      setTimeout(() => {
+        scrollToBottom(true);
+        setIsNearBottom(true);
+        setIsUserScrolling(false);
+      }, 100);
+    }
+  }, [selectedChatId]); // Only depend on selectedChatId, not messages length
+
+  // Auto-scroll when new messages arrive (only if user is near bottom and not scrolling)
+  useEffect(() => {
+    console.log('📜 Auto-scroll effect triggered');
+    console.log('   - Messages count:', selectedChatDetails?.messages?.length);
+    console.log('   - isUserScrolling:', isUserScrolling);
+    console.log('   - isNearBottom:', isNearBottom);
+    
+    if (selectedChatDetails?.messages && selectedChatDetails.messages.length > 0 && !isUserScrolling && isNearBottom) {
+      console.log('✅ Auto-scrolling to bottom (new message)');
+      // Only scroll if we're near the bottom and not actively scrolling
+      setTimeout(() => {
+        scrollToBottom(false);
+      }, 100);
+    } else {
+      console.log('❌ Auto-scroll conditions not met');
+    }
+  }, [selectedChatDetails?.messages?.length, isUserScrolling, isNearBottom, scrollToBottom]); // Re-add necessary dependencies
+
+  // Handle real-time updates from socket specifically
+  useEffect(() => {
+    console.log('🔄 Socket update effect triggered');
+    console.log('   - lastWebSocketUpdate:', lastWebSocketUpdate);
+    console.log('   - selectedChatId:', selectedChatId);
+    console.log('   - isUserScrolling:', isUserScrolling);
+    console.log('   - isNearBottom:', isNearBottom);
+    
+    // This effect specifically handles socket updates that might not trigger message length change immediately
+    if (lastWebSocketUpdate > 0 && selectedChatId && !isUserScrolling && isNearBottom) {
+      console.log('✅ Auto-scrolling to bottom (socket update)');
+      setTimeout(() => {
+        scrollToBottom(false);
+      }, 200); // Slightly longer delay for socket updates
+    } else {
+      console.log('❌ Socket auto-scroll conditions not met');
+    }
+  }, [lastWebSocketUpdate, selectedChatId, isUserScrolling, isNearBottom, scrollToBottom]);
+
+  // Cleanup scroll timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleDateRangeApply = (startDate: string, endDate: string) => {
     setFilters((prev) => ({
@@ -166,6 +331,22 @@ export default function ChatLogTabContent() {
     }));
     setSelectedChatId(null);
   };
+
+  // Callback after message is sent to refresh chat details
+  const handleMessageSent = useCallback(() => {
+    if (selectedChatId) {
+      // Invalidate the chat details query to refresh messages
+      queryClient.invalidateQueries({
+        queryKey: chatQueries.getChatDetails(orgSlug, selectedChatId).queryKey,
+      });
+      
+      // Force scroll to bottom when sending a message
+      setTimeout(() => {
+        scrollToBottom(true);
+        setIsNearBottom(true);
+      }, 200);
+    }
+  }, [selectedChatId, orgSlug, queryClient, scrollToBottom]);
 
   const chats = localChats.length > 0 ? localChats : (chatsData?.chats || []);
 
@@ -362,12 +543,19 @@ export default function ChatLogTabContent() {
                       <div
                         key={chat.id}
                         onClick={() => {
-                          setSelectedChatId(chat.id.toString());
-                          router.push(`/${orgSlug}/chat-logs?chat=${chat.id}`, {
-                            scroll: false,
-                          });
+                          try {
+                            const chatIdString = chat.id?.toString();
+                            if (chatIdString) {
+                              setSelectedChatId(chatIdString);
+                              router.push(`/${orgSlug}/chat-logs?chat=${chat.id}`, {
+                                scroll: false,
+                              });
+                            }
+                          } catch (error) {
+                            console.error('Error selecting chat:', error);
+                          }
                         }}
-                        className={`hover:bg-muted/70 cursor-pointer rounded-xl p-5 mb-2 transition-all duration-200 hover:shadow-sm ${selectedChatId === chat.id.toString()
+                        className={`hover:bg-muted/70 cursor-pointer rounded-xl p-5 mb-2 transition-all duration-200 hover:shadow-sm ${selectedChatId === chat.id?.toString()
                           ? "bg-muted border-border border shadow-sm ring-1 ring-blue-100"
                           : "hover:border-muted border border-transparent"
                           }`}
@@ -378,25 +566,25 @@ export default function ChatLogTabContent() {
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <h4 className="text-foreground line-clamp-1 text-sm font-semibold leading-tight">
-                                    {chat.name || chat.lead?.phone_number || "Unknown User"}
+                                    {chat?.name || chat?.lead?.phone_number || "Unknown User"}
                                   </h4>
                                 </div>
                                 <div className="mt-3 flex items-center gap-2">
                                   <Badge
                                     variant="secondary"
-                                    className={`text-xs font-semibold ${getSourceBadgeColor(chat.source)}`}
+                                    className={`text-xs font-semibold ${getSourceBadgeColor(chat?.source || 'unknown')}`}
                                   >
-                                    {chat.source}
+                                    {chat?.source || 'Unknown'}
                                   </Badge>
                                 </div>
                               </div>
                               <div className="flex flex-col gap-3 items-end">
                                 <span className="text-muted-foreground shrink-0 text-xs font-medium">
-                                  {formatTimeAgo(chat.updated_at)}
+                                  {chat?.updated_at ? formatTimeAgo(chat.updated_at) : 'Unknown time'}
                                 </span>
                                 {(() => {
-                                  const unreadCount = Number(chat.unread_count);
-                                  const shouldShow = chat.unread_count && unreadCount > 0;
+                                  const unreadCount = Number(chat?.unread_count || 0);
+                                  const shouldShow = chat?.unread_count && unreadCount > 0;
                                   
                                   return shouldShow ? (
                                     <Badge className="bg-red-500 text-white px-2 py-0.5 text-xs font-bold hover:bg-red-600">
@@ -406,7 +594,7 @@ export default function ChatLogTabContent() {
                                 })()}
                               </div>
                             </div>
-                            {chat.summary && (
+                            {chat?.summary && (
                               <p className="text-muted-foreground mt-2.5 line-clamp-2 text-xs leading-relaxed">
                                 {chat.summary}
                               </p>
@@ -535,7 +723,7 @@ export default function ChatLogTabContent() {
                 {/* Tab Content */}
                 <div className="flex-1 overflow-hidden">
                   {activeTab === "messages" ? (
-                    <div className="h-full p-7">
+                    <div className="h-full p-3">
                       {!selectedChatDetails.messages ||
                         selectedChatDetails.messages.length === 0 ? (
                         <div className="flex h-full items-center justify-center text-center">
@@ -555,47 +743,28 @@ export default function ChatLogTabContent() {
                           </div>
                         </div>
                       ) : (
-                        <div className="h-full space-y-6 overflow-y-auto px-1">
-                          {selectedChatDetails.messages.map((message) => (
-                            <div
-                              key={message.id}
-                              className={`flex gap-4 ${message.role === "user"
-                                ? "justify-end"
-                                : "justify-start"
-                                }`}
-                            >
-                              {(message.role === "assistant" ||
-                                message.role === "bot") && (
-                                  <Avatar className="h-9 w-9 shrink-0">
-                                    <AvatarFallback className="bg-green-100 text-sm font-medium text-green-700">
-                                      AI
-                                    </AvatarFallback>
-                                  </Avatar>
-                                )}
-
-                              <div
-                                className={`max-w-[80%] rounded-xl px-5 py-4 text-sm shadow-sm ${message.role === "user"
-                                  ? "bg-green-600 text-white"
-                                  : "border border-gray-100 bg-gray-50 text-gray-900"
-                                  }`}
-                              >
-                                <div className="break-words whitespace-pre-wrap font-medium leading-relaxed">
-                                  {message.content}
-                                </div>
-                                <div className="mt-2.5 text-xs font-medium opacity-70">
-                                  {formatTimeAgo(message.created_at)}
-                                </div>
-                              </div>
-
-                              {message.role === "user" && (
-                                <Avatar className="h-9 w-9 shrink-0">
-                                  <AvatarFallback className="bg-blue-100 font-medium text-blue-700">
-                                    <User className="h-4 w-4" />
-                                  </AvatarFallback>
-                                </Avatar>
-                              )}
-                            </div>
-                          ))}
+                        <div className="flex flex-col h-full">
+                          <div 
+                            ref={messagesContainerRef}
+                            className="flex-1 space-y-6 overflow-y-auto px-1 pb-4"
+                            onScroll={handleScroll}
+                          >
+                            {selectedChatDetails.messages?.map((message) => (
+                              message?.id ? (
+                                <MessageItem
+                                  key={message.id}
+                                  message={message as EnhancedMessage}
+                                />
+                              ) : null
+                            )) || null}
+                          </div>
+                          
+                          {/* Message Input */}
+                          <MessageInput
+                            chatId={selectedChatId}
+                            onMessageSent={handleMessageSent}
+                            placeholder="Type your message..."
+                          />
                         </div>
                       )}
                     </div>

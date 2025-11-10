@@ -1,3 +1,4 @@
+/* eslint-disable import/order */
 import { getCallDetailsAction } from "@/lib/api/actions/organisation/get-call-details";
 import { getLeadDetailsAction } from "@/lib/api/actions/organisation/get-lead-details";
 import { getOrganisationAction } from "@/lib/api/actions/organisation/get-organisation";

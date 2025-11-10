@@ -28,8 +28,20 @@ export interface ChatLead {
 export interface ChatMessage {
   id: number;
   role: string;
-  content: string;
+  content?: string | null;
+  message_type?: string;
   created_at: string;
+  attachments?: Array<{
+    id: number;
+    file_url: string;
+    file_name: string;
+    file_size: number;
+    file_type: string;
+    width?: number;
+    height?: number;
+    duration?: number;
+    thumbnail_url?: string;
+  }>;
 }
 
 export interface Chat {

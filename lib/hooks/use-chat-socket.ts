@@ -1,8 +1,11 @@
+/* eslint-disable import/order */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import io, { Socket } from "socket.io-client";
+import { createClient } from "@/lib/supabase/client";
 
 interface NewMessageEvent {
   chatId: number;
@@ -44,21 +47,49 @@ export function useChatSocket(
   const queryClient = useQueryClient();
 
   const connectSocket = useCallback(async () => {
-    if (!organisationId || !enabled) return;
+    if (!organisationId || !enabled) {
+      console.log("🚫 WebSocket connection skipped - organisationId:", organisationId, "enabled:", enabled);
+      return;
+    }
 
     try {
+      // Use manual WebSocket server for testing
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4022";
+      const wsUrl = backendUrl.replace(':4022', ':4023');
+      
+      // Get access token from Supabase
+      const supabase = createClient();
+      const { data: session } = await supabase.auth.getSession();
+      const accessToken = session?.session?.access_token;
 
-      const socket = io(`${backendUrl}/chat`, {
+      console.log("🔗 Connecting to WebSocket:", wsUrl);
+      console.log("🎫 Access token available:", !!accessToken);
+      console.log("🏢 Organisation ID:", organisationId);
+      console.log("👤 User ID:", userId);
+
+      const socket = io(wsUrl, {
         transports: ["websocket", "polling"],
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionAttempts: 5,
+        auth: {
+          token: accessToken, // Pass token for authentication (if needed)
+        },
       });
 
       socket.on("connect", () => {
+        console.log("✅ WebSocket connected:", socket.id);
         // Join organisation room with userId
         socket.emit("join-organisation", { organisationId, userId });
+        console.log("📤 Emitted join-organisation:", { organisationId, userId });
+      });
+
+      socket.on("connect_error", (error) => {
+        console.error("❌ WebSocket connection error:", error);
+      });
+
+      socket.on("disconnect", (reason) => {
+        console.log("❌ WebSocket disconnected:", reason);
       });
 
       socket.on("joined-organisation", (data) => {
@@ -66,6 +97,7 @@ export function useChatSocket(
       });
 
       socket.on("new-message", (data: NewMessageEvent) => {
+        console.log("📨 WebSocket new-message event received:", data);
         const { chatId, message } = data;
 
         if (message.action === "created") {
@@ -223,12 +255,18 @@ export function useChatSocket(
         console.log("❌ Chat WebSocket disconnected:", reason);
       });
 
+      socket.on("connect_error", (error) => {
+        console.error("❌ Chat WebSocket connection error:", error);
+      });
+
       socket.on("error", (error) => {
         console.error("❌ Chat WebSocket error:", error);
       });
 
       socket.on("chat-marked-read", (data) => {
+        console.log("📖 Received chat-marked-read event:", data);
         if (data.success && data.chatId) {
+          console.log("✅ Chat marked as read successfully, emitting custom event");
           // Emit custom event for component
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('chat-socket-update', {
@@ -290,7 +328,9 @@ export function useChatSocket(
       });
 
       socket.on("chat-read-updated", (data) => {
+        console.log("📖 Received chat-read-updated event:", data);
         if (data.chatId !== undefined) {
+          console.log("✅ Updating unread count for chat:", data.chatId, "to:", data.unread_count);
           // Optimistically update specific chat's unread count
           queryClient.setQueryData(
             ["organisation", "chats"],
@@ -333,15 +373,29 @@ export function useChatSocket(
 
   const disconnectSocket = useCallback(() => {
     if (socketRef.current) {
+      console.log("🔌 Disconnecting WebSocket:", socketRef.current.id);
       socketRef.current.disconnect();
       socketRef.current = null;
+      console.log("✅ WebSocket disconnected and cleaned up");
+    } else {
+      console.log("🔌 No WebSocket connection to disconnect");
     }
   }, []);
 
   const markChatAsRead = useCallback(
     (chatId: number) => {
+      console.log("📖 markChatAsRead called with chatId:", chatId, "userId:", userId);
+      console.log("📖 Socket connected:", !!socketRef.current?.connected);
+      
       if (socketRef.current && userId) {
+        console.log("📤 Emitting mark-chat-read event:", { chatId, userId });
         socketRef.current.emit("mark-chat-read", { chatId, userId });
+      } else {
+        console.warn("❌ Cannot mark chat as read - socket or userId missing:", {
+          socket: !!socketRef.current,
+          socketConnected: !!socketRef.current?.connected,
+          userId: userId
+        });
       }
     },
     [userId]

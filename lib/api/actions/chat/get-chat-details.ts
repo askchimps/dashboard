@@ -6,6 +6,18 @@ export interface ChatMessage {
   id: number;
   role: "user" | "assistant" | "bot";
   content: string;
+  message_type?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE' | 'GIF';
+  attachments?: Array<{
+    id: number;
+    file_url: string;
+    file_name: string;
+    file_size: number;
+    file_type: string;
+    width?: number;
+    height?: number;
+    duration?: number;
+    thumbnail_url?: string;
+  }>;
   prompt_tokens: number;
   completion_tokens: number;
   total_cost?: number | null;
