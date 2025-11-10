@@ -98,7 +98,7 @@ export default function ChatLogTabContent() {
   const organisationId = chatsData?.organisation?.id || null;
   console.log('🏢 Organisation ID for WebSocket:', organisationId);
   console.log('👤 User ID for WebSocket:', userId);
-  
+
   const { isConnected, markChatAsRead } = useChatSocket(organisationId, userId, !!organisationId);
   console.log('🔌 WebSocket connected:', isConnected);
 
@@ -115,19 +115,19 @@ export default function ChatLogTabContent() {
     console.log('🔌 Message type:', data?.type);
     console.log('🔌 Chat ID:', data?.chatId);
     console.log('🔌 Current selected chat ID:', selectedChatId);
-    
+
     try {
       if (data?.type === 'new-message' && data?.chatId && data?.message?.action === 'created') {
         console.log('✅ Processing new message');
         console.log('📝 Message details:', data.message);
-        
+
         setLocalChats(prevChats => {
           console.log('📊 Previous chats count:', prevChats.length);
           const updatedChats = prevChats.map(chat => {
             if (chat?.id === data.chatId) {
               console.log(`🔄 Updating chat ${chat.id} with new message`);
               const newUnreadCount = data.message?.chat?.unread_count || (chat?.unread_count || 0) + 1;
-              
+
               return {
                 ...chat,
                 unread_count: newUnreadCount,
@@ -136,10 +136,10 @@ export default function ChatLogTabContent() {
             }
             return chat;
           });
-          
+
           setLastWebSocketUpdate(Date.now());
           console.log('⏰ Set lastWebSocketUpdate to:', Date.now());
-          
+
           // Check if the message is for the currently selected chat
           if (selectedChatId && data.chatId?.toString() === selectedChatId) {
             console.log('🎯 Message is for current chat, refreshing chat details...');
@@ -148,61 +148,86 @@ export default function ChatLogTabContent() {
               queryKey: chatQueries.getChatDetails(orgSlug, selectedChatId).queryKey,
             });
             console.log('🔄 Query invalidated for chat:', selectedChatId);
-            
-            // Show unread count briefly, then mark as read after 1 second
+
             setTimeout(() => {
               if (markChatAsRead) {
                 console.log('✅ Marking chat as read:', data.chatId);
                 markChatAsRead(data.chatId);
               }
             }, 1000);
-          } else {
+          }
+          else {
             console.log('❌ Message is NOT for current chat');
             console.log('   - selectedChatId:', selectedChatId);
             console.log('   - message chatId:', data.chatId?.toString());
           }
-          
+
+          console.log('✅ Updated chats state with new message');
+          console.log('📊 New chats count:', updatedChats.length);
           return updatedChats;
         });
-      } else {
-        console.log('❌ Message does not match new-message criteria');
-        console.log('   - Type check:', data?.type === 'new-message');
-        console.log('   - ChatId check:', !!data?.chatId);
-        console.log('   - Action check:', data?.message?.action === 'created');
-      }
-      
-      if (data?.type === 'chat-read' && data?.chatId) {
-        console.log('👁️ Processing chat-read event for chat:', data.chatId);
-        setLocalChats(prevChats => 
-          prevChats.map(chat => 
-            chat?.id === data.chatId 
-              ? { ...chat, unread_count: 0 }
-              : chat
-          )
-        );
-        setLastWebSocketUpdate(Date.now());
+      } else if (data?.type === 'new-chat' && data?.chat) {
+        console.log('✅ Processing new chat creation');
+        console.log('💬 New chat details:', data.chat);
+
+        setLocalChats(prevChats => {
+          console.log('📊 Previous chats count:', prevChats.length);
+
+          // Check if chat already exists (avoid duplicates)
+          const existingChat = prevChats.find(chat => chat.id === data.chat.id);
+          if (existingChat) {
+            console.log('⚠️ Chat already exists, skipping addition');
+            return prevChats;
+          }
+
+          // Add new chat to the beginning of the list
+          const updatedChats = [data.chat, ...prevChats];
+
+          setLastWebSocketUpdate(Date.now());
+          console.log('⏰ Set lastWebSocketUpdate to:', Date.now());
+
+          console.log('✅ Added new chat to state');
+          console.log('📊 New chats count:', updatedChats.length);
+          console.log(`🆕 New chat #${data.chat.id} from ${data.chat.source} source added`);
+
+          return updatedChats;
+        });
+      } else if (data.type === 'chat-read' && data?.chatId) {
+        console.log('✅ Processing chat read event');
+        console.log('💬 Chat ID:', data.chatId);
+
+        setLocalChats(prevChats => {
+          const updatedChats = prevChats.map(chat => {
+            if (chat.id === data.chatId) {
+              console.log(`🔄 Marking chat ${chat.id} as read`);
+              return {
+                ...chat,
+                unread_count: 0,
+              };
+            }
+            return chat;
+          });
+
+          console.log('✅ Updated chats state with read status');
+          return updatedChats;
+        });
       }
     } catch (error) {
-      console.error('❌ Error handling WebSocket message:', error);
+      console.error('❌ Error processing WebSocket message:', error);
     }
-  }, [selectedChatId, markChatAsRead, queryClient, orgSlug]);
 
-  // Listen for WebSocket events via window events (we'll emit these from the hook)
+  }, [selectedChatId, queryClient, orgSlug]);
+
+  // Listen for WebSocket events through custom events
   useEffect(() => {
-    console.log('🔗 Setting up WebSocket event listener');
-    
-    const handleMessage = (event: CustomEvent) => {
-      console.log('📨 Window event received:', event);
-      console.log('📨 Event detail:', event.detail);
+    const handleCustomEvent = (event: CustomEvent) => {
       handleWebSocketMessage(event.detail);
     };
 
-    window.addEventListener('chat-socket-update' as any, handleMessage);
-    console.log('✅ WebSocket event listener added');
-    
+    window.addEventListener('chat-socket-update', handleCustomEvent as EventListener);
+
     return () => {
-      console.log('🔇 Removing WebSocket event listener');
-      window.removeEventListener('chat-socket-update' as any, handleMessage);
+      window.removeEventListener('chat-socket-update', handleCustomEvent as EventListener);
     };
   }, [handleWebSocketMessage]);
 
@@ -235,21 +260,21 @@ export default function ChatLogTabContent() {
 
   const handleScroll = useCallback(() => {
     checkScrollPosition();
-    
+
     // Only set user scrolling if they scroll away from the bottom
     if (messagesContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
       const threshold = 150;
       const isNear = scrollHeight - (scrollTop + clientHeight) <= threshold;
-      
+
       if (!isNear) {
         setIsUserScrolling(true);
-        
+
         // Clear existing timeout
         if (scrollTimeoutRef.current) {
           clearTimeout(scrollTimeoutRef.current);
         }
-        
+
         // Set user scrolling to false after 3 seconds of no scrolling
         scrollTimeoutRef.current = setTimeout(() => {
           setIsUserScrolling(false);
@@ -282,7 +307,7 @@ export default function ChatLogTabContent() {
     console.log('   - Messages count:', selectedChatDetails?.messages?.length);
     console.log('   - isUserScrolling:', isUserScrolling);
     console.log('   - isNearBottom:', isNearBottom);
-    
+
     if (selectedChatDetails?.messages && selectedChatDetails.messages.length > 0 && !isUserScrolling && isNearBottom) {
       console.log('✅ Auto-scrolling to bottom (new message)');
       // Only scroll if we're near the bottom and not actively scrolling
@@ -301,7 +326,7 @@ export default function ChatLogTabContent() {
     console.log('   - selectedChatId:', selectedChatId);
     console.log('   - isUserScrolling:', isUserScrolling);
     console.log('   - isNearBottom:', isNearBottom);
-    
+
     // This effect specifically handles socket updates that might not trigger message length change immediately
     if (lastWebSocketUpdate > 0 && selectedChatId && !isUserScrolling && isNearBottom) {
       console.log('✅ Auto-scrolling to bottom (socket update)');
@@ -339,7 +364,7 @@ export default function ChatLogTabContent() {
       queryClient.invalidateQueries({
         queryKey: chatQueries.getChatDetails(orgSlug, selectedChatId).queryKey,
       });
-      
+
       // Force scroll to bottom when sending a message
       setTimeout(() => {
         scrollToBottom(true);
@@ -585,7 +610,7 @@ export default function ChatLogTabContent() {
                                 {(() => {
                                   const unreadCount = Number(chat?.unread_count || 0);
                                   const shouldShow = chat?.unread_count && unreadCount > 0;
-                                  
+
                                   return shouldShow ? (
                                     <Badge className="bg-red-500 text-white px-2 py-0.5 text-xs font-bold hover:bg-red-600">
                                       {chat.unread_count}
@@ -744,7 +769,7 @@ export default function ChatLogTabContent() {
                         </div>
                       ) : (
                         <div className="flex flex-col h-full">
-                          <div 
+                          <div
                             ref={messagesContainerRef}
                             className="flex-1 space-y-6 overflow-y-auto px-1 pb-4"
                             onScroll={handleScroll}
@@ -758,7 +783,7 @@ export default function ChatLogTabContent() {
                               ) : null
                             )) || null}
                           </div>
-                          
+
                           {/* Message Input */}
                           <MessageInput
                             chatId={selectedChatId}

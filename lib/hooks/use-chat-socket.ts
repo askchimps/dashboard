@@ -208,6 +208,44 @@ export function useChatSocket(
         }
       });
 
+      socket.on("new-chat", (data: any) => {
+        console.log("🆕 WebSocket new-chat event received:", data);
+        const { chat, action } = data;
+
+        if (action === "created" && chat) {
+          // Emit custom event for component to listen to
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('chat-socket-update', {
+              detail: {
+                type: 'new-chat',
+                chat,
+                timestamp: Date.now()
+              }
+            }));
+          }
+          
+          // Add new chat to the beginning of the chat list
+          queryClient.setQueryData(
+            ["organisation", "chats"],
+            (oldData: any) => {
+              if (!oldData) return oldData;
+              
+              return {
+                ...oldData,
+                chats: [chat, ...oldData.chats],
+                summary: {
+                  ...oldData.summary,
+                  total_chats: (oldData.summary?.total_chats || 0) + 1
+                }
+              };
+            }
+          );
+
+          // Show a brief notification that a new chat has arrived
+          console.log(`🎉 New chat #${chat.id} from ${chat.source} has been added`);
+        }
+      });
+
       socket.on("chat-updated", (data: ChatUpdateEvent) => {
         console.log("💬 Chat updated:", data);
 
