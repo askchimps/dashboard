@@ -441,7 +441,7 @@ export default function ChatLogTabContent() {
                         className={`hover:bg-muted/70 cursor-pointer rounded-xl p-5 mb-2 transition-all duration-200 hover:shadow-sm ${selectedChatId === chat.id?.toString()
                           ? "bg-muted border-border border shadow-sm ring-1 ring-blue-100"
                           : "hover:border-muted border border-transparent"
-                          }${chat.human_handled ? " border-red-500 hover:border-red-50" : ""}`}
+                          }${chat.human_handled ? " !border-red-500 border-2 hover:border-red-50" : ""}`}
                       >
                         <div className="flex items-start gap-4">
                           <div className="min-w-0 flex-1 space-y-2">
