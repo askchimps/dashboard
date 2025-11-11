@@ -810,6 +810,7 @@ export default function ChatLogTabContent() {
                             chatInstagramId={selectedChatDetails?.chat?.instagram_id}
                             chatWhatsAppId={selectedChatDetails?.chat?.whatsapp_id}
                             onMessageSent={handleMessageSent}
+                            organisation={selectedChatDetails.organisation.slug}
                             placeholder="Type your message..."
                           />
                         </div>

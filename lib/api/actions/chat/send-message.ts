@@ -57,6 +57,7 @@ export interface CreateAttachmentData {
 
 export interface CreateMessageData {
   role: 'user' | 'assistant' | 'bot';
+  organisation: string;
   content?: string;
   message_type?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE' | 'GIF';
   attachments?: CreateAttachmentData[];
@@ -69,6 +70,7 @@ export interface CreateMessageData {
 
 export interface SendMediaMessageData {
   role: 'user' | 'assistant' | 'bot';
+  organisation: string;
   content?: string;
   message_type: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE' | 'GIF';
   files: File[];
@@ -102,7 +104,7 @@ export const uploadFileAction = async (
 ): Promise<{ success: boolean; data?: MessageUploadResult; message?: string }> => {
   try {
     const axios = await createFileUploadAxios();
-    
+
     const formData = new FormData();
     formData.append('file', file, file.name);
     formData.append('category', category);
@@ -164,7 +166,7 @@ export const sendTextMessageAction = async (
   try {
     const axios = await createAuthenticatedAxios();
 
-    const { instagram_id, source, ...rest } = messageData;
+    const { instagram_id, source, organisation, ...rest } = messageData;
 
     const response = await axios.post(`/v1/chat/${chatId}/message`, rest);
 
@@ -179,22 +181,21 @@ export const sendTextMessageAction = async (
           recipient: {
             id: messageData.instagram_id
           },
-          message: messageData.attachments && messageData.attachments.length > 0 
+          message: messageData.attachments && messageData.attachments.length > 0
             ? {
-                attachments: messageData.attachments.map(attachment => ({
-                  type: getAttachmentTypeForInstagram(attachment.file_type),
-                  payload: {
-                    url: attachment.file_url
-                  }
-                }))
-              }
+              attachments: messageData.attachments.map(attachment => ({
+                type: getAttachmentTypeForInstagram(attachment.file_type),
+                payload: {
+                  url: attachment.file_url
+                }
+              }))
+            }
             : {
-                text: messageData.content || ""
-              }
+              text: messageData.content || ""
+            }
         };
-
         const webhookResponse = await fetch(
-          'https://www.ai.askchimps.com/webhook/askchimps/sunrooof/dashboard-instagram',
+          `${process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL}/${organisation}/dashboard-instagram`,
           {
             method: 'POST',
             headers: {
@@ -262,6 +263,7 @@ export const sendMediaMessageAction = async (
       total_cost: messageData.total_cost,
       instagram_id: messageData.instagram_id,
       source: messageData.source,
+      organisation: messageData.organisation,
     };
 
     return await sendTextMessageAction(chatId, createMessageData);
@@ -277,6 +279,7 @@ export const sendMediaMessageAction = async (
 // Combined function to send message with files (simplified API for frontend)
 export const sendMessageWithFilesAction = async (
   chatId: string,
+  organisation: string,
   content: string,
   files: File[],
   instagram_id?: string,
@@ -287,6 +290,7 @@ export const sendMessageWithFilesAction = async (
       // Send text-only message
       return await sendTextMessageAction(chatId, {
         role: 'assistant',
+        organisation,
         content,
         message_type: 'TEXT',
         instagram_id,
@@ -313,6 +317,7 @@ export const sendMessageWithFilesAction = async (
       files,
       instagram_id,
       source,
+      organisation,
     });
   } catch (error: any) {
     console.error('Failed to send message with files:', error);

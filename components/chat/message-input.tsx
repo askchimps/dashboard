@@ -35,6 +35,7 @@ export type MessageType = 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE' | 'GIF';
 
 interface MessageInputProps {
   chatId: string;
+  organisation: string;
   chatSource?: string; // Chat source (e.g., "INSTAGRAM", "WHATSAPP", etc.)
   chatInstagramId?: string; // Instagram chat ID
   chatWhatsAppId?: string; // WhatsApp chat ID
@@ -47,6 +48,7 @@ interface MessageInputProps {
 
 export function MessageInput({
   chatId,
+  organisation,
   chatSource,
   chatInstagramId,
   chatWhatsAppId,
@@ -186,6 +188,7 @@ export function MessageInput({
     try {
       const result = await sendMessageWithFilesAction(
         chatId,
+        organisation,
         content.trim(),
         attachedFiles,
         chatInstagramId,
@@ -285,7 +288,7 @@ export function MessageInput({
               <Paperclip className="h-4 w-4" />
             </Button>
 
-            <Button
+            {/* <Button
               variant="ghost"
               size="sm"
               onClick={isRecording ? stopRecording : startRecording}
@@ -297,7 +300,7 @@ export function MessageInput({
               title={isRecording ? "Stop recording" : "Record voice message"}
             >
               <Mic className="h-4 w-4" />
-            </Button>
+            </Button> */}
           </div>
         </div>
 
