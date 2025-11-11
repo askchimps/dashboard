@@ -57,7 +57,8 @@ export interface Chat {
   agent?: ChatAgent;
   messages?: ChatMessage[];
   total_cost?: number | null;
-  unread_count?: number;
+  unread_messages?: number;
+  human_handled?: number
 }
 
 export interface ChatSummary {
@@ -94,7 +95,6 @@ export const getChatsAction = async (
   filters: ChatFilters = {}
 ): Promise<ChatsResponse> => {
   const axios = await createAuthenticatedAxios();
-
   const params = new URLSearchParams();
 
   if (filters.page) params.append("page", filters.page.toString());

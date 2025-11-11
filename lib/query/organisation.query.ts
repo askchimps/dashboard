@@ -120,14 +120,10 @@ export const chatQueries = {
   getChats: (orgSlug: string, filters: ChatFilters) => ({
     queryKey: ["organisation", orgSlug, "chats", filters],
     queryFn: () => getChatsAction(orgSlug, filters),
-    staleTime: 1 * 60 * 1000, // 1 minute
-    gcTime: 3 * 60 * 1000, // 3 minutes
   }),
   getChatDetails: (orgSlug: string, chatId: string) => ({
     queryKey: ["chat", "details", chatId],
     queryFn: () => getChatDetailsAction(orgSlug, chatId),
-    staleTime: 1 * 60 * 1000, // 1 minute
-    gcTime: 3 * 60 * 1000, // 3 minutes
     enabled: !!chatId,
   }),
 };

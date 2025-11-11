@@ -12,7 +12,7 @@ function getAttachmentTypeForInstagram(fileType: string): string {
   if (fileType.startsWith('image/')) return 'image';
   if (fileType.startsWith('video/')) return 'video';
   if (fileType.startsWith('audio/')) return 'audio';
-  return 'file';
+  return 'document';
 }
 
 // Create axios instance specifically for file uploads
@@ -59,12 +59,13 @@ export interface CreateMessageData {
   role: 'user' | 'assistant' | 'bot';
   organisation: string;
   content?: string;
-  message_type?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE' | 'GIF';
+  message_type?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'DOCUMENT' | 'GIF';
   attachments?: CreateAttachmentData[];
   prompt_tokens?: number;
   completion_tokens?: number;
   total_cost?: number;
   instagram_id?: string;
+  whatsapp_id?: string;
   source?: string;
 }
 
@@ -72,12 +73,13 @@ export interface SendMediaMessageData {
   role: 'user' | 'assistant' | 'bot';
   organisation: string;
   content?: string;
-  message_type: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE' | 'GIF';
+  message_type: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'DOCUMENT' | 'GIF';
   files: File[];
   prompt_tokens?: number;
   completion_tokens?: number;
   total_cost?: number;
   instagram_id?: string;
+  whatsapp_id?: string;
   source?: string;
 }
 
@@ -100,14 +102,18 @@ export interface MessageUploadResult {
 // Upload single file
 export const uploadFileAction = async (
   file: File,
-  category: 'image' | 'video' | 'audio' | 'document'
+  category: 'image' | 'video' | 'audio' | 'document',
+  subFolder?: string
 ): Promise<{ success: boolean; data?: MessageUploadResult; message?: string }> => {
   try {
     const axios = await createFileUploadAxios();
-
+    console.log('Uploading file:', file.name, 'Category:', category, 'Subfolder:', subFolder);
     const formData = new FormData();
     formData.append('file', file, file.name);
     formData.append('category', category);
+    if (subFolder) {
+      formData.append('subFolder', subFolder);
+    }
 
     const response = await axios.post('/v1/upload/single', formData);
 
@@ -126,7 +132,8 @@ export const uploadFileAction = async (
 
 // Upload multiple files
 export const uploadMultipleFilesAction = async (
-  files: File[]
+  files: File[],
+  subFolder?: string
 ): Promise<{ success: boolean; data?: MessageUploadResult[]; message?: string }> => {
   try {
     const uploadResults: MessageUploadResult[] = [];
@@ -138,7 +145,7 @@ export const uploadMultipleFilesAction = async (
       else if (file.type.startsWith('video/')) category = 'video';
       else if (file.type.startsWith('audio/')) category = 'audio';
 
-      const result = await uploadFileAction(file, category);
+      const result = await uploadFileAction(file, category, subFolder);
       if (result.success && result.data) {
         uploadResults.push(result.data);
       } else {
@@ -166,9 +173,9 @@ export const sendTextMessageAction = async (
   try {
     const axios = await createAuthenticatedAxios();
 
-    const { instagram_id, source, organisation, ...rest } = messageData;
+    const { instagram_id, whatsapp_id, source, ...rest } = messageData;
 
-    const response = await axios.post(`/v1/chat/${chatId}/message`, rest);
+    const response = await axios.post(`/v1/chat/${chatId}/${messageData.organisation}/message`, rest);
 
     // Revalidate chat details to reflect new message
     revalidateTag(`chat-details-${chatId}`);
@@ -195,7 +202,7 @@ export const sendTextMessageAction = async (
             }
         };
         const webhookResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL}/${organisation}/dashboard-instagram`,
+          `${process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL}/${messageData.organisation}/dashboard-instagram`,
           {
             method: 'POST',
             headers: {
@@ -212,6 +219,31 @@ export const sendTextMessageAction = async (
         }
       } catch (webhookError) {
         console.error('Failed to call Instagram webhook:', webhookError);
+        // Don't fail the message creation if webhook fails
+      }
+    }
+    else if (messageData.source?.toUpperCase() === "WHATSAPP" && messageData.whatsapp_id) {
+      try {
+        // Create webhook body based on whether message has attachments or not
+
+        const webhookResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL}/${messageData.organisation}/dashboard-whatsapp`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(messageData),
+          }
+        );
+
+        if (!webhookResponse.ok) {
+          console.error('WhatsApp webhook call failed:', webhookResponse.status, webhookResponse.statusText);
+        } else {
+          console.log('WhatsApp webhook call successful');
+        }
+      } catch (webhookError) {
+        console.error('Failed to call WhatsApp webhook:', webhookError);
         // Don't fail the message creation if webhook fails
       }
     }
@@ -235,7 +267,11 @@ export const sendMediaMessageAction = async (
 ): Promise<{ success: boolean; data?: any; message?: string }> => {
   try {
     // Upload files first
-    const uploadResult = await uploadMultipleFilesAction(messageData.files);
+    const currentDate = new Date().toISOString().split('T')[0];
+    const uploadResult = await uploadMultipleFilesAction(
+      messageData.files,
+      `${messageData.organisation}/${messageData.whatsapp_id ?? messageData.instagram_id ?? 'general'}/${currentDate}`
+    );
 
     if (!uploadResult.success || !uploadResult.data) {
       throw new Error(uploadResult.message || 'Failed to upload files');
@@ -262,6 +298,7 @@ export const sendMediaMessageAction = async (
       completion_tokens: messageData.completion_tokens,
       total_cost: messageData.total_cost,
       instagram_id: messageData.instagram_id,
+      whatsapp_id: messageData.whatsapp_id,
       source: messageData.source,
       organisation: messageData.organisation,
     };
@@ -283,6 +320,7 @@ export const sendMessageWithFilesAction = async (
   content: string,
   files: File[],
   instagram_id?: string,
+  whatsapp_id?: string,
   source?: string
 ): Promise<{ success: boolean; data?: any; message?: string }> => {
   try {
@@ -294,12 +332,13 @@ export const sendMessageWithFilesAction = async (
         content,
         message_type: 'TEXT',
         instagram_id,
+        whatsapp_id,
         source,
       });
     }
 
     // Determine message type from first file
-    let messageType: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE' | 'GIF' = 'FILE';
+    let messageType: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'DOCUMENT' | 'GIF' = 'DOCUMENT';
     const firstFile = files[0];
 
     if (firstFile.type.startsWith('image/')) {
@@ -316,6 +355,7 @@ export const sendMessageWithFilesAction = async (
       message_type: messageType,
       files,
       instagram_id,
+      whatsapp_id,
       source,
       organisation,
     });

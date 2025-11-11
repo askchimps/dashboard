@@ -94,7 +94,6 @@ export const getChatDetailsAction = async (
   chatId: string
 ): Promise<ChatDetails> => {
   const axios = await createAuthenticatedAxios();
-
   const response = await axios.get<ChatDetailsResponse>(
     `/v1/organisation/${orgSlug}/chat/${chatId}`
   );

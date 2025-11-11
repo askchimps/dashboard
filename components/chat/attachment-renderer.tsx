@@ -273,10 +273,10 @@ function DocumentAttachment({ attachment, className }: AttachmentProps) {
       </div>
       
       <div className="flex gap-1">
-        <Button variant="ghost" size="sm" onClick={handleView} title="View file">
+        <Button variant="secondary" size="sm" onClick={handleView} title="View file">
           <Eye className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="sm" onClick={handleDownload} title="Download file">
+        <Button variant="secondary" size="sm" onClick={handleDownload} title="Download file">
           <Download className="h-4 w-4" />
         </Button>
       </div>

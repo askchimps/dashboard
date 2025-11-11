@@ -1,5 +1,4 @@
 /* eslint-disable import/order */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable object-shorthand */
 "use client";
@@ -27,8 +26,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatFilters } from "@/lib/api/actions/chat/get-chats";
 import { chatQueries } from "@/lib/query/organisation.query";
-import { useChatSocket } from "@/lib/hooks/use-chat-socket";
-import { createClient } from "@/lib/supabase/client";
+import { updateChatUnreadMessagesAction } from "@/lib/api/actions/chat/update-chat-unread";
 import { MessageItem, type EnhancedMessage } from "@/components/chat/message-item";
 import { MessageInput } from "@/components/chat/message-input";
 
@@ -46,9 +44,6 @@ export default function ChatLogTabContent() {
     chatFromQuery
   );
   const [activeTab, setActiveTab] = useState("messages");
-  const [userId, setUserId] = useState<string | null>(null);
-  const [localChats, setLocalChats] = useState<any[]>([]);
-  const [lastWebSocketUpdate, setLastWebSocketUpdate] = useState<number>(0);
   const [filters, setFilters] = useState<ChatFilters>({
     page: 1,
     limit: 50,
@@ -64,18 +59,6 @@ export default function ChatLogTabContent() {
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const [isNearBottom, setIsNearBottom] = useState(true);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Get user ID from Supabase
-  useEffect(() => {
-    const getUserId = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserId(user.id);
-      }
-    };
-    getUserId();
-  }, []);
 
   // Update selected chat when query parameter changes
   useEffect(() => {
@@ -94,172 +77,7 @@ export default function ChatLogTabContent() {
     enabled: !!selectedChatId,
   });
 
-  // WebSocket Integration for real-time updates
-  const organisationId = chatsData?.organisation?.id || null;
-  console.log('🏢 Organisation ID for WebSocket:', organisationId);
-  console.log('👤 User ID for WebSocket:', userId);
-
-  const { isConnected, markChatAsRead } = useChatSocket(organisationId, userId, !!organisationId);
-  console.log('🔌 WebSocket connected:', isConnected);
-
-  // Sync local chats with API data
-  useEffect(() => {
-    if (chatsData?.chats) {
-      setLocalChats(chatsData.chats);
-    }
-  }, [chatsData]);
-
-  // Create a custom WebSocket handler that updates local state
-  const handleWebSocketMessage = useCallback((data: any) => {
-    console.log('🔌 WebSocket message received:', data);
-    console.log('🔌 Message type:', data?.type);
-    console.log('🔌 Chat ID:', data?.chatId);
-    console.log('🔌 Current selected chat ID:', selectedChatId);
-
-    try {
-      if (data?.type === 'new-message' && data?.chatId && data?.message?.action === 'created') {
-        console.log('✅ Processing new message');
-        console.log('📝 Message details:', data.message);
-
-        setLocalChats(prevChats => {
-          console.log('📊 Previous chats count:', prevChats.length);
-          const updatedChats = prevChats.map(chat => {
-            if (chat?.id === data.chatId) {
-              console.log(`🔄 Updating chat ${chat.id} with new message`);
-              const newUnreadCount = data.message?.chat?.unread_count || (chat?.unread_count || 0) + 1;
-
-              return {
-                ...chat,
-                unread_count: newUnreadCount,
-                updated_at: data.message?.created_at || chat.updated_at,
-              };
-            }
-            return chat;
-          });
-
-          setLastWebSocketUpdate(Date.now());
-          console.log('⏰ Set lastWebSocketUpdate to:', Date.now());
-
-          // Check if the message is for the currently selected chat
-          if (selectedChatId && data.chatId?.toString() === selectedChatId) {
-            console.log('🎯 Message is for current chat, refreshing chat details...');
-            // Refresh the chat details to get the new message
-            queryClient.invalidateQueries({
-              queryKey: chatQueries.getChatDetails(orgSlug, selectedChatId).queryKey,
-            });
-            console.log('🔄 Query invalidated for chat:', selectedChatId);
-
-            setTimeout(() => {
-              if (markChatAsRead) {
-                console.log('✅ Marking chat as read:', data.chatId);
-                markChatAsRead(data.chatId);
-              }
-            }, 1000);
-          }
-          else {
-            console.log('❌ Message is NOT for current chat');
-            console.log('   - selectedChatId:', selectedChatId);
-            console.log('   - message chatId:', data.chatId?.toString());
-          }
-
-          console.log('✅ Updated chats state with new message');
-          console.log('📊 New chats count:', updatedChats.length);
-          return updatedChats;
-        });
-      } else if (data?.type === 'new-chat' && data?.chat) {
-        console.log('✅ Processing new chat creation');
-        console.log('💬 New chat details:', data.chat);
-
-        setLocalChats(prevChats => {
-          console.log('📊 Previous chats count:', prevChats.length);
-
-          // Check if chat already exists (avoid duplicates)
-          const existingChat = prevChats.find(chat => chat.id === data.chat.id);
-          if (existingChat) {
-            console.log('⚠️ Chat already exists, skipping addition');
-            return prevChats;
-          }
-
-          // Add new chat to the beginning of the list
-          const updatedChats = [data.chat, ...prevChats];
-
-          setLastWebSocketUpdate(Date.now());
-          console.log('⏰ Set lastWebSocketUpdate to:', Date.now());
-
-          console.log('✅ Added new chat to state');
-          console.log('📊 New chats count:', updatedChats.length);
-          console.log(`🆕 New chat #${data.chat.id} from ${data.chat.source} source added`);
-
-          return updatedChats;
-        });
-      } else if (data.type === 'chat-read' && data?.chatId) {
-        console.log('✅ Processing chat read event');
-        console.log('💬 Chat ID:', data.chatId);
-
-        setLocalChats(prevChats => {
-          const updatedChats = prevChats.map(chat => {
-            if (chat.id === data.chatId) {
-              console.log(`🔄 Marking chat ${chat.id} as read`);
-              return {
-                ...chat,
-                unread_count: 0,
-              };
-            }
-            return chat;
-          });
-
-          console.log('✅ Updated chats state with read status');
-          return updatedChats;
-        });
-      } else if (data.type === 'chat-updated' && data?.chatId) {
-        console.log('✅ Processing chat updated event');
-        console.log('💬 Chat details:', data.updateData.chat);
-
-        setLocalChats(prevChats => {
-          const updatedChats = prevChats.map(chat => {
-            if (chat.id === data.chatId) {
-              console.log(`🔄 Updating chat ${chat.id}`);
-              return {
-                ...chat,
-                ...data.updateData.chat,
-              };
-            }
-            return chat;
-          });
-
-          console.log('✅ Updated chats state with new chat details');
-          return updatedChats;
-        });
-      }
-    } catch (error) {
-      console.error('❌ Error processing WebSocket message:', error);
-    }
-
-  }, [selectedChatId, queryClient, orgSlug]);
-
-  // Listen for WebSocket events through custom events
-  useEffect(() => {
-    const handleCustomEvent = (event: CustomEvent) => {
-      handleWebSocketMessage(event.detail);
-    };
-
-    window.addEventListener('chat-socket-update', handleCustomEvent as EventListener);
-
-    return () => {
-      window.removeEventListener('chat-socket-update', handleCustomEvent as EventListener);
-    };
-  }, [handleWebSocketMessage]);
-
-  // Mark chat as read when selected
-  useEffect(() => {
-    console.log("🎯 Chat selection effect triggered:", { selectedChatId, markChatAsReadAvailable: !!markChatAsRead });
-    if (selectedChatId && markChatAsRead) {
-      console.log("📖 Calling markChatAsRead for selected chat:", selectedChatId);
-      markChatAsRead(parseInt(selectedChatId));
-    }
-  }, [selectedChatId, markChatAsRead]);
-
-  // Scroll utility functions (moved before useEffects that use them)
+  // Scroll utility functions
   const scrollToBottom = useCallback((force = false) => {
     if (messagesContainerRef.current) {
       if (force || isNearBottom) {
@@ -338,25 +156,6 @@ export default function ChatLogTabContent() {
     }
   }, [selectedChatDetails?.messages?.length, isUserScrolling, isNearBottom, scrollToBottom]); // Re-add necessary dependencies
 
-  // Handle real-time updates from socket specifically
-  useEffect(() => {
-    console.log('🔄 Socket update effect triggered');
-    console.log('   - lastWebSocketUpdate:', lastWebSocketUpdate);
-    console.log('   - selectedChatId:', selectedChatId);
-    console.log('   - isUserScrolling:', isUserScrolling);
-    console.log('   - isNearBottom:', isNearBottom);
-
-    // This effect specifically handles socket updates that might not trigger message length change immediately
-    if (lastWebSocketUpdate > 0 && selectedChatId && !isUserScrolling && isNearBottom) {
-      console.log('✅ Auto-scrolling to bottom (socket update)');
-      setTimeout(() => {
-        scrollToBottom(false);
-      }, 200); // Slightly longer delay for socket updates
-    } else {
-      console.log('❌ Socket auto-scroll conditions not met');
-    }
-  }, [lastWebSocketUpdate, selectedChatId, isUserScrolling, isNearBottom, scrollToBottom]);
-
   // Cleanup scroll timeout on unmount
   useEffect(() => {
     return () => {
@@ -383,6 +182,9 @@ export default function ChatLogTabContent() {
       queryClient.invalidateQueries({
         queryKey: chatQueries.getChatDetails(orgSlug, selectedChatId).queryKey,
       });
+      queryClient.invalidateQueries({
+        queryKey: chatQueries.getChats(orgSlug, filters).queryKey,
+      });
 
       // Force scroll to bottom when sending a message
       setTimeout(() => {
@@ -392,7 +194,44 @@ export default function ChatLogTabContent() {
     }
   }, [selectedChatId, orgSlug, queryClient, scrollToBottom]);
 
-  const chats = localChats.length > 0 ? localChats : (chatsData?.chats || []);
+  const chats = chatsData?.chats || [];
+
+  // Helper to refetch both getChats and getChatDetails queries simultaneously
+  const refetchChatsAndDetails = () => {
+    queryClient.invalidateQueries({
+      queryKey: chatQueries.getChats(orgSlug, filters).queryKey,
+    });
+    if (selectedChatId) {
+      queryClient.invalidateQueries({
+        queryKey: chatQueries.getChatDetails(orgSlug, selectedChatId).queryKey,
+      });
+    }
+  };
+
+  // Refetch both queries every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetchChatsAndDetails();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [orgSlug, filters, selectedChatId]);
+
+  // Mark selected chat as read if unread_messages > 0 after chatsData refetch
+  useEffect(() => {
+    if (selectedChatId && chats.length > 0) {
+      const selectedChat = chats.find(c => c.id?.toString() === selectedChatId?.toString());
+      if (selectedChat && selectedChat.unread_messages && Number(selectedChat.unread_messages) > 0) {
+        setTimeout(async () => {
+          try {
+            await updateChatUnreadMessagesAction(selectedChat.id, orgSlug);
+            refetchChatsAndDetails();
+          } catch (error) {
+            console.error('Error marking chat as read:', error);
+          }
+        }, 1000); // Delay to ensure UI is ready
+      }
+    }
+  }, [chatsData?.chats, selectedChatId]);
 
   const formatTimeAgo = (dateString: string) => {
     try {
@@ -425,12 +264,6 @@ export default function ChatLogTabContent() {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3">
           <SectionHeader label="Chat Logs" />
-          {isConnected && (
-            <Badge variant="secondary" className="bg-green-100 text-green-800">
-              <div className="mr-1.5 h-2 w-2 rounded-full bg-green-600"></div>
-              Live
-            </Badge>
-          )}
         </div>
         <div className="flex items-center gap-3">
           <DateRangeFilter
@@ -586,7 +419,7 @@ export default function ChatLogTabContent() {
                     {chats.map((chat) => (
                       <div
                         key={chat.id}
-                        onClick={() => {
+                        onClick={async () => {
                           try {
                             const chatIdString = chat.id?.toString();
                             if (chatIdString) {
@@ -594,6 +427,12 @@ export default function ChatLogTabContent() {
                               router.push(`/${orgSlug}/chat-logs?chat=${chat.id}`, {
                                 scroll: false,
                               });
+                              // Mark chat as read on select
+                              if (chat.unread_messages && Number(chat.unread_messages) > 0) {
+                                await updateChatUnreadMessagesAction(chat.id, orgSlug);
+                              }
+                              // Always refetch both queries together
+                              refetchChatsAndDetails();
                             }
                           } catch (error) {
                             console.error('Error selecting chat:', error);
@@ -602,7 +441,7 @@ export default function ChatLogTabContent() {
                         className={`hover:bg-muted/70 cursor-pointer rounded-xl p-5 mb-2 transition-all duration-200 hover:shadow-sm ${selectedChatId === chat.id?.toString()
                           ? "bg-muted border-border border shadow-sm ring-1 ring-blue-100"
                           : "hover:border-muted border border-transparent"
-                          }${chat.human_handled ? "border border-red-500" : " "}`}
+                          }${chat.human_handled ? " border-red-500 hover:border-red-50" : ""}`}
                       >
                         <div className="flex items-start gap-4">
                           <div className="min-w-0 flex-1 space-y-2">
@@ -627,12 +466,12 @@ export default function ChatLogTabContent() {
                                   {chat?.updated_at ? formatTimeAgo(chat.updated_at) : 'Unknown time'}
                                 </span>
                                 {(() => {
-                                  const unreadCount = Number(chat?.unread_count || 0);
-                                  const shouldShow = chat?.unread_count && unreadCount > 0;
+                                  const unreadCount = Number(chat?.unread_messages || 0);
+                                  const shouldShow = chat?.unread_messages && unreadCount > 0;
 
                                   return shouldShow ? (
                                     <Badge className="bg-red-500 text-white px-2 py-0.5 text-xs font-bold hover:bg-red-600">
-                                      {chat.unread_count}
+                                      {chat.unread_messages}
                                     </Badge>
                                   ) : null;
                                 })()}

@@ -192,6 +192,7 @@ export function MessageInput({
         content.trim(),
         attachedFiles,
         chatInstagramId,
+        chatWhatsAppId,
         chatSource
       );
 
