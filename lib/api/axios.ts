@@ -20,8 +20,7 @@ export async function createAuthenticatedAxios() {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
-      "x-api-key":
-        API_KEY
+      "x-api-key": API_KEY,
     },
   });
 }

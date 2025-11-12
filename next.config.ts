@@ -3,6 +3,33 @@ import type { NextConfig } from "next";
 const NEXT_PUBLIC_BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL; // Read from .env
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'media.getsetmvp.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lookaside.fbsbx.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.giphy.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "50mb"
+    }
+  },
   async redirects() {
     return [
       {

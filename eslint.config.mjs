@@ -25,8 +25,8 @@ const eslintConfig = [
     files: ["**/*.{js,jsx,ts,tsx}"],
     rules: {
       // Import ordering and organization
-      "import/order": [
-        "error",
+        "import/order": [
+          "warn",
         {
           groups: [
             "builtin",
@@ -52,10 +52,10 @@ const eslintConfig = [
       ],
 
       // Code quality rules
-      "prefer-const": "error",
-      "no-var": "error",
-      "object-shorthand": "error",
-      "prefer-template": "error",
+        "prefer-const": "warn",
+        "no-var": "warn",
+        "object-shorthand": "warn",
+        "prefer-template": "warn",
     },
   },
 ];

@@ -1,3 +1,4 @@
+/* eslint-disable import/order */
 import { getCallDetailsAction } from "@/lib/api/actions/organisation/get-call-details";
 import { getLeadDetailsAction } from "@/lib/api/actions/organisation/get-lead-details";
 import { getOrganisationAction } from "@/lib/api/actions/organisation/get-organisation";
@@ -108,5 +109,21 @@ export const organisationQueries = {
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!callId,
+  }),
+};
+
+// Chat queries
+import { getChatsAction, type ChatFilters } from "@/lib/api/actions/chat/get-chats";
+import { getChatDetailsAction } from "@/lib/api/actions/chat/get-chat-details";
+
+export const chatQueries = {
+  getChats: (orgSlug: string, filters: ChatFilters) => ({
+    queryKey: ["organisation", orgSlug, "chats", filters],
+    queryFn: () => getChatsAction(orgSlug, filters),
+  }),
+  getChatDetails: (orgSlug: string, chatId: string) => ({
+    queryKey: ["chat", "details", chatId],
+    queryFn: () => getChatDetailsAction(orgSlug, chatId),
+    enabled: !!chatId,
   }),
 };

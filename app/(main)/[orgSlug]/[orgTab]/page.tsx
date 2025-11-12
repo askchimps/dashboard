@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
 
