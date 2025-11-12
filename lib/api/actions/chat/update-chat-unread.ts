@@ -4,6 +4,7 @@ import { createAuthenticatedAxios } from "@/lib/api/axios";
 export const updateChatUnreadMessagesAction = async (
   chatId: string | number,
   orgSlug: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<{ success: boolean; data?: any; message?: string }> => {
   try {
     const axios = await createAuthenticatedAxios();
@@ -15,6 +16,7 @@ export const updateChatUnreadMessagesAction = async (
       success: true,
       data: response.data.data,
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("Failed to update chat unread_messages:", error);
     return {
