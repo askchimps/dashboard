@@ -39,8 +39,6 @@ export default function CallLogTabContent() {
   );
   const [activeTab, setActiveTab] = useState("chat");
   const [filters, setFilters] = useState<CallFilters>({
-    page: 1,
-    limit: 50,
     start_date: format(
       new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       "yyyy-MM-dd"
