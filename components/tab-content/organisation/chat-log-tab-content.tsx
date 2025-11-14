@@ -85,10 +85,10 @@ export default function ChatLogTabContent() {
       const response = await chatQueries.getChats(orgSlug, { ...filters, page: pageParam }).queryFn();
       return response;
     },
-    getNextPageParam: (lastPage: unknown) => {
+    getNextPageParam: (lastPage: { pagination?: { page: number; totalPages: number } }) => {
       if (!lastPage?.pagination) return undefined;
-      const { current_page, total_pages } = lastPage.pagination;
-      return current_page < total_pages ? current_page + 1 : undefined;
+      const { page, totalPages } = lastPage.pagination;
+      return page < totalPages ? page + 1 : undefined;
     },
     initialPageParam: 1,
     refetchOnWindowFocus: false,

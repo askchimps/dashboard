@@ -75,7 +75,7 @@ export default function CallLogTabContent() {
       const response = await organisationQueries.getCalls(orgSlug, { ...filters, page: pageParam }).queryFn();
       return response;
     },
-    getNextPageParam: (lastPage: unknown) => {
+    getNextPageParam: (lastPage: {pagination?: {current_page: number; total_pages: number}}) => {
       if (!lastPage?.pagination) return undefined;
       const { current_page, total_pages } = lastPage.pagination;
       return current_page < total_pages ? current_page + 1 : undefined;
