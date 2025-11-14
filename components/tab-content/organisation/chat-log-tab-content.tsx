@@ -3,7 +3,7 @@
 /* eslint-disable object-shorthand */
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import {
   MessageSquare,
@@ -46,13 +46,17 @@ export default function ChatLogTabContent() {
   const [activeTab, setActiveTab] = useState("messages");
   const [filters, setFilters] = useState<ChatFilters>({
     page: 1,
-    limit: 50,
+    limit: 20,
     startDate: format(
       new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       "yyyy-MM-dd"
     ),
     endDate: format(new Date(), "yyyy-MM-dd"),
   });
+  const chatRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // Track if user has manually scrolled the chats list
+  const [hasUserScrolled, setHasUserScrolled] = useState(false);
 
   // Refs for scroll management
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -67,9 +71,27 @@ export default function ChatLogTabContent() {
     }
   }, [chatFromQuery]);
 
-  // API Integration
-  const { data: chatsData, isLoading } = useQuery({
-    ...chatQueries.getChats(orgSlug, filters),
+  // Infinite Query for Chats
+  const {
+    data: chatsData,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: ["organisation", orgSlug, "chats", filters],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await chatQueries.getChats(orgSlug, { ...filters, page: pageParam }).queryFn();
+      return response;
+    },
+    getNextPageParam: (lastPage: any) => {
+      if (!lastPage?.pagination) return undefined;
+      const { current_page, total_pages } = lastPage.pagination;
+      return current_page < total_pages ? current_page + 1 : undefined;
+    },
+    initialPageParam: 1,
+    refetchOnWindowFocus: false,
   });
 
   const { data: selectedChatDetails, isLoading: isLoadingDetails } = useQuery({
@@ -175,6 +197,52 @@ export default function ChatLogTabContent() {
     setSelectedChatId(null);
   };
 
+  // Infinite scroll handler for useInfiniteQuery
+  const chatsListContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const container = chatsListContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      // User scroll tracking
+      if (container.scrollTop > 0) {
+        setHasUserScrolled(true);
+      }
+      // Infinite scroll trigger
+      if (!isFetchingNextPage && hasNextPage &&
+        container.scrollHeight - container.scrollTop - container.clientHeight < 100) {
+        fetchNextPage();
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
+
+  // Flatten chats from all pages
+  const chats = Array.isArray(chatsData?.pages)
+    ? chatsData.pages.flatMap(page => page.chats || [])
+    : [];
+
+  // Scroll selected chat into view only if user hasn't manually scrolled
+  useEffect(() => {
+    if (!selectedChatId || hasUserScrolled) return;
+    const el = chatRefs.current[selectedChatId];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    else {
+      fetchNextPage();
+    }
+  }, [selectedChatId, chats, hasUserScrolled, fetchNextPage]);
+
+  // Reset hasUserScrolled when filters change or selectedChatId changes (e.g., new navigation)
+  useEffect(() => {
+    setHasUserScrolled(false);
+  }, [filters, selectedChatId]);
+
   // Callback after message is sent to refresh chat details
   const handleMessageSent = useCallback(() => {
     if (selectedChatId) {
@@ -194,12 +262,12 @@ export default function ChatLogTabContent() {
     }
   }, [selectedChatId, orgSlug, queryClient, scrollToBottom]);
 
-  const chats = chatsData?.chats || [];
+
 
   // Helper to refetch both getChats and getChatDetails queries simultaneously
   const refetchChatsAndDetails = () => {
     queryClient.invalidateQueries({
-      queryKey: chatQueries.getChats(orgSlug, filters).queryKey,
+      queryKey: ["organisation", orgSlug, "chats", filters],
     });
     if (selectedChatId) {
       queryClient.invalidateQueries({
@@ -231,7 +299,7 @@ export default function ChatLogTabContent() {
         }, 1000); // Delay to ensure UI is ready
       }
     }
-  }, [chatsData?.chats, selectedChatId]);
+  }, [chats, selectedChatId]);
 
   const formatTimeAgo = (dateString: string) => {
     try {
@@ -291,7 +359,7 @@ export default function ChatLogTabContent() {
           ))}
         </div>
       ) : (
-        chatsData && (
+        chatsData && chatsData.pages && chatsData.pages[0] && (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -302,7 +370,7 @@ export default function ChatLogTabContent() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {chatsData.summary.totalChats}
+                  {chatsData.pages[0].summary.totalChats}
                 </div>
               </CardContent>
             </Card>
@@ -321,7 +389,7 @@ export default function ChatLogTabContent() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {chatsData.summary.openChats}
+                  {chatsData.pages[0].summary.openChats}
                 </div>
               </CardContent>
             </Card>
@@ -340,7 +408,7 @@ export default function ChatLogTabContent() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {chatsData.summary.chatsWithLead}
+                  {chatsData.pages[0].summary.chatsWithLead}
                 </div>
               </CardContent>
             </Card>
@@ -359,7 +427,7 @@ export default function ChatLogTabContent() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {chatsData.summary.chatsWithoutLead}
+                  {chatsData.pages[0].summary.chatsWithoutLead}
                 </div>
               </CardContent>
             </Card>
@@ -373,8 +441,8 @@ export default function ChatLogTabContent() {
         <div className="h-80 w-full lg:h-full lg:w-80 lg:flex-shrink-0">
           <div className="border-border flex h-full flex-col rounded-lg border bg-white">
             <div className="flex-1 overflow-hidden">
-              <div className="h-full overflow-y-auto">
-                {isLoading ? (
+              <div ref={chatsListContainerRef} className="h-full overflow-y-auto">
+                {isLoading && chats.length === 0 ? (
                   <div className="space-y-1 p-2">
                     {/* Skeleton loading for chat list */}
                     {Array.from({ length: 6 }).map((_, index) => (
@@ -419,6 +487,7 @@ export default function ChatLogTabContent() {
                     {chats.map((chat) => (
                       <div
                         key={chat.id}
+                        ref={el => { chatRefs.current[chat.id] = el; }}
                         onClick={async () => {
                           try {
                             const chatIdString = chat.id?.toString();
@@ -486,6 +555,11 @@ export default function ChatLogTabContent() {
                         </div>
                       </div>
                     ))}
+                    {isFetchingNextPage && (
+                      <div className="flex justify-center py-4">
+                        <Skeleton className="h-8 w-32" />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

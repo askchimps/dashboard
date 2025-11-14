@@ -70,9 +70,15 @@ export interface CallPagination {
   total_pages: number;
 }
 
+export interface SourceOption {
+  label: string;
+  value: string;
+}
+
 export interface CallsResponse {
   calls: Call[];
   stats: CallStats;
+  statuses: SourceOption[];
   pagination: CallPagination;
 }
 

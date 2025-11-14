@@ -7,6 +7,8 @@ export interface LeadFilters {
   limit?: number;
   source?: string;
   status?: string;
+  zoho_status?: string;
+  zoho_lead_owner?: string;
   agent?: string;
   search?: string;
   startDate?: string;
@@ -126,6 +128,8 @@ export interface LeadListResponse {
   };
   sources?: SourceOption[];
   status?: StatusOption[];
+  zoho_statuses?: StatusOption[];
+  zoho_lead_owners?: StatusOption[];
 }
 
 export const getOrganisationLeadsAction = async (
@@ -140,10 +144,12 @@ export const getOrganisationLeadsAction = async (
   if (filters.limit) params.append("limit", filters.limit.toString());
   if (filters.source) params.append("source", filters.source);
   if (filters.status) params.append("status", filters.status);
+  if (filters.zoho_status) params.append("zoho_status", filters.zoho_status);
   if (filters.agent) params.append("agent", filters.agent);
   if (filters.search) params.append("search", filters.search);
   if (filters.startDate) params.append("start_date", filters.startDate);
   if (filters.endDate) params.append("end_date", filters.endDate);
+  if (filters.zoho_lead_owner) params.append("zoho_lead_owner", filters.zoho_lead_owner);
 
   const queryString = params.toString() ? `?${params.toString()}` : "";
   const response = await axios.get(

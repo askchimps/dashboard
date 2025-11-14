@@ -20,13 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -41,6 +34,7 @@ import {
   LeadFilters,
 } from "@/lib/api/actions/organisation/get-organisation-leads";
 import { organisationQueries } from "@/lib/query/organisation.query";
+import Link from "next/link";
 
 export default function LeadTabContent() {
   const params = useParams();
@@ -103,7 +97,9 @@ export default function LeadTabContent() {
 
   // Use status and source options from API response
   const statusOptions = leadsData?.status || [];
+  const zohoStatusOptions = leadsData?.zoho_statuses || [];
   const sourceOptions = leadsData?.sources || [];
+  const zohoLeadOwners = leadsData?.zoho_lead_owners || [];
 
   const formatTimeAgo = (dateString: string) => {
     try {
@@ -116,17 +112,16 @@ export default function LeadTabContent() {
   const getStatusColor = (status?: string) => {
     switch (status?.toLowerCase()) {
       case "qualified":
+      case "prospect":
         return "bg-green-100 text-green-800";
+      case "fresh":
       case "new":
         return "bg-blue-100 text-blue-800";
-      case "follow_up":
-        return "bg-yellow-100 text-yellow-800";
-      case "not_qualified":
+      case "junk":
+      case "not interested":
         return "bg-red-100 text-red-800";
-      case "converted":
-        return "bg-purple-100 text-purple-800";
-      case "lost":
-        return "bg-gray-100 text-gray-800";
+      case "human_handover":
+        return "bg-yellow-100 text-yellow-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -186,6 +181,25 @@ export default function LeadTabContent() {
             </Select>
 
             <Select
+              value={filters.zoho_status || "all"}
+              onValueChange={(value: string) =>
+                handleFilterChange("zoho_status", value)
+              }
+            >
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="Zoho Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Zoho Status</SelectItem>
+                {zohoStatusOptions.map(status => (
+                  <SelectItem key={status.value} value={status.value}>
+                    {status.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* <Select
               value={filters.source || "all"}
               onValueChange={(value: string) =>
                 handleFilterChange("source", value)
@@ -199,6 +213,25 @@ export default function LeadTabContent() {
                 {sourceOptions.map(source => (
                   <SelectItem key={source.value} value={source.value}>
                     {source.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select> */}
+
+            <Select
+              value={filters.zoho_lead_owner || "all"}
+              onValueChange={(value: string) =>
+                handleFilterChange("zoho_lead_owner", value)
+              }
+            >
+              <SelectTrigger className="w-50">
+                <SelectValue placeholder="Zoho Lead Owner" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Zoho Lead Owners</SelectItem>
+                {zohoLeadOwners.map(owner => (
+                  <SelectItem key={owner.value} value={owner.value}>
+                    {owner.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -338,11 +371,15 @@ export default function LeadTabContent() {
                       <TableHead className="w-[250px]">Lead</TableHead>
                       <TableHead>Contact Info</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Zoho Status</TableHead>
                       <TableHead className="hidden md:table-cell">
                         Source
                       </TableHead>
                       <TableHead className="hidden lg:table-cell">
-                        Conversations
+                        Calls
+                      </TableHead>
+                      <TableHead className="hidden lg:table-cell">
+                        Chats
                       </TableHead>
                       <TableHead className="hidden sm:table-cell">
                         Created
@@ -371,6 +408,12 @@ export default function LeadTabContent() {
                           </TableCell>
                           <TableCell>
                             <Skeleton className="h-6 w-20 rounded-full" />
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <Skeleton className="h-4 w-16" />
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <Skeleton className="h-4 w-16" />
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
                             <Skeleton className="h-4 w-16" />
@@ -440,10 +483,16 @@ export default function LeadTabContent() {
                           Status
                         </TableHead>
                         <TableHead className="hidden md:table-cell">
+                          Zoho Status
+                        </TableHead>
+                        <TableHead className="hidden md:table-cell">
                           Source
                         </TableHead>
                         <TableHead className="hidden lg:table-cell">
-                          Conversations
+                          Calls
+                        </TableHead>
+                        <TableHead className="hidden lg:table-cell">
+                          Chats
                         </TableHead>
                         <TableHead className="hidden sm:table-cell">
                           Created
@@ -456,10 +505,6 @@ export default function LeadTabContent() {
                         <TableRow
                           key={lead.id}
                           className="hover:bg-muted/50 cursor-pointer"
-                          onClick={() => {
-                            setSelectedLeadId(lead.id.toString());
-                            setIsLeadDetailsOpen(true);
-                          }}
                         >
                           <TableCell className="font-medium">
                             <div className="flex items-center space-x-3">
@@ -480,8 +525,8 @@ export default function LeadTabContent() {
                                     (lead.first_name && lead.last_name
                                       ? `${lead.first_name} ${lead.last_name}`
                                       : lead.first_name ||
-                                        lead.email ||
-                                        "Unknown")}
+                                      lead.email ||
+                                      "Unknown")}
                                 </div>
                                 <div className="text-muted-foreground text-xs">
                                   ID: {lead.id}
@@ -492,16 +537,16 @@ export default function LeadTabContent() {
 
                           <TableCell>
                             <div className="text-sm">
-                              {lead.email ? (
+                              {lead.phone_number ? (
                                 <span
                                   className="block max-w-[150px] truncate"
-                                  title={lead.email}
+                                  title={lead.phone_number}
                                 >
-                                  {lead.email}
-                                </span>
-                              ) : lead.phone_number ? (
-                                <span className="block">
                                   {lead.phone_number}
+                                </span>
+                              ) : lead.email ? (
+                                <span className="block">
+                                  {lead.email}
                                 </span>
                               ) : (
                                 <span className="text-muted-foreground text-xs">
@@ -517,9 +562,17 @@ export default function LeadTabContent() {
                             >
                               {lead.status
                                 ? statusOptions.find(
-                                    option => option.value === lead.status
-                                  )?.label
+                                  option => option.value === lead.status
+                                )?.label
                                 : "Unknown"}
+                            </Badge>
+                          </TableCell>
+
+                          <TableCell>
+                            <Badge
+                              className={`text-xs ${getStatusColor(lead.zoho_lead?.status)}`}
+                            >
+                              {lead.zoho_lead?.status ?? "Unknown"}
                             </Badge>
                           </TableCell>
 
@@ -529,55 +582,49 @@ export default function LeadTabContent() {
                             </span>
                           </TableCell>
 
-                          {/* <TableCell>
-                            {lead.agents && lead.agents.length > 0 ? (
-                              <div className="text-sm">
-                                {lead.agents.map((agent, idx) => (
-                                  <span key={agent.id}>
-                                    {idx > 0 && ", "}
-                                    <span className="font-medium">{agent.name}</span>
-                                  </span>
-                                ))}
+                          <TableCell className="hidden lg:table-cell">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1 text-sm">
+                                <MessageSquare className="text-muted-foreground h-3 w-3" />
+                                <span>
+                                  {(lead.total_chats || 0)}{" "}
+                                  Call
+                                  {(lead.total_chats || 0) !==
+                                    1
+                                    ? "s"
+                                    : ""}
+                                </span>
                               </div>
-                            ) : (
-                              <span className="text-muted-foreground text-xs">No agents</span>
-                            )}
-                          </TableCell> */}
+                              {lead.latest_call && (
+                                <div className="text-muted-foreground text-xs">
+                                  Latest:{" "}
+                                  {lead.latest_call
+                                    ? formatTimeAgo(lead.latest_call.started_at)
+                                    : "N/A"}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
 
                           <TableCell className="hidden lg:table-cell">
                             <div className="space-y-1">
                               <div className="flex items-center gap-1 text-sm">
                                 <MessageSquare className="text-muted-foreground h-3 w-3" />
                                 <span>
-                                  {(lead.total_calls || 0) +
-                                    (lead.total_chats || 0)}{" "}
-                                  conversation
-                                  {(lead.total_calls || 0) +
-                                    (lead.total_chats || 0) !==
-                                  1
+                                  {(lead.total_chats || 0)}{" "}
+                                  Chat
+                                  {(lead.total_chats || 0) !==
+                                    1
                                     ? "s"
                                     : ""}
                                 </span>
                               </div>
-                              {(lead.latest_call || lead.latest_chat) && (
+                              {lead.latest_chat && (
                                 <div className="text-muted-foreground text-xs">
                                   Latest:{" "}
-                                  {lead.latest_call && lead.latest_chat
-                                    ? formatTimeAgo(
-                                        new Date(lead.latest_call.started_at) >
-                                          new Date(lead.latest_chat.created_at)
-                                          ? lead.latest_call.started_at
-                                          : lead.latest_chat.created_at
-                                      )
-                                    : lead.latest_call
-                                      ? formatTimeAgo(
-                                          lead.latest_call.started_at
-                                        )
-                                      : lead.latest_chat
-                                        ? formatTimeAgo(
-                                            lead.latest_chat.created_at
-                                          )
-                                        : "N/A"}
+                                  {lead.latest_chat
+                                    ? formatTimeAgo(lead.latest_chat.created_at)
+                                    : "N/A"}
                                 </div>
                               )}
                             </div>
@@ -590,16 +637,13 @@ export default function LeadTabContent() {
                           </TableCell>
 
                           <TableCell>
-                            <Button
-                              variant="ghost"
+                            <Link
                               className="h-8 w-8 cursor-pointer p-0"
-                              onClick={() =>
-                                router.push(`/${orgSlug}/leads/${lead.id}`)
-                              }
+                              href={`/${orgSlug}/leads/${lead.id}`}
                             >
                               <span className="sr-only">Open menu</span>
                               <ExternalLink className="h-4 w-4" />
-                            </Button>
+                            </Link>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -621,7 +665,7 @@ export default function LeadTabContent() {
                     to{" "}
                     {Math.min(
                       leadsData.pagination.current_page *
-                        leadsData.pagination.per_page,
+                      leadsData.pagination.per_page,
                       leadsData.pagination.total
                     )}{" "}
                     of {leadsData.pagination.total} leads
@@ -645,6 +689,8 @@ export default function LeadTabContent() {
                       <SelectItem value="10">10</SelectItem>
                       <SelectItem value="20">20</SelectItem>
                       <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                      <SelectItem value="200">200</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { organisationQueries } from "@/lib/query/organisation.query";
+import Link from "next/link";
 
 export default function LeadDetailsPage() {
   const params = useParams();
@@ -332,21 +333,21 @@ export default function LeadDetailsPage() {
                     {(lead.zoho_lead.city ||
                       lead.zoho_lead.state ||
                       lead.zoho_lead.country) && (
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">
-                          Location
-                        </label>
-                        <p className="mt-1 text-gray-900">
-                          {[
-                            lead.zoho_lead.city,
-                            lead.zoho_lead.state,
-                            lead.zoho_lead.country,
-                          ]
-                            .filter(Boolean)
-                            .join(", ") || "Not provided"}
-                        </p>
-                      </div>
-                    )}
+                        <div>
+                          <label className="text-sm font-medium text-gray-600">
+                            Location
+                          </label>
+                          <p className="mt-1 text-gray-900">
+                            {[
+                              lead.zoho_lead.city,
+                              lead.zoho_lead.state,
+                              lead.zoho_lead.country,
+                            ]
+                              .filter(Boolean)
+                              .join(", ") || "Not provided"}
+                          </p>
+                        </div>
+                      )}
                   </div>
                 </div>
               </CardContent>
@@ -369,55 +370,54 @@ export default function LeadDetailsPage() {
                     <div
                       key={`call-${call.id}`}
                       className="cursor-pointer rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
-                      onClick={() => {
-                        router.push(`/${orgSlug}/call-logs?call=${call.id}`);
-                      }}
                     >
-                      <div className="mb-3 flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
-                            <PhoneCall className="h-4 w-4 text-blue-600" />
+                      <Link href={`/${orgSlug}/call-logs?call=${call.id}`}>
+                        <div className="mb-3 flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
+                              <PhoneCall className="h-4 w-4 text-blue-600" />
+                            </div>
+                            <span className="text-sm font-medium text-gray-900">
+                              {call.agent.name}
+                            </span>
                           </div>
-                          <span className="text-sm font-medium text-gray-900">
-                            {call.agent.name}
-                          </span>
+                          <Badge
+                            variant="outline"
+                            className="border-gray-300 text-xs text-gray-600"
+                          >
+                            {call.status}
+                          </Badge>
                         </div>
-                        <Badge
-                          variant="outline"
-                          className="border-gray-300 text-xs text-gray-600"
-                        >
-                          {call.status}
-                        </Badge>
-                      </div>
-                      {call.summary && (
-                        <p className="mb-3 line-clamp-2 text-sm leading-relaxed text-gray-600">
-                          {(() => {
-                            try {
-                              const parsed = JSON.parse(call.summary);
-                              return (
-                                parsed.short || parsed.detailed || call.summary
-                              );
-                            } catch {
-                              return call.summary;
-                            }
-                          })()}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span>
-                          {formatDistanceToNow(new Date(call.started_at), {
-                            addSuffix: true,
-                          })}
-                        </span>
-                        {call.duration && (
-                          <span>
-                            • {Math.floor(call.duration / 60)}m{" "}
-                            {Math.floor(call.duration % 60)}s
-                          </span>
+                        {call.summary && (
+                          <p className="mb-3 line-clamp-2 text-sm leading-relaxed text-gray-600">
+                            {(() => {
+                              try {
+                                const parsed = JSON.parse(call.summary);
+                                return (
+                                  parsed.short || parsed.detailed || call.summary
+                                );
+                              } catch {
+                                return call.summary;
+                              }
+                            })()}
+                          </p>
                         )}
-                        <span>• {call.direction}</span>
-                        <span>• {call.source}</span>
-                      </div>
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span>
+                            {formatDistanceToNow(new Date(call.started_at), {
+                              addSuffix: true,
+                            })}
+                          </span>
+                          {call.duration && (
+                            <span>
+                              • {Math.floor(call.duration / 60)}m{" "}
+                              {Math.floor(call.duration % 60)}s
+                            </span>
+                          )}
+                          <span>• {call.direction}</span>
+                          <span>• {call.source}</span>
+                        </div>
+                      </Link>
                     </div>
                   ))}
 
@@ -426,33 +426,32 @@ export default function LeadDetailsPage() {
                     <div
                       key={`chat-${chat.id}`}
                       className="cursor-pointer rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
-                      onClick={() => {
-                        router.push(`/${orgSlug}/chat-logs?chat=${chat.id}`);
-                      }}
                     >
-                      <div className="mb-3 flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
-                            <MessageSquare className="h-4 w-4 text-green-600" />
+                      <Link href={`/${orgSlug}/chat-logs?chat=${chat.id}`}>
+                        <div className="mb-3 flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
+                              <MessageSquare className="h-4 w-4 text-green-600" />
+                            </div>
+                            <span className="text-sm font-medium text-gray-900">
+                              Chat Session
+                            </span>
                           </div>
-                          <span className="text-sm font-medium text-gray-900">
-                            Chat Session
+                          <Badge
+                            variant="outline"
+                            className="border-gray-300 text-xs text-gray-600"
+                          >
+                            {chat.status}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span>
+                            {formatDistanceToNow(new Date(chat.created_at), {
+                              addSuffix: true,
+                            })}
                           </span>
                         </div>
-                        <Badge
-                          variant="outline"
-                          className="border-gray-300 text-xs text-gray-600"
-                        >
-                          {chat.status}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span>
-                          {formatDistanceToNow(new Date(chat.created_at), {
-                            addSuffix: true,
-                          })}
-                        </span>
-                      </div>
+                      </Link>
                     </div>
                   ))}
                 </div>
