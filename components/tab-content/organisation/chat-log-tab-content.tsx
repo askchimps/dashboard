@@ -878,10 +878,58 @@ export default function ChatLogTabContent() {
                                 Chat Summary
                               </h4>
                             </div>
-                            <div className="rounded-xl border border-purple-100 bg-gradient-to-br from-purple-50/50 to-blue-50/50 p-6">
-                              <p className="text-muted-foreground text-sm font-medium leading-relaxed">
-                                {selectedChatDetails.chat.summary}
-                              </p>
+                            <div className="space-y-4">
+                              {(() => {
+                                try {
+                                  const summaryData = JSON.parse(selectedChatDetails.chat.summary);
+                                  return (
+                                    <>
+                                      {/* Brief Summary */}
+                                      {summaryData.brief && (
+                                        <div className="rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 p-5">
+                                          <div className="mb-3 flex items-center gap-2">
+                                            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-100">
+                                              <MessageCircle className="h-3 w-3 text-blue-700" />
+                                            </div>
+                                            <h5 className="text-foreground text-xs font-bold uppercase tracking-wide">
+                                              Brief Summary
+                                            </h5>
+                                          </div>
+                                          <p className="text-muted-foreground text-sm font-medium leading-relaxed">
+                                            {summaryData.brief}
+                                          </p>
+                                        </div>
+                                      )}
+
+                                      {/* Detailed Summary */}
+                                      {summaryData.detailed && (
+                                        <div className="rounded-xl border border-purple-100 bg-gradient-to-br from-purple-50/50 to-pink-50/50 p-5">
+                                          <div className="mb-3 flex items-center gap-2">
+                                            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-purple-100">
+                                              <Activity className="h-3 w-3 text-purple-700" />
+                                            </div>
+                                            <h5 className="text-foreground text-xs font-bold uppercase tracking-wide">
+                                              Detailed Summary
+                                            </h5>
+                                          </div>
+                                          <p className="text-muted-foreground text-sm font-medium leading-relaxed">
+                                            {summaryData.detailed}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </>
+                                  );
+                                } catch (error) {
+                                  // Fallback to original display if summary is not in JSON format
+                                  return (
+                                    <div className="rounded-xl border border-purple-100 bg-gradient-to-br from-purple-50/50 to-blue-50/50 p-6">
+                                      <p className="text-muted-foreground text-sm font-medium leading-relaxed">
+                                        {selectedChatDetails.chat.summary}
+                                      </p>
+                                    </div>
+                                  );
+                                }
+                              })()}
                             </div>
                           </div>
                         )}
@@ -894,14 +942,102 @@ export default function ChatLogTabContent() {
                                 <Activity className="h-4 w-4 text-orange-700" />
                               </div>
                               <h4 className="text-foreground text-sm font-bold tracking-tight">
-                                Chat Analysis
+                                Sentiment Analysis
                               </h4>
                             </div>
-                            <div className="rounded-xl border border-orange-100 bg-gradient-to-br from-orange-50/50 to-yellow-50/50 p-6">
-                              <p className="text-muted-foreground text-sm font-medium leading-relaxed">
-                                {selectedChatDetails.chat.analysis}
-                              </p>
-                            </div>
+                            {(() => {
+                              try {
+                                const analysisData = JSON.parse(selectedChatDetails.chat.analysis);
+                                const sentiment = analysisData.sentiment;
+                                
+                                if (sentiment?.value) {
+                                  const getSentimentColor = (value: string) => {
+                                    switch (value.toLowerCase()) {
+                                      case 'hot':
+                                        return {
+                                          bg: 'bg-red-100',
+                                          text: 'text-red-800',
+                                          border: 'border-red-200',
+                                          gradient: 'from-red-50/50 to-orange-50/50'
+                                        };
+                                      case 'warm':
+                                        return {
+                                          bg: 'bg-orange-100',
+                                          text: 'text-orange-800',
+                                          border: 'border-orange-200',
+                                          gradient: 'from-orange-50/50 to-yellow-50/50'
+                                        };
+                                      case 'cold':
+                                        return {
+                                          bg: 'bg-blue-100',
+                                          text: 'text-blue-800',
+                                          border: 'border-blue-200',
+                                          gradient: 'from-blue-50/50 to-indigo-50/50'
+                                        };
+                                      case 'neutral':
+                                      default:
+                                        return {
+                                          bg: 'bg-gray-100',
+                                          text: 'text-gray-800',
+                                          border: 'border-gray-200',
+                                          gradient: 'from-gray-50/50 to-slate-50/50'
+                                        };
+                                    }
+                                  };
+
+                                  const colors = getSentimentColor(sentiment.value);
+
+                                  return (
+                                    <div className={`rounded-xl border ${colors.border} bg-gradient-to-br ${colors.gradient} p-6`}>
+                                      <div className="space-y-4">
+                                        {/* Sentiment Value */}
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-muted-foreground text-sm font-medium">
+                                            Lead Temperature:
+                                          </span>
+                                          <Badge
+                                            variant="secondary"
+                                            className={`${colors.bg} ${colors.text} text-xs font-bold uppercase tracking-wide`}
+                                          >
+                                            {sentiment.value}
+                                          </Badge>
+                                        </div>
+
+                                        {/* Sentiment Reason */}
+                                        {sentiment.reason && (
+                                          <div className="space-y-2">
+                                            <h6 className="text-foreground text-xs font-bold uppercase tracking-wide">
+                                              Analysis Reason
+                                            </h6>
+                                            <p className="text-muted-foreground text-sm font-medium leading-relaxed">
+                                              {sentiment.reason}
+                                            </p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                }
+
+                                // Fallback if no sentiment found in JSON
+                                return (
+                                  <div className="rounded-xl border border-orange-100 bg-gradient-to-br from-orange-50/50 to-yellow-50/50 p-6">
+                                    <p className="text-muted-foreground text-sm font-medium leading-relaxed">
+                                      {selectedChatDetails.chat.analysis}
+                                    </p>
+                                  </div>
+                                );
+                              } catch (error) {
+                                // Fallback to original display if analysis is not in JSON format
+                                return (
+                                  <div className="rounded-xl border border-orange-100 bg-gradient-to-br from-orange-50/50 to-yellow-50/50 p-6">
+                                    <p className="text-muted-foreground text-sm font-medium leading-relaxed">
+                                      {selectedChatDetails.chat.analysis}
+                                    </p>
+                                  </div>
+                                );
+                              }
+                            })()}
                           </div>
                         )}
                       </div>
