@@ -5,15 +5,15 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { 
-  Download, 
-  FileText, 
-  File, 
-  PlayCircle, 
-  PauseCircle, 
+import {
+  Download,
+  FileText,
+  File,
+  PlayCircle,
+  PauseCircle,
   Volume2,
   Maximize2,
-  Eye 
+  Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -93,12 +93,12 @@ function ImageAttachment({ attachment, className }: AttachmentProps) {
           onClick={() => setIsModalOpen(true)}
           onError={() => setImageError(true)}
         />
-        
+
         {/* Overlay */}
         <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-all flex items-center justify-center opacity-0 hover:opacity-100">
-          <Button 
-            variant="secondary" 
-            size="sm" 
+          <Button
+            variant="secondary"
+            size="sm"
             className="bg-white/90 hover:bg-white"
             onClick={(e) => {
               e.stopPropagation();
@@ -123,7 +123,7 @@ function ImageAttachment({ attachment, className }: AttachmentProps) {
 
       {/* Modal */}
       {isModalOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
           onClick={() => setIsModalOpen(false)}
         >
@@ -177,7 +177,7 @@ function VideoAttachment({ attachment, className }: AttachmentProps) {
         <source src={attachment.file_url} type={attachment.file_type} />
         Your browser does not support the video tag.
       </video>
-      
+
       {/* Video metadata */}
       <div className="p-2 bg-gray-50 border-t">
         <div className="flex justify-between items-center text-sm">
@@ -215,7 +215,7 @@ function AudioAttachment({ attachment, className }: AttachmentProps) {
       {/* <div className="text-blue-600">
         <Volume2 className="h-5 w-5" />
       </div> */}
-      
+
       <div className="flex-1 w-36">
         <div className="font-medium text-sm truncate">{attachment.file_name}</div>
         <audio controls className="w-full mt-2">
@@ -264,14 +264,14 @@ function DocumentAttachment({ attachment, className }: AttachmentProps) {
       <div className="flex-shrink-0">
         {getFileIcon(attachment.file_type)}
       </div>
-      
+
       <div className="flex-1 min-w-0">
-        <div className="font-medium text-sm truncate">{attachment.file_name}</div>
+        <div className="font-medium text-sm truncate w-32">{attachment.file_name.slice(0, 10)}...</div>
         <div className="text-xs text-gray-500">
           {formatFileSize(attachment.file_size)} • {attachment.file_type}
         </div>
       </div>
-      
+
       <div className="flex gap-1">
         <Button variant="secondary" size="sm" onClick={handleView} title="View file">
           <Eye className="h-4 w-4" />
@@ -306,14 +306,14 @@ function GenericFileAttachment({ attachment, className }: AttachmentProps) {
       <div className="flex-shrink-0">
         <File className="h-8 w-8 text-gray-500" />
       </div>
-      
+
       <div className="flex-1 min-w-0">
         <div className="font-medium text-sm truncate">{attachment.file_name}</div>
         <div className="text-xs text-gray-500">
           {formatFileSize(attachment.file_size)} • {attachment.file_type}
         </div>
       </div>
-      
+
       <Button variant="ghost" size="sm" onClick={handleDownload} title="Download file">
         <Download className="h-4 w-4" />
       </Button>

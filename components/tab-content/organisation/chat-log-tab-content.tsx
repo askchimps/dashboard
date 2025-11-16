@@ -635,7 +635,7 @@ export default function ChatLogTabContent() {
                         {selectedChatDetails.lead?.first_name ||
                           selectedChatDetails.lead?.last_name
                           ? `${selectedChatDetails.lead.first_name ?? ""} ${selectedChatDetails.lead.last_name ?? ""}`
-                          : selectedChatDetails.lead?.phone_number ||
+                          : selectedChatDetails.lead?.phone_number || selectedChatDetails?.chat?.name ||
                           "Unknown User"}
                       </h3>
                       <p className="text-muted-foreground flex items-center gap-2 text-sm font-medium">
@@ -815,7 +815,7 @@ export default function ChatLogTabContent() {
                                     {selectedChatDetails.lead.first_name ||
                                       selectedChatDetails.lead.last_name
                                       ? `${selectedChatDetails.lead.first_name ?? ""} ${selectedChatDetails.lead.last_name ?? ""}`
-                                      : selectedChatDetails.lead.phone_number ||
+                                      : selectedChatDetails.lead.phone_number || selectedChatDetails?.chat?.name ||
                                       "Unknown"}
                                   </span>
                                 </div>
