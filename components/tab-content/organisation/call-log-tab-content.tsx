@@ -555,8 +555,8 @@ export default function CallLogTabContent() {
                               <div
                                 key={message.id}
                                 className={`flex gap-4 ${message.role === "user"
-                                  ? "justify-end"
-                                  : "justify-start"
+                                  ? "justify-start"
+                                  : "justify-end"
                                   }`}
                               >
                                 {(message.role === "assistant" ||
