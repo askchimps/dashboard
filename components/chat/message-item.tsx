@@ -41,7 +41,7 @@ export function MessageItem({ message, className }: MessageItemProps) {
   return (
     <div className={cn(
       "flex gap-4",
-      isUser ? "justify-end" : "justify-start",
+      isUser ? "justify-start" : "justify-end",
       className
     )}>
       {/* Avatar for non-user messages */}

@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Clock,
   MessageSquareText,
+  Users,
 } from "lucide-react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -44,6 +45,7 @@ export default function ChatLogTabContent() {
     chatFromQuery
   );
   const [activeTab, setActiveTab] = useState("messages");
+  const [chatTypeFilter, setChatTypeFilter] = useState<"all" | "human_handover">("all");
   const [filters, setFilters] = useState<ChatFilters>({
     page: 1,
     limit: 20,
@@ -135,9 +137,9 @@ export default function ChatLogTabContent() {
         }
 
         // Set user scrolling to false after 3 seconds of no scrolling
-        scrollTimeoutRef.current = setTimeout(() => {
-          setIsUserScrolling(false);
-        }, 3000);
+        // scrollTimeoutRef.current = setTimeout(() => {
+        //   setIsUserScrolling(false);
+        // }, 3000);
       } else {
         // If user scrolled back to bottom, allow auto-scroll again
         setIsUserScrolling(false);
@@ -197,6 +199,12 @@ export default function ChatLogTabContent() {
     setSelectedChatId(null);
   };
 
+  const handleChatTypeChange = (type: "all" | "human_handover") => {
+    setChatTypeFilter(type);
+    setSelectedChatId(null);
+    setHasUserScrolled(false);
+  };
+
   // Infinite scroll handler for useInfiniteQuery
   const chatsListContainerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -222,18 +230,43 @@ export default function ChatLogTabContent() {
   }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
 
   // Flatten chats from all pages
-  const chats = Array.isArray(chatsData?.pages)
+  const allChats = Array.isArray(chatsData?.pages)
     ? chatsData.pages.flatMap(page => page.chats || [])
     : [];
 
-  // Scroll selected chat into view only if user hasn't manually scrolled
+  // Filter chats based on chat type filter
+  const chats = chatTypeFilter === "human_handover"
+    ? allChats.filter(chat => chat.human_handled)
+    : allChats;
+
+  // Scroll selected chat into view within the chat list container only
   useEffect(() => {
     if (!selectedChatId || hasUserScrolled) return;
+
     const el = chatRefs.current[selectedChatId];
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-    else {
+    const container = chatsListContainerRef.current;
+
+    if (el && container) {
+      const containerRect = container.getBoundingClientRect();
+      const elementRect = el.getBoundingClientRect();
+
+      // Check if element is already visible in the container
+      const isVisible =
+        elementRect.top >= containerRect.top &&
+        elementRect.bottom <= containerRect.bottom;
+
+      if (!isVisible) {
+        // Calculate scroll position to show element in upper third of container
+        const containerHeight = container.clientHeight;
+        const elementHeight = el.offsetHeight;
+        const targetPosition = el.offsetTop - (containerHeight / 3) + (elementHeight / 2);
+
+        container.scrollTo({
+          top: Math.max(0, targetPosition),
+          behavior: "smooth"
+        });
+      }
+    } else if (!el) {
       fetchNextPage();
     }
   }, [selectedChatId, chats, hasUserScrolled, fetchNextPage]);
@@ -280,7 +313,7 @@ export default function ChatLogTabContent() {
   useEffect(() => {
     const interval = setInterval(() => {
       refetchChatsAndDetails();
-    }, 30000);
+    }, 10000);
     return () => clearInterval(interval);
   }, [orgSlug, filters, selectedChatId]);
 
@@ -435,6 +468,38 @@ export default function ChatLogTabContent() {
         )
       )}
 
+      {/* Chat Type Filter Tabs */}
+      <div className="flex border-b bg-gray-50/30">
+        <button
+          onClick={() => handleChatTypeChange("all")}
+          className={`border-b-2 px-6 py-3 text-sm font-semibold transition-all duration-200 ${chatTypeFilter === "all"
+            ? "border-primary text-primary -mb-px bg-white"
+            : "text-muted-foreground hover:text-foreground border-transparent hover:bg-white/50"
+            }`}
+        >
+          <MessageSquare className="mr-2 inline h-4 w-4" />
+          All Chats
+          {chatsData && chatsData.pages && chatsData.pages[0] && (
+            <span className="ml-2 rounded-full bg-gray-100 px-2 py-1 text-xs font-bold text-gray-600">
+              {chatsData.pages[0].summary.totalChats}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => handleChatTypeChange("human_handover")}
+          className={`border-b-2 px-6 py-3 text-sm font-semibold transition-all duration-200 ${chatTypeFilter === "human_handover"
+            ? "border-primary text-primary -mb-px bg-white"
+            : "text-muted-foreground hover:text-foreground border-transparent hover:bg-white/50"
+            }`}
+        >
+          <Users className="mr-2 inline h-4 w-4" />
+          Human Handover
+          <span className="ml-2 rounded-full bg-red-100 px-2 py-1 text-xs font-bold text-red-600">
+            {allChats.filter(chat => chat.human_handled).length}
+          </span>
+        </button>
+      </div>
+
       {/* Main Layout */}
       <div className="flex h-[calc(100vh-100px)] flex-col gap-6 lg:flex-row">
         {/* Left Panel - Chats List */}
@@ -510,7 +575,7 @@ export default function ChatLogTabContent() {
                         className={`hover:bg-muted/70 cursor-pointer rounded-xl p-5 mb-2 transition-all duration-200 hover:shadow-sm ${selectedChatId === chat.id?.toString()
                           ? "bg-muted border-border border shadow-sm ring-1 ring-blue-100"
                           : "hover:border-muted border border-transparent"
-                          }${chat.human_handled ? " !border-red-500 border-2 hover:border-red-50" : ""}`}
+                          }`}
                       >
                         <div className="flex items-start gap-4">
                           <div className="min-w-0 flex-1 space-y-2">
@@ -521,13 +586,21 @@ export default function ChatLogTabContent() {
                                     {chat?.name || chat?.lead?.phone_number || "Unknown User"}
                                   </h4>
                                 </div>
-                                <div className="mt-3 flex items-center gap-2">
+                                <div className="mt-3 flex items-center gap-3">
                                   <Badge
                                     variant="secondary"
                                     className={`text-xs font-semibold ${getSourceBadgeColor(chat?.source || 'unknown')}`}
                                   >
                                     {chat?.source || 'Unknown'}
                                   </Badge>
+                                  {chat.human_handled ? (
+                                    <Badge
+                                      variant="secondary"
+                                      className={`text-xs font-semibold bg-red-100 text-red-800`}
+                                    >
+                                      HANDOVER
+                                    </Badge>
+                                  ) : null}
                                 </div>
                               </div>
                               <div className="flex flex-col gap-3 items-end">
@@ -949,7 +1022,7 @@ export default function ChatLogTabContent() {
                               try {
                                 const analysisData = JSON.parse(selectedChatDetails.chat.analysis);
                                 const sentiment = analysisData.sentiment;
-                                
+
                                 if (sentiment?.value) {
                                   const getSentimentColor = (value: string) => {
                                     switch (value.toLowerCase()) {
