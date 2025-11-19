@@ -587,9 +587,9 @@ export default function LeadTabContent() {
                               <div className="flex items-center gap-1 text-sm">
                                 <MessageSquare className="text-muted-foreground h-3 w-3" />
                                 <span>
-                                  {(lead.total_chats || 0)}{" "}
+                                  {(lead.total_calls || 0)}{" "}
                                   Call
-                                  {(lead.total_chats || 0) !==
+                                  {(lead.total_calls || 0) !==
                                     1
                                     ? "s"
                                     : ""}
