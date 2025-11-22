@@ -45,7 +45,7 @@ export default function ChatLogTabContent() {
     chatFromQuery
   );
   const [activeTab, setActiveTab] = useState("messages");
-  const [chatTypeFilter, setChatTypeFilter] = useState<"all" | "human_handover">("all");
+  const [chatTypeFilter, setChatTypeFilter] = useState<"all" | "human_handover" | "completed">("all");
   const [filters, setFilters] = useState<ChatFilters>({
     page: 1,
     limit: 20,
@@ -199,7 +199,7 @@ export default function ChatLogTabContent() {
     setSelectedChatId(null);
   };
 
-  const handleChatTypeChange = (type: "all" | "human_handover") => {
+  const handleChatTypeChange = (type: "all" | "human_handover" | "completed") => {
     setChatTypeFilter(type);
     setSelectedChatId(null);
     setHasUserScrolled(false);
@@ -237,7 +237,9 @@ export default function ChatLogTabContent() {
   // Filter chats based on chat type filter
   const chats = chatTypeFilter === "human_handover"
     ? allChats.filter(chat => chat.human_handled)
-    : allChats;
+    : chatTypeFilter === "completed"
+      ? allChats.filter(chat => chat.status === "completed")
+      : allChats;
 
   // Scroll selected chat into view within the chat list container only
   useEffect(() => {
@@ -496,6 +498,19 @@ export default function ChatLogTabContent() {
           Human Handover
           <span className="ml-2 rounded-full bg-red-100 px-2 py-1 text-xs font-bold text-red-600">
             {allChats.filter(chat => chat.human_handled).length}
+          </span>
+        </button>
+        <button
+          onClick={() => handleChatTypeChange("completed")}
+          className={`border-b-2 px-6 py-3 text-sm font-semibold transition-all duration-200 ${chatTypeFilter === "completed"
+            ? "border-primary text-primary -mb-px bg-white"
+            : "text-muted-foreground hover:text-foreground border-transparent hover:bg-white/50"
+            }`}
+        >
+          <Users className="mr-2 inline h-4 w-4" />
+          Completed
+          <span className="ml-2 rounded-full bg-red-100 px-2 py-1 text-xs font-bold text-green-600">
+            {allChats.filter(chat => chat.status === "completed").length}
           </span>
         </button>
       </div>
