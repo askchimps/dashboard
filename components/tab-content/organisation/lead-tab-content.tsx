@@ -3,9 +3,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
-import { Users, User, MessageSquare, ExternalLink } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { Users, User, MessageSquare, ExternalLink, Search, X } from "lucide-react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
 
 import SectionHeader from "@/components/section-header/section-header";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -13,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateRangeFilter } from "@/components/ui/date-range-filter";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -39,20 +41,72 @@ import Link from "next/link";
 export default function LeadTabContent() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const orgSlug = params.orgSlug as string;
 
-  // const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState<LeadFilters>({
-    page: 1,
-    limit: 20,
-    startDate: format(
-      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-      "yyyy-MM-dd"
-    ),
-    endDate: format(new Date(), "yyyy-MM-dd"),
-  });
+  // Get initial filters from URL params (no dependencies to avoid loops)
+  const getFiltersFromURL = (): LeadFilters => {
+    const urlFilters: LeadFilters = {
+      page: parseInt(searchParams.get('page') || '1'),
+      limit: parseInt(searchParams.get('limit') || '20'),
+      startDate: searchParams.get('startDate') || format(
+        new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+        "yyyy-MM-dd"
+      ),
+      endDate: searchParams.get('endDate') || format(new Date(), "yyyy-MM-dd"),
+    };
+
+    if (searchParams.get('search')) urlFilters.search = searchParams.get('search')!;
+    if (searchParams.get('status')) urlFilters.status = searchParams.get('status')!;
+    if (searchParams.get('zoho_status')) urlFilters.zoho_status = searchParams.get('zoho_status')!;
+    if (searchParams.get('source')) urlFilters.source = searchParams.get('source')!;
+    if (searchParams.get('zoho_lead_owner')) urlFilters.zoho_lead_owner = searchParams.get('zoho_lead_owner')!;
+    if (searchParams.get('agent')) urlFilters.agent = searchParams.get('agent')!;
+
+    return urlFilters;
+  };
+
+  // Initialize state from URL only once
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('search') || "");
+  const [filters, setFilters] = useState<LeadFilters>(() => getFiltersFromURL());
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isLeadDetailsOpen, setIsLeadDetailsOpen] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Update URL when filters change (but not during initialization)
+  const updateURL = useCallback((newFilters: LeadFilters) => {
+    if (!isInitialized) return; // Don't update URL during initialization
+    
+    const params = new URLSearchParams();
+    
+    if (newFilters.page && newFilters.page > 1) params.set('page', newFilters.page.toString());
+    if (newFilters.limit && newFilters.limit !== 20) params.set('limit', newFilters.limit.toString());
+    if (newFilters.search) params.set('search', newFilters.search);
+    if (newFilters.status) params.set('status', newFilters.status);
+    if (newFilters.zoho_status) params.set('zoho_status', newFilters.zoho_status);
+    if (newFilters.source) params.set('source', newFilters.source);
+    if (newFilters.zoho_lead_owner) params.set('zoho_lead_owner', newFilters.zoho_lead_owner);
+    if (newFilters.agent) params.set('agent', newFilters.agent);
+    if (newFilters.startDate !== format(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), "yyyy-MM-dd")) {
+      params.set('startDate', newFilters.startDate!);
+    }
+    if (newFilters.endDate !== format(new Date(), "yyyy-MM-dd")) {
+      params.set('endDate', newFilters.endDate!);
+    }
+
+    const url = params.toString() ? `?${params.toString()}` : '';
+    router.replace(`/${orgSlug}/leads${url}`, { scroll: false });
+  }, [router, orgSlug, isInitialized]);
+
+  // Initialize component on mount
+  useEffect(() => {
+    setIsInitialized(true);
+  }, []);
+
+  // Update URL when filters change (only after initialization)
+  useEffect(() => {
+    updateURL(filters);
+  }, [filters, updateURL]);
 
   // API Integration
   const { data: leadsData, isLoading } = useQuery({
@@ -69,18 +123,24 @@ export default function LeadTabContent() {
     setFilters(prev => ({ ...prev, startDate, endDate, page: 1 }));
   };
 
-  // const handleSearch = () => {
-  //   setFilters(prev => ({
-  //     ...prev,
-  //     search: searchQuery.trim() || undefined,
-  //     page: 1,
-  //   }));
-  // };
+  // Debounced search handler
+  const debouncedSearch = useDebounce((searchValue: string) => {
+    setFilters(prev => ({
+      ...prev,
+      search: searchValue.trim() || undefined,
+      page: 1,
+    }));
+  }, 500);
 
-  // const handleClearSearch = () => {
-  //   setSearchQuery("");
-  //   setFilters(prev => ({ ...prev, search: undefined, page: 1 }));
-  // };
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    debouncedSearch(value);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setFilters(prev => ({ ...prev, search: undefined, page: 1 }));
+  };
 
   const handleFilterChange = (
     key: keyof LeadFilters,
@@ -240,16 +300,15 @@ export default function LeadTabContent() {
         </div>
       </div>
 
-      {/* Filters & Search */}
-      {/* <div className="flex flex-col sm:flex-row gap-4">
+      {/* Search Bar */}
+      <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder="Search leads by name, email, or phone..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-10 pr-10"
             />
             {searchQuery && (
@@ -257,16 +316,14 @@ export default function LeadTabContent() {
                 variant="ghost"
                 size="sm"
                 onClick={handleClearSearch}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-transparent"
               >
-                ×
+                <X className="h-4 w-4" />
               </Button>
             )}
           </div>
         </div>
-
-
-      </div> */}
+      </div>
 
       {/* Content */}
       <div className="space-y-6">
@@ -442,26 +499,28 @@ export default function LeadTabContent() {
                   </div>
                   <div className="space-y-2">
                     <h3 className="text-foreground font-medium">
-                      {filters.search || filters.status || filters.source
+                      {filters.search || filters.status || filters.source || filters.zoho_status || filters.zoho_lead_owner
                         ? "No leads found"
                         : "No leads yet"}
                     </h3>
                     <p className="text-muted-foreground mx-auto max-w-sm text-sm">
-                      {filters.search || filters.status || filters.source
+                      {filters.search || filters.status || filters.source || filters.zoho_status || filters.zoho_lead_owner
                         ? "Try adjusting your search or filters to find what you're looking for"
                         : "Leads will appear here when customers show interest in your services"}
                     </p>
-                    {(filters.search || filters.status || filters.source) && (
+                    {(filters.search || filters.status || filters.source || filters.zoho_status || filters.zoho_lead_owner) && (
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          // setSearchQuery("");
+                          setSearchQuery("");
                           setFilters(prev => ({
                             ...prev,
                             search: undefined,
                             status: undefined,
                             source: undefined,
+                            zoho_status: undefined,
+                            zoho_lead_owner: undefined,
                             page: 1,
                           }));
                         }}
