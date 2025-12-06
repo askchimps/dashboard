@@ -30,6 +30,7 @@ import { chatQueries } from "@/lib/query/organisation.query";
 import { updateChatUnreadMessagesAction } from "@/lib/api/actions/chat/update-chat-unread";
 import { MessageItem, type EnhancedMessage } from "@/components/chat/message-item";
 import { MessageInput } from "@/components/chat/message-input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function ChatLogTabContent() {
   const params = useParams();
@@ -41,20 +42,38 @@ export default function ChatLogTabContent() {
   // Get chat ID from query parameter
   const chatFromQuery = searchParams.get("chat");
 
+  // Initialize filters from URL query parameters
+  const initializeFiltersFromQuery = () => {
+    const startDateFromQuery = searchParams.get("startDate");
+    const endDateFromQuery = searchParams.get("endDate");
+    const sourceFromQuery = searchParams.get("source");
+    const statusFromQuery = searchParams.get("status");
+    
+    return {
+      page: 1,
+      limit: 100,
+      startDate: startDateFromQuery || format(
+        new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+        "yyyy-MM-dd"
+      ),
+      endDate: endDateFromQuery || format(new Date(), "yyyy-MM-dd"),
+      source: sourceFromQuery || undefined,
+      status: statusFromQuery || undefined,
+    };
+  };
+
+  // Initialize chat type filter from URL query parameters
+  const initializeChatTypeFromQuery = () => {
+    const chatTypeFromQuery = searchParams.get("chatType") as "all" | "human_handover" | "completed";
+    return chatTypeFromQuery || "all";
+  };
+
   const [selectedChatId, setSelectedChatId] = useState<string | null>(
     chatFromQuery
   );
   const [activeTab, setActiveTab] = useState("messages");
-  const [chatTypeFilter, setChatTypeFilter] = useState<"all" | "human_handover" | "completed">("all");
-  const [filters, setFilters] = useState<ChatFilters>({
-    page: 1,
-    limit: 20,
-    startDate: format(
-      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-      "yyyy-MM-dd"
-    ),
-    endDate: format(new Date(), "yyyy-MM-dd"),
-  });
+  const [chatTypeFilter, setChatTypeFilter] = useState<"all" | "human_handover" | "completed">(initializeChatTypeFromQuery());
+  const [filters, setFilters] = useState<ChatFilters>(initializeFiltersFromQuery());
   const chatRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // Track if user has manually scrolled the chats list
@@ -72,6 +91,47 @@ export default function ChatLogTabContent() {
       setSelectedChatId(chatFromQuery);
     }
   }, [chatFromQuery]);
+
+  // Helper function to update URL with current filters and state
+  const updateURLWithState = (newFilters?: Partial<ChatFilters>, newChatType?: "all" | "human_handover" | "completed", newChatId?: string | null) => {
+    const currentFilters = newFilters ? { ...filters, ...newFilters } : filters;
+    const currentChatType = newChatType !== undefined ? newChatType : chatTypeFilter;
+    const currentChatId = newChatId !== undefined ? newChatId : selectedChatId;
+    
+    const params = new URLSearchParams();
+    
+    // Add chat ID if selected
+    if (currentChatId) {
+      params.set("chat", currentChatId);
+    }
+    
+    // Add chat type filter if not "all"
+    if (currentChatType !== "all") {
+      params.set("chatType", currentChatType);
+    }
+    
+    // Add date filters
+    if (currentFilters.startDate) {
+      params.set("startDate", currentFilters.startDate);
+    }
+    if (currentFilters.endDate) {
+      params.set("endDate", currentFilters.endDate);
+    }
+    
+    // Add source filter if selected
+    if (currentFilters.source) {
+      params.set("source", currentFilters.source);
+    }
+
+    if (currentFilters.status) {
+      params.set("status", currentFilters.status);
+    }
+    
+    const queryString = params.toString();
+    const newURL = `/${orgSlug}/chat-logs${queryString ? `?${queryString}` : ''}`;
+    
+    router.push(newURL, { scroll: false });
+  };
 
   // Infinite Query for Chats
   const {
@@ -190,19 +250,24 @@ export default function ChatLogTabContent() {
   }, []);
 
   const handleDateRangeApply = (startDate: string, endDate: string) => {
-    setFilters((prev) => ({
-      ...prev,
+    const newFilters = {
       startDate: startDate,
       endDate: endDate,
       page: 1,
+    };
+    setFilters((prev) => ({
+      ...prev,
+      ...newFilters,
     }));
     setSelectedChatId(null);
+    updateURLWithState(newFilters, undefined, null);
   };
 
   const handleChatTypeChange = (type: "all" | "human_handover" | "completed") => {
     setChatTypeFilter(type);
     setSelectedChatId(null);
     setHasUserScrolled(false);
+    updateURLWithState(undefined, type, null);
   };
 
   // Infinite scroll handler for useInfiniteQuery
@@ -297,6 +362,22 @@ export default function ChatLogTabContent() {
     }
   }, [selectedChatId, orgSlug, queryClient, scrollToBottom]);
 
+  const handleFilterChange = (
+    key: keyof ChatFilters,
+    value: string | undefined
+  ) => {
+    const newFilterValue = value === "all" ? undefined : value;
+    const newFilters = {
+      [key]: newFilterValue,
+      page: 1,
+    };
+    setFilters(prev => ({
+      ...prev,
+      ...newFilters,
+    }));
+    updateURLWithState(newFilters);
+  };
+
 
 
   // Helper to refetch both getChats and getChatDetails queries simultaneously
@@ -375,6 +456,50 @@ export default function ChatLogTabContent() {
             endDate={filters.endDate}
             isLoading={isLoading}
           />
+
+          <div className="flex gap-2">
+            <Select
+              value={filters.source || "all"}
+              onValueChange={(value: string) =>
+                handleFilterChange("source", value)
+              }
+            >
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="Source" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sources</SelectItem>
+                <SelectItem key={"Instagram"} value={"INSTAGRAM"}>
+                  Instagram
+                </SelectItem>
+                <SelectItem key={"WhatsApp"} value={"WHATSAPP"}>
+                  WhatsApp
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex gap-2">
+            <Select
+              value={filters.status || "all"}
+              onValueChange={(value: string) =>
+                handleFilterChange("status", value)
+              }
+            >
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem key={"Open"} value={"open"}>
+                  Open
+                </SelectItem>
+                <SelectItem key={"Completed"} value={"completed"}>
+                  Completed
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -496,9 +621,11 @@ export default function ChatLogTabContent() {
         >
           <Users className="mr-2 inline h-4 w-4" />
           Human Handover
-          <span className="ml-2 rounded-full bg-red-100 px-2 py-1 text-xs font-bold text-red-600">
-            {allChats.filter(chat => chat.human_handled).length}
-          </span>
+          {chatsData && chatsData.pages && chatsData.pages[0] && (
+            <span className="ml-2 rounded-full bg-red-100 px-2 py-1 text-xs font-bold text-red-600">
+              {chatsData.pages[0].summary.handoverChats}
+            </span>
+          )}
         </button>
         <button
           onClick={() => handleChatTypeChange("completed")}
@@ -509,9 +636,11 @@ export default function ChatLogTabContent() {
         >
           <Users className="mr-2 inline h-4 w-4" />
           Completed
-          <span className="ml-2 rounded-full bg-red-100 px-2 py-1 text-xs font-bold text-green-600">
-            {allChats.filter(chat => chat.status === "completed").length}
-          </span>
+          {chatsData && chatsData.pages && chatsData.pages[0] && (
+            <span className="ml-2 rounded-full bg-red-100 px-2 py-1 text-xs font-bold text-green-600">
+              {chatsData.pages[0].summary.completedChats}
+            </span>
+          )}
         </button>
       </div>
 
@@ -573,9 +702,7 @@ export default function ChatLogTabContent() {
                             const chatIdString = chat.id?.toString();
                             if (chatIdString) {
                               setSelectedChatId(chatIdString);
-                              router.push(`/${orgSlug}/chat-logs?chat=${chat.id}`, {
-                                scroll: false,
-                              });
+                              updateURLWithState(undefined, undefined, chatIdString);
                               // Mark chat as read on select
                               if (chat.unread_messages && Number(chat.unread_messages) > 0) {
                                 await updateChatUnreadMessagesAction(chat.id, orgSlug);

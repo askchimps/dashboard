@@ -64,6 +64,8 @@ export interface Chat {
 export interface ChatSummary {
   totalChats: number;
   openChats: number;
+  handoverChats: number;
+  completedChats: number;
   chatsWithLead: number;
   chatsWithoutLead: number;
 }
