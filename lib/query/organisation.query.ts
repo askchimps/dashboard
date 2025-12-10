@@ -3,6 +3,7 @@ import { getCallDetailsAction } from "@/lib/api/actions/organisation/get-call-de
 import { getLeadDetailsAction } from "@/lib/api/actions/organisation/get-lead-details";
 import { getOrganisationAction } from "@/lib/api/actions/organisation/get-organisation";
 import { getOrganisationAgentsAction } from "@/lib/api/actions/organisation/get-organisation-agents";
+import { getOrganisationTagsAction } from "@/lib/api/actions/organisation/get-organisation-tags";
 import {
   getOrganisationAnalyticsAction,
   type AnalyticsFilters,
@@ -48,6 +49,11 @@ export const organisationQueries = {
   getAgents: (idOrSlug: string) => ({
     queryKey: [...organisationKeys.detail(idOrSlug), "agents"] as const,
     queryFn: () => getOrganisationAgentsAction(idOrSlug),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  }),
+  getTags: (idOrSlug: string) => ({
+    queryKey: [...organisationKeys.detail(idOrSlug), "tags"] as const,
+    queryFn: () => getOrganisationTagsAction(idOrSlug),
     staleTime: 1000 * 60 * 5, // 5 minutes
   }),
   getUsage: (idOrSlug: string) => ({

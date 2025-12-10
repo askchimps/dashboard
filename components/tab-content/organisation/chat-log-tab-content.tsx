@@ -14,9 +14,10 @@ import {
   Clock,
   MessageSquareText,
   Users,
+  UserPlus,
 } from "lucide-react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 
 import SectionHeader from "@/components/section-header/section-header";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -25,12 +26,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateRangeFilter } from "@/components/ui/date-range-filter";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChatFilters } from "@/lib/api/actions/chat/get-chats";
-import { chatQueries } from "@/lib/query/organisation.query";
+import { ChatFilters, ChatTag } from "@/lib/api/actions/chat/get-chats";
+import { chatQueries, organisationQueries } from "@/lib/query/organisation.query";
 import { updateChatUnreadMessagesAction } from "@/lib/api/actions/chat/update-chat-unread";
+import { updateChatHandoverAction } from "@/lib/api/actions/chat/update-chat-handover";
 import { MessageItem, type EnhancedMessage } from "@/components/chat/message-item";
 import { MessageInput } from "@/components/chat/message-input";
+import { InlineChatTags } from "@/components/chat/inline-chat-tags";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 export default function ChatLogTabContent() {
   const params = useParams();
@@ -48,6 +52,7 @@ export default function ChatLogTabContent() {
     const endDateFromQuery = searchParams.get("endDate");
     const sourceFromQuery = searchParams.get("source");
     const statusFromQuery = searchParams.get("status");
+    const tagsFromQuery = searchParams.get("tags");
     
     return {
       page: 1,
@@ -59,6 +64,7 @@ export default function ChatLogTabContent() {
       endDate: endDateFromQuery || format(new Date(), "yyyy-MM-dd"),
       source: sourceFromQuery || undefined,
       status: statusFromQuery || undefined,
+      tags: tagsFromQuery || undefined,
     };
   };
 
@@ -74,6 +80,7 @@ export default function ChatLogTabContent() {
   const [activeTab, setActiveTab] = useState("messages");
   const [chatTypeFilter, setChatTypeFilter] = useState<"all" | "human_handover" | "completed">(initializeChatTypeFromQuery());
   const [filters, setFilters] = useState<ChatFilters>(initializeFiltersFromQuery());
+  const [isUpdatingHandover, setIsUpdatingHandover] = useState(false);
   const chatRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // Track if user has manually scrolled the chats list
@@ -127,6 +134,11 @@ export default function ChatLogTabContent() {
       params.set("status", currentFilters.status);
     }
     
+    // Add tags filter if selected
+    if (currentFilters.tags) {
+      params.set("tags", currentFilters.tags);
+    }
+    
     const queryString = params.toString();
     const newURL = `/${orgSlug}/chat-logs${queryString ? `?${queryString}` : ''}`;
     
@@ -159,6 +171,19 @@ export default function ChatLogTabContent() {
   const { data: selectedChatDetails, isLoading: isLoadingDetails } = useQuery({
     ...chatQueries.getChatDetails(orgSlug, selectedChatId || ""),
     enabled: !!selectedChatId,
+  });
+
+  // Debug logging for chat details
+  React.useEffect(() => {
+    if (selectedChatDetails) {
+      console.log('Chat Details Response:', selectedChatDetails);
+      console.log('Chat Tags:', selectedChatDetails.tags);
+    }
+  }, [selectedChatDetails]);
+
+  // Fetch organisation tags for filtering
+  const { data: organisationTags = [] } = useQuery({
+    ...organisationQueries.getTags(orgSlug),
   });
 
   // Scroll utility functions
@@ -362,6 +387,39 @@ export default function ChatLogTabContent() {
     }
   }, [selectedChatId, orgSlug, queryClient, scrollToBottom]);
 
+  const handleHandoverToggle = async (checked: boolean) => {
+    if (!selectedChatId || !selectedChatDetails) return;
+
+    setIsUpdatingHandover(true);
+    try {
+      await updateChatHandoverAction(selectedChatId, orgSlug, checked);
+      // Refresh both queries and wait for them to complete
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["organisation", orgSlug, "chats", filters],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: chatQueries.getChatDetails(orgSlug, selectedChatId).queryKey,
+        }),
+      ]);
+    } catch (error) {
+      console.error('Error updating handover status:', error);
+    } finally {
+      setIsUpdatingHandover(false);
+    }
+  };
+
+  const handleTagsUpdated = async () => {
+    // Immediately invalidate chat details to show updated tags
+    await queryClient.invalidateQueries({
+      queryKey: chatQueries.getChatDetails(orgSlug, selectedChatId || "").queryKey,
+    });
+    // Also refresh the chats list
+    queryClient.invalidateQueries({
+      queryKey: ["organisation", orgSlug, "chats", filters],
+    });
+  };
+
   const handleFilterChange = (
     key: keyof ChatFilters,
     value: string | undefined
@@ -497,6 +555,27 @@ export default function ChatLogTabContent() {
                 <SelectItem key={"Completed"} value={"completed"}>
                   Completed
                 </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex gap-2">
+            <Select
+              value={filters.tags || "all"}
+              onValueChange={(value: string) =>
+                handleFilterChange("tags", value)
+              }
+            >
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="Filter by Tag" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Tags</SelectItem>
+                {organisationTags.map((tag) => (
+                  <SelectItem key={tag.id} value={tag.id.toString()}>
+                    {tag.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -728,7 +807,7 @@ export default function ChatLogTabContent() {
                                     {chat?.name || chat?.lead?.phone_number || "Unknown User"}
                                   </h4>
                                 </div>
-                                <div className="mt-3 flex items-center gap-3">
+                                <div className="mt-3 flex items-center gap-3 flex-wrap">
                                   <Badge
                                     variant="secondary"
                                     className={`text-xs font-semibold ${getSourceBadgeColor(chat?.source || 'unknown')}`}
@@ -743,7 +822,28 @@ export default function ChatLogTabContent() {
                                       HANDOVER
                                     </Badge>
                                   ) : null}
+                                  {chat.status === "completed" ? (
+                                    <Badge
+                                      variant="secondary"
+                                      className={`text-xs font-semibold bg-blue-100 text-blue-800`}
+                                    >
+                                      COMPLETED
+                                    </Badge>
+                                  ) : null}
                                 </div>
+                                {chat.tags && chat.tags.length > 0 && (
+                                  <div className="mt-2 flex flex-wrap gap-1.5">
+                                    {chat.tags.map((tag) => (
+                                      <Badge
+                                        key={tag.id}
+                                        variant="outline"
+                                        className="text-[10px] font-medium bg-purple-50 text-purple-700 border-purple-200"
+                                      >
+                                        {tag.name}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                               <div className="flex flex-col gap-3 items-end">
                                 <span className="text-muted-foreground shrink-0 text-xs font-medium">
@@ -837,31 +937,52 @@ export default function ChatLogTabContent() {
               <div className="flex h-full flex-col">
                 {/* Header */}
                 <div className="border-border border-b p-7">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-12 w-12">
-                      <AvatarFallback className="bg-gradient-to-br from-green-100 to-green-200 text-base font-semibold text-green-700">
-                        {selectedChatDetails.lead?.first_name?.[0] ||
-                          selectedChatDetails.lead?.last_name?.[0] ||
-                          "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="space-y-1">
-                      <h3 className="text-foreground text-lg font-bold">
-                        {selectedChatDetails.lead?.first_name ||
-                          selectedChatDetails.lead?.last_name
-                          ? `${selectedChatDetails.lead.first_name ?? ""} ${selectedChatDetails.lead.last_name ?? ""}`
-                          : selectedChatDetails.lead?.phone_number || selectedChatDetails?.chat?.name ||
-                          "Unknown User"}
-                      </h3>
-                      <p className="text-muted-foreground flex items-center gap-2 text-sm font-medium">
-                        <Badge
-                          variant="secondary"
-                          className={`text-xs ${getSourceBadgeColor(selectedChatDetails.chat.source)}`}
-                        >
-                          {selectedChatDetails.chat.source}
-                        </Badge>
-                        • Chat Session
-                      </p>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarFallback className="bg-gradient-to-br from-green-100 to-green-200 text-base font-semibold text-green-700">
+                          {selectedChatDetails.lead?.first_name?.[0] ||
+                            selectedChatDetails.lead?.last_name?.[0] ||
+                            "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="space-y-1">
+                        <h3 className="text-foreground text-lg font-bold">
+                          {selectedChatDetails.lead?.first_name ||
+                            selectedChatDetails.lead?.last_name
+                            ? `${selectedChatDetails.lead.first_name ?? ""} ${selectedChatDetails.lead.last_name ?? ""}`
+                            : selectedChatDetails.lead?.phone_number || selectedChatDetails?.chat?.name ||
+                            "Unknown User"}
+                        </h3>
+                        <p className="text-muted-foreground flex items-center gap-2 text-sm font-medium">
+                          <Badge
+                            variant="secondary"
+                            className={`text-xs ${getSourceBadgeColor(selectedChatDetails.chat.source)}`}
+                          >
+                            {selectedChatDetails.chat.source}
+                          </Badge>
+                          • Chat Session
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <InlineChatTags
+                        chatId={selectedChatId}
+                        orgSlug={orgSlug}
+                        currentTags={selectedChatDetails.tags || []}
+                        availableTags={organisationTags}
+                        onTagsUpdated={handleTagsUpdated}
+                      />
+                      <div className="h-6 w-px bg-border" />
+                      <div className="flex items-center gap-2">
+                        <UserPlus className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium text-muted-foreground">Human Handover</span>
+                      </div>
+                      <Switch
+                        checked={selectedChatDetails.chat.human_handled === 1}
+                        onCheckedChange={handleHandoverToggle}
+                        disabled={isUpdatingHandover}
+                      />
                     </div>
                   </div>
                 </div>

@@ -1,6 +1,7 @@
 "use server";
 
 import { createAuthenticatedAxios } from "@/lib/api/axios";
+import type { ChatTag } from "@/lib/api/actions/chat/get-chats";
 
 export interface ChatMessage {
   id: number;
@@ -73,6 +74,7 @@ export interface Chat {
   updated_at: string;
   name?: string | null;
   duration?: number | null;
+  human_handled?: number;
 }
 
 export interface ChatDetails {
@@ -81,6 +83,7 @@ export interface ChatDetails {
   lead: ChatLead | null;
   agent: ChatAgent;
   messages: ChatMessage[];
+  tags?: ChatTag[];
 }
 
 export interface ChatDetailsResponse {

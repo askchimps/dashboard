@@ -9,6 +9,7 @@ export interface ChatFilters {
   status?: string;
   startDate?: string;
   endDate?: string;
+  tags?: string;
 }
 
 export interface ChatAgent {
@@ -23,6 +24,15 @@ export interface ChatLead {
   phone_number?: string;
   email?: string;
   status?: string;
+}
+
+export interface ChatTag {
+  id: number;
+  name: string;
+  organisation_id: number;
+  is_deleted: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ChatMessage {
@@ -58,7 +68,8 @@ export interface Chat {
   messages?: ChatMessage[];
   total_cost?: number | null;
   unread_messages?: number;
-  human_handled?: number
+  human_handled?: number;
+  tags?: ChatTag[];
 }
 
 export interface ChatSummary {
@@ -105,6 +116,7 @@ export const getChatsAction = async (
   if (filters.status) params.append("status", filters.status);
   if (filters.startDate) params.append("startDate", filters.startDate);
   if (filters.endDate) params.append("endDate", filters.endDate);
+  if (filters.tags) params.append("tag_id", filters.tags);
 
   const queryString = params.toString() ? `?${params.toString()}` : "";
   const response = await axios.get(
