@@ -13,7 +13,7 @@ export type MessageType = 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE' | 'GIF';
 // Use the same interface as the backend
 export interface EnhancedMessage {
   id: number;
-  role: 'user' | 'assistant' | 'bot';
+  role: 'user' | 'assistant' | 'bot' | 'agent';
   content?: string;
   message_type?: MessageType;
   attachments?: MessageAttachment[];
@@ -35,8 +35,8 @@ export function MessageItem({ message, className }: MessageItemProps) {
     return formatDistanceToNow(new Date(dateString), { addSuffix: true });
   };
 
-  const isUser = message.role === 'user';
-  const isBot = message.role === 'assistant' || message.role === 'bot';
+  const isUser = message.role.toLowerCase() === 'user';
+  const isBot = message.role.toLowerCase() === 'assistant' || message.role.toLowerCase() === 'bot' || message.role.toLowerCase() === 'agent';
 
   return (
     <div className={cn(

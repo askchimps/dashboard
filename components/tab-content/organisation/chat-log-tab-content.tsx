@@ -173,14 +173,6 @@ export default function ChatLogTabContent() {
     enabled: !!selectedChatId,
   });
 
-  // Debug logging for chat details
-  React.useEffect(() => {
-    if (selectedChatDetails) {
-      console.log('Chat Details Response:', selectedChatDetails);
-      console.log('Chat Tags:', selectedChatDetails.tags);
-    }
-  }, [selectedChatDetails]);
-
   // Fetch organisation tags for filtering
   const { data: organisationTags = [] } = useQuery({
     ...organisationQueries.getTags(orgSlug),
@@ -249,14 +241,8 @@ export default function ChatLogTabContent() {
 
   // Auto-scroll when new messages arrive (only if user is near bottom and not scrolling)
   useEffect(() => {
-    console.log('📜 Auto-scroll effect triggered');
-    console.log('   - Messages count:', selectedChatDetails?.messages?.length);
-    console.log('   - isUserScrolling:', isUserScrolling);
-    console.log('   - isNearBottom:', isNearBottom);
 
     if (selectedChatDetails?.messages && selectedChatDetails.messages.length > 0 && !isUserScrolling && isNearBottom) {
-      console.log('✅ Auto-scrolling to bottom (new message)');
-      // Only scroll if we're near the bottom and not actively scrolling
       setTimeout(() => {
         scrollToBottom(false);
       }, 20);
