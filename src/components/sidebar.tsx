@@ -1,4 +1,11 @@
-import { Bot, LayoutDashboard, PhoneCall, Users } from 'lucide-react';
+import {
+  Bot,
+  CalendarClock,
+  LayoutDashboard,
+  PhoneCall,
+  Settings,
+  Users,
+} from 'lucide-react';
 import { SidebarToggle } from './sidebar-toggle';
 import { NavLink } from './nav-link';
 import type { AuthUser } from '@/lib/types';
@@ -9,35 +16,54 @@ interface Props {
   user: AuthUser;
 }
 
+function hasOwnerOrAdmin(user: AuthUser, orgId: string): boolean {
+  if (user.isPlatformAdmin) return true;
+  return user.memberships.some(
+    (m) => m.orgId === orgId && m.role === 'OWNER',
+  );
+}
+
 export function Sidebar({ orgId, collapsed, user }: Props) {
   const items = [
     {
       href: `/orgs/${orgId}/dashboard`,
       label: 'Dashboard',
       icon: <LayoutDashboard className="h-4 w-4" aria-hidden="true" />,
-      adminOnly: false,
+      show: true,
     },
     {
       href: `/orgs/${orgId}/leads`,
       label: 'Leads',
       icon: <Users className="h-4 w-4" aria-hidden="true" />,
-      adminOnly: false,
+      show: true,
     },
     {
       href: `/orgs/${orgId}/calls`,
       label: 'Calls',
       icon: <PhoneCall className="h-4 w-4" aria-hidden="true" />,
-      adminOnly: false,
+      show: true,
+    },
+    {
+      href: `/orgs/${orgId}/schedule`,
+      label: 'Schedule',
+      icon: <CalendarClock className="h-4 w-4" aria-hidden="true" />,
+      show: true,
     },
     {
       href: `/orgs/${orgId}/agents`,
       label: 'Agent',
       icon: <Bot className="h-4 w-4" aria-hidden="true" />,
-      adminOnly: true,
+      show: user.isPlatformAdmin,
+    },
+    {
+      href: `/orgs/${orgId}/settings`,
+      label: 'Settings',
+      icon: <Settings className="h-4 w-4" aria-hidden="true" />,
+      show: hasOwnerOrAdmin(user, orgId),
     },
   ];
 
-  const visible = items.filter((it) => !it.adminOnly || user.isPlatformAdmin);
+  const visible = items.filter((it) => it.show);
 
   return (
     <aside

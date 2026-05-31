@@ -12,6 +12,9 @@ import type {
   LeadSummary,
   LoginResponse,
   Org,
+  OrgSettings,
+  Schedule,
+  ScheduleListQuery,
 } from './types';
 
 export class ApiError extends Error {
@@ -142,6 +145,62 @@ export async function getLead(orgId: string, leadId: string): Promise<LeadDetail
   return call<LeadDetail>(
     `/v1/orgs/${encodeURIComponent(orgId)}/leads/${encodeURIComponent(leadId)}`,
     { token },
+  );
+}
+
+export async function listSchedules(
+  orgId: string,
+  query: ScheduleListQuery = {},
+): Promise<Schedule[]> {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  const search = new URLSearchParams();
+  if (query.q) search.set('q', query.q);
+  if (query.status) search.set('status', query.status);
+  if (query.window) search.set('window', query.window);
+  if (query.includeDeleted) search.set('includeDeleted', 'true');
+  const qs = search.toString();
+  return call<Schedule[]>(
+    `/v1/orgs/${encodeURIComponent(orgId)}/schedules${qs ? `?${qs}` : ''}`,
+    { token },
+  );
+}
+
+export async function cancelSchedule(
+  orgId: string,
+  scheduleId: string,
+): Promise<void> {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  await call<void>(
+    `/v1/orgs/${encodeURIComponent(orgId)}/schedules/${encodeURIComponent(scheduleId)}`,
+    { method: 'DELETE', token },
+  );
+}
+
+export async function getSettings(orgId: string): Promise<OrgSettings> {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  return call<OrgSettings>(
+    `/v1/orgs/${encodeURIComponent(orgId)}/settings`,
+    { token },
+  );
+}
+
+export async function updateSettings(
+  orgId: string,
+  data: Partial<
+    Pick<
+      OrgSettings,
+      'callingHoursStart' | 'callingHoursEnd' | 'timezone' | 'maxRetries' | 'retryDelayMinutes'
+    >
+  >,
+): Promise<OrgSettings> {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  return call<OrgSettings>(
+    `/v1/orgs/${encodeURIComponent(orgId)}/settings`,
+    { method: 'PATCH', token, body: JSON.stringify(data) },
   );
 }
 

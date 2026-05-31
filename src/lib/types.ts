@@ -186,6 +186,49 @@ export interface LeadDetail
   timeline: TimelineEvent[];
 }
 
+export interface ScheduleLeadLite {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  source: string | null;
+}
+
+export interface Schedule {
+  id: string;
+  orgId: string;
+  leadId: string;
+  scheduledAt: string;
+  attemptNo: number;
+  reason: string | null;
+  status: string;
+  callId: string | null;
+  executedAt: string | null;
+  isDeleted: boolean;
+  deletedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  lead: ScheduleLeadLite;
+}
+
+export interface ScheduleListQuery {
+  q?: string;
+  status?: string;
+  window?: 'upcoming' | 'past' | 'all';
+  includeDeleted?: boolean;
+}
+
+export interface OrgSettings {
+  id: string;
+  orgId: string;
+  callingHoursStart: string;
+  callingHoursEnd: string;
+  timezone: string;
+  maxRetries: number;
+  retryDelayMinutes: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface LoginResponse {
   accessToken: string;
   user: AuthUser;
