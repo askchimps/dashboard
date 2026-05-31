@@ -60,6 +60,24 @@ export interface CallSummary {
   lead: CallLeadLite;
 }
 
+export interface CallAnalysisQuestion {
+  id: string;
+  question: string;
+  answer: string;
+  extracted?: Record<string, unknown>;
+}
+
+export interface CallAnalysis {
+  summary?: string;
+  intent_bucket?: 'high' | 'med' | 'low' | 'disqualified' | null;
+  score?: number | null;
+  questions?: CallAnalysisQuestion[];
+  tags?: string[];
+  model?: string;
+  generated_at?: string;
+  [k: string]: unknown;
+}
+
 export interface CallAnswer {
   id: string;
   callId: string;
@@ -79,6 +97,7 @@ export interface CallLeadFull extends CallLeadLite {
 export interface CallDetail extends Omit<CallSummary, 'lead'> {
   lead: CallLeadFull;
   answers: CallAnswer[];
+  analysis: CallAnalysis | null;
 }
 
 export type CallSort =
