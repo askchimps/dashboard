@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search } from 'lucide-react';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import type { LeadListQuery, LeadSort } from '@/lib/types';
 
 const SORT_OPTIONS: { value: LeadSort; label: string }[] = [
@@ -40,8 +40,15 @@ export function LeadFilters({ orgId, filters }: Props) {
   const sp = useSearchParams();
   const [pending, startTransition] = useTransition();
   const [q, setQ] = useState(filters.q ?? '');
+  const mountedRef = useRef(false);
 
+  // Debounce search input -> URL. Skip the first render so opening a deep
+  // link with ?leadId= doesn't trigger a replace that strips leadId.
   useEffect(() => {
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      return;
+    }
     const handle = setTimeout(() => {
       const next = new URLSearchParams(sp.toString());
       if (q.trim()) next.set('q', q.trim());
