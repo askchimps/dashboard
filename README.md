@@ -1,6 +1,6 @@
 # askchimps/dashboard
 
-AskChimps web dashboard. Next.js 16 (App Router), Tailwind v4, TypeScript strict.
+AskChimps web dashboard. Next.js 15 (App Router), Tailwind v4, TypeScript strict.
 
 > Backend lives in [`askchimps/api`](https://github.com/askchimps/api). System architecture + ADRs in [`askchimps/askchimps`](https://github.com/askchimps/askchimps).
 
@@ -31,7 +31,7 @@ prefills `admin@askchimps.ai`; password is `Admin@123` per the seed.
 - `/` — protected dashboard. Calls `GET /v1/auth/me` and `GET /v1/orgs`
   server-side using the session cookie. Shows the current user, role,
   memberships, and the orgs the actor can see.
-- `src/proxy.ts` — Next 16 edge proxy: redirects unauthenticated requests to `/login`.
+- `src/middleware.ts` — Next 15 middleware: redirects unauthenticated requests to `/login`.
 - `actions/logout.ts` — clears the cookie + redirects to `/login`.
 
 ## Auth model
@@ -65,7 +65,7 @@ dashboard/
 │   │   ├── env.ts               server-only env helpers
 │   │   ├── session.ts           httpOnly cookie set/get/clear
 │   │   └── types.ts             shared response shapes
-│   └── proxy.ts                 auth redirect (Next 16 edge proxy)
+│   └── middleware.ts                 auth redirect (Next 15 middleware)
 ├── .env.example
 ├── .nvmrc
 ├── next.config.ts

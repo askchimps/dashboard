@@ -12,7 +12,7 @@ AskChimps web dashboard. Next.js 16 App Router + Tailwind v4 + TypeScript strict
 
 | Layer | Pick |
 |---|---|
-| Framework | Next.js 16 (App Router) |
+| Framework | Next.js 15 (App Router) — webpack dev (Next 16 + Turbopack had a hydration regression on Server Action forms; revisit when 16 stabilises) |
 | Language | TypeScript strict |
 | Styling | Tailwind CSS v4 |
 | Auth carrier | httpOnly cookie storing JWT issued by `askchimps/api` |
@@ -48,9 +48,9 @@ AskChimps web dashboard. Next.js 16 App Router + Tailwind v4 + TypeScript strict
   inside Server Components and Server Actions. Old sync patterns will break.
 - **`redirect()` in Server Actions** throws a special error to bubble up;
   don't try/catch around it.
-- **Proxy** (formerly `middleware.ts` in Next ≤15) runs on the edge
+- **Middleware** (formerly `middleware.ts` in Next ≤15) runs on the edge
   runtime — it can't import server-only helpers like `cookies()`. Use
-  `req.cookies.get(...)` instead. File is `src/proxy.ts`.
+  `req.cookies.get(...)` instead. File is `src/middleware.ts`.
 - **CORS not needed**: dashboard talks to the api server-side. Browser
   never sees `api.askchimps.ai`. If we add client-side calls, we'll add
   CORS in the api.

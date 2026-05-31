@@ -5,7 +5,7 @@ const SESSION_COOKIE_NAME =
 
 const PUBLIC_PATHS = ['/login'];
 
-export function proxy(req: NextRequest) {
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return NextResponse.next();
