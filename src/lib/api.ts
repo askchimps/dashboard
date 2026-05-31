@@ -1,7 +1,15 @@
 import 'server-only';
 import { getApiBaseUrl } from './env';
 import { getSessionToken } from './session';
-import type { Agent, AuthUser, LoginResponse, Org } from './types';
+import type {
+  Agent,
+  AuthUser,
+  CallDetail,
+  CallListQuery,
+  CallSummary,
+  LoginResponse,
+  Org,
+} from './types';
 
 export class ApiError extends Error {
   constructor(
@@ -73,6 +81,36 @@ export async function getAgent(orgId: string, agentId: string): Promise<Agent> {
   if (!token) throw new ApiError(401, 'No session');
   return call<Agent>(
     `/v1/orgs/${encodeURIComponent(orgId)}/agents/${encodeURIComponent(agentId)}`,
+    { token },
+  );
+}
+
+export async function listCalls(
+  orgId: string,
+  query: CallListQuery = {},
+): Promise<CallSummary[]> {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  const search = new URLSearchParams();
+  if (query.q) search.set('q', query.q);
+  if (query.outcome) search.set('outcome', query.outcome);
+  if (query.bucket) search.set('bucket', query.bucket);
+  if (query.sort) search.set('sort', query.sort);
+  const qs = search.toString();
+  return call<CallSummary[]>(
+    `/v1/orgs/${encodeURIComponent(orgId)}/calls${qs ? `?${qs}` : ''}`,
+    { token },
+  );
+}
+
+export async function getCall(
+  orgId: string,
+  callId: string,
+): Promise<CallDetail> {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  return call<CallDetail>(
+    `/v1/orgs/${encodeURIComponent(orgId)}/calls/${encodeURIComponent(callId)}`,
     { token },
   );
 }

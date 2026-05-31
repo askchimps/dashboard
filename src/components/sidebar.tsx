@@ -1,4 +1,4 @@
-import { Bot, LayoutDashboard } from 'lucide-react';
+import { Bot, LayoutDashboard, PhoneCall } from 'lucide-react';
 import { SidebarToggle } from './sidebar-toggle';
 import { NavLink } from './nav-link';
 import type { AuthUser } from '@/lib/types';
@@ -15,6 +15,12 @@ export function Sidebar({ orgId, collapsed, user }: Props) {
       href: `/orgs/${orgId}/dashboard`,
       label: 'Dashboard',
       icon: <LayoutDashboard className="h-4 w-4" aria-hidden="true" />,
+      adminOnly: false,
+    },
+    {
+      href: `/orgs/${orgId}/calls`,
+      label: 'Calls',
+      icon: <PhoneCall className="h-4 w-4" aria-hidden="true" />,
       adminOnly: false,
     },
     {
