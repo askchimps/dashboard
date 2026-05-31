@@ -11,36 +11,64 @@ interface Props {
 
 const initial: SettingsState = {};
 
+const SECTIONS: {
+  key: 'A' | 'B' | 'C';
+  label: string;
+  hint: string;
+}[] = [
+  { key: 'A', label: 'Section A (morning)', hint: 'Default 09:00–12:00' },
+  { key: 'B', label: 'Section B (afternoon)', hint: 'Default 13:00–17:00' },
+  { key: 'C', label: 'Section C (evening)', hint: 'Default 18:00–20:00' },
+];
+
 export function SettingsForm({ orgId, settings }: Props) {
   const [state, action, pending] = useActionState(
     saveSettingsAction.bind(null, orgId),
     initial,
   );
+
+  const startOf = (k: 'A' | 'B' | 'C'): string =>
+    k === 'A' ? settings.sectionAStart : k === 'B' ? settings.sectionBStart : settings.sectionCStart;
+  const endOf = (k: 'A' | 'B' | 'C'): string =>
+    k === 'A' ? settings.sectionAEnd : k === 'B' ? settings.sectionBEnd : settings.sectionCEnd;
+
   return (
     <form action={action} className="space-y-5">
       <div>
         <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-          Calling hours
+          Calling sections
         </h2>
         <p className="mb-3 text-xs text-gray-500">
-          Wall-clock hours in the configured timezone. Schedules outside this
-          window are skipped until they re-enter it.
+          Three wall-clock windows per day in the configured timezone. The
+          dispatcher only places calls while the current local time falls
+          inside one of these windows. Reschedules cycle A → B → C → A on
+          the next calendar day until max-retries is hit.
         </p>
-        <div className="grid grid-cols-2 gap-4">
-          <Field
-            label="Start (HH:MM)"
-            name="callingHoursStart"
-            defaultValue={settings.callingHoursStart}
-            placeholder="09:00"
-            pattern="^([01]\d|2[0-3]):[0-5]\d$"
-          />
-          <Field
-            label="End (HH:MM)"
-            name="callingHoursEnd"
-            defaultValue={settings.callingHoursEnd}
-            placeholder="20:00"
-            pattern="^([01]\d|2[0-3]):[0-5]\d$"
-          />
+        <div className="space-y-4">
+          {SECTIONS.map((s) => (
+            <div key={s.key}>
+              <div className="mb-1 flex items-baseline justify-between">
+                <span className="text-sm font-medium text-gray-700">{s.label}</span>
+                <span className="text-xs text-gray-400">{s.hint}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Field
+                  label="Start (HH:MM)"
+                  name={`section${s.key}Start`}
+                  defaultValue={startOf(s.key)}
+                  placeholder="09:00"
+                  pattern="^([01]\d|2[0-3]):[0-5]\d$"
+                />
+                <Field
+                  label="End (HH:MM)"
+                  name={`section${s.key}End`}
+                  defaultValue={endOf(s.key)}
+                  placeholder="12:00"
+                  pattern="^([01]\d|2[0-3]):[0-5]\d$"
+                />
+              </div>
+            </div>
+          ))}
         </div>
         <div className="mt-4">
           <Field

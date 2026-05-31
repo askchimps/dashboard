@@ -193,11 +193,16 @@ export interface ScheduleLeadLite {
   source: string | null;
 }
 
+export type SchedulePriority = 'new_ingest' | 'explicit' | 'followup';
+export type ScheduleSection = 'A' | 'B' | 'C';
+
 export interface Schedule {
   id: string;
   orgId: string;
   leadId: string;
   scheduledAt: string;
+  section: ScheduleSection | null;
+  priority: SchedulePriority | string;
   attemptNo: number;
   reason: string | null;
   status: string;
@@ -220,8 +225,12 @@ export interface ScheduleListQuery {
 export interface OrgSettings {
   id: string;
   orgId: string;
-  callingHoursStart: string;
-  callingHoursEnd: string;
+  sectionAStart: string;
+  sectionAEnd: string;
+  sectionBStart: string;
+  sectionBEnd: string;
+  sectionCStart: string;
+  sectionCEnd: string;
   timezone: string;
   maxRetries: number;
   retryDelayMinutes: number;

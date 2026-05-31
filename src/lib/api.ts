@@ -192,7 +192,15 @@ export async function updateSettings(
   data: Partial<
     Pick<
       OrgSettings,
-      'callingHoursStart' | 'callingHoursEnd' | 'timezone' | 'maxRetries' | 'retryDelayMinutes'
+      | 'sectionAStart'
+      | 'sectionAEnd'
+      | 'sectionBStart'
+      | 'sectionBEnd'
+      | 'sectionCStart'
+      | 'sectionCEnd'
+      | 'timezone'
+      | 'maxRetries'
+      | 'retryDelayMinutes'
     >
   >,
 ): Promise<OrgSettings> {

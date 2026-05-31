@@ -24,12 +24,47 @@ function statusBadge(status: string) {
   );
 }
 
+function priorityBadge(priority: string) {
+  const cls =
+    priority === 'new_ingest'
+      ? 'bg-sky-50 text-sky-700'
+      : priority === 'explicit'
+        ? 'bg-violet-50 text-violet-700'
+        : 'bg-gray-50 text-gray-600';
+  const label =
+    priority === 'new_ingest'
+      ? 'new'
+      : priority === 'explicit'
+        ? 'explicit'
+        : 'followup';
+  return (
+    <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${cls}`}>
+      {label}
+    </span>
+  );
+}
+
+function sectionBadge(section: string | null) {
+  if (!section) return <span className="text-xs text-gray-400">—</span>;
+  const cls =
+    section === 'A'
+      ? 'bg-emerald-50 text-emerald-700'
+      : section === 'B'
+        ? 'bg-amber-50 text-amber-700'
+        : 'bg-indigo-50 text-indigo-700';
+  return (
+    <span
+      className={`rounded px-1.5 py-0.5 font-mono text-xs font-medium ${cls}`}
+    >
+      {section}
+    </span>
+  );
+}
+
 export function ScheduleTable({ orgId, schedules, canCancel }: Props) {
   if (schedules.length === 0) {
     return (
-      <div className="p-6 text-sm text-gray-500">
-        No upcoming schedules.
-      </div>
+      <div className="p-6 text-sm text-gray-500">No upcoming schedules.</div>
     );
   }
 
@@ -38,6 +73,8 @@ export function ScheduleTable({ orgId, schedules, canCancel }: Props) {
       <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
         <tr>
           <th className="px-4 py-2 font-medium">Scheduled at</th>
+          <th className="px-4 py-2 font-medium">Sec</th>
+          <th className="px-4 py-2 font-medium">Priority</th>
           <th className="px-4 py-2 font-medium">Lead</th>
           <th className="px-4 py-2 font-medium">Phone</th>
           <th className="px-4 py-2 font-medium">Attempt</th>
@@ -52,6 +89,8 @@ export function ScheduleTable({ orgId, schedules, canCancel }: Props) {
             <td className="px-4 py-2 text-gray-900">
               {new Date(s.scheduledAt).toLocaleString()}
             </td>
+            <td className="px-4 py-2">{sectionBadge(s.section)}</td>
+            <td className="px-4 py-2">{priorityBadge(s.priority)}</td>
             <td className="px-4 py-2 text-gray-900">
               <Link
                 href={`/orgs/${orgId}/leads?leadId=${s.lead.id}`}
