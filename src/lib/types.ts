@@ -23,6 +23,18 @@ export interface Org {
   updatedAt: string;
 }
 
+export interface Agent {
+  id: string;
+  orgId: string;
+  name: string;
+  basePrompt: string;
+  analysisPrompt: string;
+  knowledge: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface LoginResponse {
   accessToken: string;
   user: AuthUser;

@@ -1,7 +1,7 @@
 import 'server-only';
 import { getApiBaseUrl } from './env';
 import { getSessionToken } from './session';
-import type { AuthUser, LoginResponse, Org } from './types';
+import type { Agent, AuthUser, LoginResponse, Org } from './types';
 
 export class ApiError extends Error {
   constructor(
@@ -60,4 +60,32 @@ export async function listOrgs(): Promise<Org[]> {
   const token = await getSessionToken();
   if (!token) throw new ApiError(401, 'No session');
   return call<Org[]>('/v1/orgs', { token });
+}
+
+export async function listAgents(orgId: string): Promise<Agent[]> {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  return call<Agent[]>(`/v1/orgs/${encodeURIComponent(orgId)}/agents`, { token });
+}
+
+export async function getAgent(orgId: string, agentId: string): Promise<Agent> {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  return call<Agent>(
+    `/v1/orgs/${encodeURIComponent(orgId)}/agents/${encodeURIComponent(agentId)}`,
+    { token },
+  );
+}
+
+export async function updateAgent(
+  orgId: string,
+  agentId: string,
+  data: Partial<Pick<Agent, 'name' | 'basePrompt' | 'analysisPrompt' | 'knowledge'>>,
+): Promise<Agent> {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  return call<Agent>(
+    `/v1/orgs/${encodeURIComponent(orgId)}/agents/${encodeURIComponent(agentId)}`,
+    { method: 'PATCH', token, body: JSON.stringify(data) },
+  );
 }
