@@ -54,6 +54,7 @@ export function LeadFilters({ orgId, filters }: Props) {
       if (q.trim()) next.set('q', q.trim());
       else next.delete('q');
       next.delete('leadId');
+      next.delete('page');
       startTransition(() => {
         router.replace(`/orgs/${orgId}/leads?${next.toString()}`, {
           scroll: false,

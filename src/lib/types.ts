@@ -112,6 +112,8 @@ export interface CallListQuery {
   outcome?: string;
   bucket?: string;
   sort?: CallSort;
+  page?: number;
+  pageSize?: number;
 }
 
 export type LeadSort = 'recent' | 'oldest' | 'name_asc' | 'name_desc';
@@ -121,6 +123,8 @@ export interface LeadListQuery {
   status?: string;
   source?: string;
   sort?: LeadSort;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface LeadSummary {
@@ -220,6 +224,8 @@ export interface ScheduleListQuery {
   status?: string;
   window?: 'upcoming' | 'past' | 'all';
   includeDeleted?: boolean;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface OrgSettings {
@@ -236,6 +242,14 @@ export interface OrgSettings {
   retryDelayMinutes: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Paged<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  pageCount: number;
 }
 
 export interface LoginResponse {

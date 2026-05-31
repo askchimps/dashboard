@@ -53,8 +53,9 @@ export function CallFilters({ orgId, filters }: Props) {
       const next = new URLSearchParams(sp.toString());
       if (q.trim()) next.set('q', q.trim());
       else next.delete('q');
-      // Reset selected call when search changes — let server pick first.
+      // Reset selected call + page when search changes.
       next.delete('callId');
+      next.delete('page');
       startTransition(() => {
         router.replace(`/orgs/${orgId}/calls?${next.toString()}`, {
           scroll: false,
@@ -70,6 +71,7 @@ export function CallFilters({ orgId, filters }: Props) {
     if (value) next.set(key, value);
     else next.delete(key);
     next.delete('callId');
+    next.delete('page');
     startTransition(() => {
       router.replace(`/orgs/${orgId}/calls?${next.toString()}`, {
         scroll: false,

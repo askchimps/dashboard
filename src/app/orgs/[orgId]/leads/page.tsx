@@ -4,6 +4,7 @@ import type {
   LeadListQuery,
   LeadSort,
   LeadSummary,
+  Paged,
 } from '@/lib/types';
 import { LeadList } from './lead-list';
 import { LeadDetailPane } from './lead-detail';
@@ -18,14 +19,26 @@ interface Props {
     status?: string;
     source?: string;
     sort?: string;
+    page?: string;
   }>;
 }
 
 export const dynamic = 'force-dynamic';
 
+const PAGE_SIZE = 25;
+const EMPTY: Paged<LeadSummary> = {
+  items: [],
+  total: 0,
+  page: 1,
+  pageSize: PAGE_SIZE,
+  pageCount: 1,
+};
+
 export default async function LeadsPage({ params, searchParams }: Props) {
   const { orgId } = await params;
   const sp = await searchParams;
+
+  const pageParsed = Math.max(1, parseInt(sp.page ?? '1', 10) || 1);
 
   const filters: LeadListQuery = {
     q: sp.q?.trim() || undefined,
@@ -34,15 +47,18 @@ export default async function LeadsPage({ params, searchParams }: Props) {
     sort: ALLOWED_SORTS.includes(sp.sort as LeadSort)
       ? (sp.sort as LeadSort)
       : 'recent',
+    page: pageParsed,
+    pageSize: PAGE_SIZE,
   };
 
-  let leads: LeadSummary[] = [];
+  let response: Paged<LeadSummary> = EMPTY;
   try {
-    leads = await listLeads(orgId, filters);
+    response = await listLeads(orgId, filters);
   } catch (e) {
     if (!(e instanceof ApiError)) throw e;
   }
 
+  const leads = response.items;
   const selectedId =
     sp.leadId && leads.some((l) => l.id === sp.leadId)
       ? sp.leadId
@@ -66,6 +82,12 @@ export default async function LeadsPage({ params, searchParams }: Props) {
           leads={leads}
           selectedId={selectedId}
           filters={filters}
+          paging={{
+            total: response.total,
+            page: response.page,
+            pageSize: response.pageSize,
+            pageCount: response.pageCount,
+          }}
         />
       </section>
 

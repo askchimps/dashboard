@@ -25,6 +25,7 @@ export function ScheduleFilters({ orgId, q: initial }: Props) {
       const next = new URLSearchParams(sp.toString());
       if (q.trim()) next.set('q', q.trim());
       else next.delete('q');
+      next.delete('page');
       startTransition(() => {
         router.replace(`/orgs/${orgId}/schedule?${next.toString()}`, {
           scroll: false,

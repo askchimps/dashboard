@@ -3,12 +3,19 @@ import type { CallListQuery, CallSummary } from '@/lib/types';
 import { CallFilters } from './call-filters';
 import { CallRowLink } from './call-row-link';
 import { formatDuration, formatRelative } from './format';
+import { Pager } from '@/components/pager';
 
 interface Props {
   orgId: string;
   calls: CallSummary[];
   selectedId: string | null;
   filters: CallListQuery;
+  paging: {
+    total: number;
+    page: number;
+    pageSize: number;
+    pageCount: number;
+  };
 }
 
 function outcomeIcon(outcome: string | null) {
@@ -45,7 +52,7 @@ function bucketBadge(bucket: string | null) {
   );
 }
 
-export function CallList({ orgId, calls, selectedId, filters }: Props) {
+export function CallList({ orgId, calls, selectedId, filters, paging }: Props) {
   return (
     <>
       <header className="border-b border-gray-200 p-3">
@@ -53,7 +60,7 @@ export function CallList({ orgId, calls, selectedId, filters }: Props) {
           <h2 className="text-sm font-semibold text-gray-900">
             Calls
             <span className="ml-2 font-normal text-gray-500">
-              {calls.length}
+              {paging.total}
             </span>
           </h2>
         </div>
@@ -108,6 +115,12 @@ export function CallList({ orgId, calls, selectedId, filters }: Props) {
           })
         )}
       </ul>
+      <Pager
+        total={paging.total}
+        page={paging.page}
+        pageSize={paging.pageSize}
+        pageCount={paging.pageCount}
+      />
     </>
   );
 }

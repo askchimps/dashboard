@@ -13,6 +13,7 @@ import type {
   LoginResponse,
   Org,
   OrgSettings,
+  Paged,
   Schedule,
   ScheduleListQuery,
 } from './types';
@@ -94,7 +95,7 @@ export async function getAgent(orgId: string, agentId: string): Promise<Agent> {
 export async function listCalls(
   orgId: string,
   query: CallListQuery = {},
-): Promise<CallSummary[]> {
+): Promise<Paged<CallSummary>> {
   const token = await getSessionToken();
   if (!token) throw new ApiError(401, 'No session');
   const search = new URLSearchParams();
@@ -102,8 +103,10 @@ export async function listCalls(
   if (query.outcome) search.set('outcome', query.outcome);
   if (query.bucket) search.set('bucket', query.bucket);
   if (query.sort) search.set('sort', query.sort);
+  if (query.page) search.set('page', String(query.page));
+  if (query.pageSize) search.set('pageSize', String(query.pageSize));
   const qs = search.toString();
-  return call<CallSummary[]>(
+  return call<Paged<CallSummary>>(
     `/v1/orgs/${encodeURIComponent(orgId)}/calls${qs ? `?${qs}` : ''}`,
     { token },
   );
@@ -124,7 +127,7 @@ export async function getCall(
 export async function listLeads(
   orgId: string,
   query: LeadListQuery = {},
-): Promise<LeadSummary[]> {
+): Promise<Paged<LeadSummary>> {
   const token = await getSessionToken();
   if (!token) throw new ApiError(401, 'No session');
   const search = new URLSearchParams();
@@ -132,8 +135,10 @@ export async function listLeads(
   if (query.status) search.set('status', query.status);
   if (query.source) search.set('source', query.source);
   if (query.sort) search.set('sort', query.sort);
+  if (query.page) search.set('page', String(query.page));
+  if (query.pageSize) search.set('pageSize', String(query.pageSize));
   const qs = search.toString();
-  return call<LeadSummary[]>(
+  return call<Paged<LeadSummary>>(
     `/v1/orgs/${encodeURIComponent(orgId)}/leads${qs ? `?${qs}` : ''}`,
     { token },
   );
@@ -151,7 +156,7 @@ export async function getLead(orgId: string, leadId: string): Promise<LeadDetail
 export async function listSchedules(
   orgId: string,
   query: ScheduleListQuery = {},
-): Promise<Schedule[]> {
+): Promise<Paged<Schedule>> {
   const token = await getSessionToken();
   if (!token) throw new ApiError(401, 'No session');
   const search = new URLSearchParams();
@@ -159,8 +164,10 @@ export async function listSchedules(
   if (query.status) search.set('status', query.status);
   if (query.window) search.set('window', query.window);
   if (query.includeDeleted) search.set('includeDeleted', 'true');
+  if (query.page) search.set('page', String(query.page));
+  if (query.pageSize) search.set('pageSize', String(query.pageSize));
   const qs = search.toString();
-  return call<Schedule[]>(
+  return call<Paged<Schedule>>(
     `/v1/orgs/${encodeURIComponent(orgId)}/schedules${qs ? `?${qs}` : ''}`,
     { token },
   );

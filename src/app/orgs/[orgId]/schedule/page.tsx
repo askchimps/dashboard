@@ -1,28 +1,44 @@
 import { ApiError, getMe, listSchedules } from '@/lib/api';
-import type { Schedule } from '@/lib/types';
+import type { Paged, Schedule } from '@/lib/types';
 import { ScheduleFilters } from './schedule-filters';
 import { ScheduleTable } from './schedule-table';
+import { Pager } from '@/components/pager';
 
 interface Props {
   params: Promise<{ orgId: string }>;
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; page?: string }>;
 }
 
 export const dynamic = 'force-dynamic';
+
+const PAGE_SIZE = 25;
+const EMPTY: Paged<Schedule> = {
+  items: [],
+  total: 0,
+  page: 1,
+  pageSize: PAGE_SIZE,
+  pageCount: 1,
+};
 
 export default async function SchedulePage({ params, searchParams }: Props) {
   const { orgId } = await params;
   const sp = await searchParams;
   const q = sp.q?.trim() || undefined;
+  const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1);
 
   const me = await getMe();
   const canCancel =
     me.isPlatformAdmin ||
     me.memberships.some((m) => m.orgId === orgId && m.role === 'OWNER');
 
-  let schedules: Schedule[] = [];
+  let response: Paged<Schedule> = EMPTY;
   try {
-    schedules = await listSchedules(orgId, { window: 'upcoming', q });
+    response = await listSchedules(orgId, {
+      window: 'upcoming',
+      q,
+      page,
+      pageSize: PAGE_SIZE,
+    });
   } catch (e) {
     if (!(e instanceof ApiError)) throw e;
   }
@@ -47,8 +63,14 @@ export default async function SchedulePage({ params, searchParams }: Props) {
       <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
         <ScheduleTable
           orgId={orgId}
-          schedules={schedules}
+          schedules={response.items}
           canCancel={canCancel}
+        />
+        <Pager
+          total={response.total}
+          page={response.page}
+          pageSize={response.pageSize}
+          pageCount={response.pageCount}
         />
       </section>
     </div>

@@ -2,12 +2,19 @@ import type { LeadListQuery, LeadSummary } from '@/lib/types';
 import { LeadFilters } from './lead-filters';
 import { LeadRowLink } from './lead-row-link';
 import { formatRelative } from '../calls/format';
+import { Pager } from '@/components/pager';
 
 interface Props {
   orgId: string;
   leads: LeadSummary[];
   selectedId: string | null;
   filters: LeadListQuery;
+  paging: {
+    total: number;
+    page: number;
+    pageSize: number;
+    pageCount: number;
+  };
 }
 
 function statusBadge(status: string) {
@@ -44,7 +51,7 @@ function bestBadge(bucket: string | null, score: number | null) {
   );
 }
 
-export function LeadList({ orgId, leads, selectedId, filters }: Props) {
+export function LeadList({ orgId, leads, selectedId, filters, paging }: Props) {
   return (
     <>
       <header className="border-b border-gray-200 p-3">
@@ -52,7 +59,7 @@ export function LeadList({ orgId, leads, selectedId, filters }: Props) {
           <h2 className="text-sm font-semibold text-gray-900">
             Leads
             <span className="ml-2 font-normal text-gray-500">
-              {leads.length}
+              {paging.total}
             </span>
           </h2>
         </div>
@@ -102,6 +109,12 @@ export function LeadList({ orgId, leads, selectedId, filters }: Props) {
           })
         )}
       </ul>
+      <Pager
+        total={paging.total}
+        page={paging.page}
+        pageSize={paging.pageSize}
+        pageCount={paging.pageCount}
+      />
     </>
   );
 }

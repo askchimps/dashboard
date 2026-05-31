@@ -4,6 +4,7 @@ import type {
   CallListQuery,
   CallSummary,
   CallSort,
+  Paged,
 } from '@/lib/types';
 import { CallList } from './call-list';
 import { CallDetailPane } from './call-detail';
@@ -24,14 +25,26 @@ interface Props {
     outcome?: string;
     bucket?: string;
     sort?: string;
+    page?: string;
   }>;
 }
 
 export const dynamic = 'force-dynamic';
 
+const PAGE_SIZE = 25;
+const EMPTY: Paged<CallSummary> = {
+  items: [],
+  total: 0,
+  page: 1,
+  pageSize: PAGE_SIZE,
+  pageCount: 1,
+};
+
 export default async function CallsPage({ params, searchParams }: Props) {
   const { orgId } = await params;
   const sp = await searchParams;
+
+  const pageParsed = Math.max(1, parseInt(sp.page ?? '1', 10) || 1);
 
   const filters: CallListQuery = {
     q: sp.q?.trim() || undefined,
@@ -40,15 +53,18 @@ export default async function CallsPage({ params, searchParams }: Props) {
     sort: ALLOWED_SORTS.includes(sp.sort as CallSort)
       ? (sp.sort as CallSort)
       : 'recent',
+    page: pageParsed,
+    pageSize: PAGE_SIZE,
   };
 
-  let calls: CallSummary[] = [];
+  let response: Paged<CallSummary> = EMPTY;
   try {
-    calls = await listCalls(orgId, filters);
+    response = await listCalls(orgId, filters);
   } catch (e) {
     if (!(e instanceof ApiError)) throw e;
   }
 
+  const calls = response.items;
   const selectedId =
     sp.callId && calls.some((c) => c.id === sp.callId)
       ? sp.callId
@@ -72,6 +88,12 @@ export default async function CallsPage({ params, searchParams }: Props) {
           calls={calls}
           selectedId={selectedId}
           filters={filters}
+          paging={{
+            total: response.total,
+            page: response.page,
+            pageSize: response.pageSize,
+            pageCount: response.pageCount,
+          }}
         />
       </section>
 
