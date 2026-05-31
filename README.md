@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# askchimps/dashboard
 
-## Getting Started
+AskChimps web dashboard. Next.js 16 (App Router), Tailwind v4, TypeScript strict.
 
-First, run the development server:
+> Backend lives in [`askchimps/api`](https://github.com/askchimps/api). System architecture + ADRs in [`askchimps/askchimps`](https://github.com/askchimps/askchimps).
+
+## Quick start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+nvm use                       # Node 22 LTS (lts/jod)
+cp .env.example .env.local    # API base + cookie config
+npm install
+npm run dev                   # http://127.0.0.1:3002
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The backend stack must be running on `http://127.0.0.1:3000`:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd ../api
+docker compose up -d
+docker compose exec api npx prisma db seed   # prints credentials
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Then in the dashboard hit `http://127.0.0.1:3002`. Default form value
+prefills `admin@askchimps.ai`; password is `Admin@123` per the seed.
 
-## Learn More
+## What's in here so far
 
-To learn more about Next.js, take a look at the following resources:
+- `/login` — email + password form. Calls `POST /v1/auth/login` server-side
+  via a Server Action and sets an httpOnly session cookie.
+- `/` — protected dashboard. Calls `GET /v1/auth/me` and `GET /v1/orgs`
+  server-side using the session cookie. Shows the current user, role,
+  memberships, and the orgs the actor can see.
+- `src/proxy.ts` — Next 16 edge proxy: redirects unauthenticated requests to `/login`.
+- `actions/logout.ts` — clears the cookie + redirects to `/login`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Auth model
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Backend issues a JWT on login (`/v1/auth/login`).
+- Dashboard stores it in an httpOnly cookie (`askchimps_session`,
+  configurable). The cookie is set by a Server Action — never readable by
+  client JS.
+- Every server-side fetch to the API attaches `Authorization: Bearer …`.
+- Role label rules:
+  - `isPlatformAdmin` → "admin (platform)" — sees every org
+  - Otherwise the user's per-org membership role(s)
 
-## Deploy on Vercel
+## Repo layout
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+dashboard/
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx           root layout
+│   │   ├── page.tsx             protected dashboard (/)
+│   │   ├── login/
+│   │   │   ├── page.tsx         login screen
+│   │   │   ├── login-form.tsx   client component (useActionState)
+│   │   │   └── actions.ts       loginAction (server)
+│   │   ├── actions/
+│   │   │   └── logout.ts        logoutAction
+│   │   └── globals.css
+│   ├── lib/
+│   │   ├── api.ts               server-side API client
+│   │   ├── env.ts               server-only env helpers
+│   │   ├── session.ts           httpOnly cookie set/get/clear
+│   │   └── types.ts             shared response shapes
+│   └── proxy.ts                 auth redirect (Next 16 edge proxy)
+├── .env.example
+├── .nvmrc
+├── next.config.ts
+├── package.json
+└── tsconfig.json
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Scripts
+
+| Script | What |
+|---|---|
+| `npm run dev` | Next dev server on `127.0.0.1:3002` |
+| `npm run build` | Production build |
+| `npm run start` | Run production build on port 3002 |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | `tsc --noEmit` |
+
+## What's next
+
+This is a thin shell for visibility. Coming features (when api lands them):
+
+- Per-org config view (the YAML from `askchimps/api/config/clients/<id>.yaml`)
+- Leads + calls list with outcome and bucket
+- Webhook registration + delivery log
+- Bull Board admin link (proxied)
+- Analytics rollups
+
+## Related
+
+- [`askchimps/api`](https://github.com/askchimps/api) — backend (NestJS)
+- [`askchimps/askchimps`](https://github.com/askchimps/askchimps) — planning,
+  ADRs, tasks
+- [`askchimps/infra`](https://github.com/askchimps/infra) — VM IaC
