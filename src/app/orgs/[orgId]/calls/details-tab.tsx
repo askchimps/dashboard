@@ -57,20 +57,19 @@ export function DetailsTab({ call }: Props) {
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
           Lead
         </h3>
-        <dl className="grid grid-cols-2 gap-y-2 text-sm">
-          <Row label="Name" value={call.lead.name ?? '—'} />
-          <Row
-            label="Phone"
-            value={<span className="font-mono text-gray-800">{call.lead.phone ?? '—'}</span>}
-          />
-          <Row label="Source" value={call.lead.source ?? '—'} />
-          <Row label="Status" value={<code className="text-gray-800">{call.lead.status}</code>} />
-          <Row
-            label="Lead id"
-            value={<span className="font-mono text-xs text-gray-700">{call.lead.id}</span>}
-          />
-          <Row label="Lead created" value={formatDateTime(call.lead.createdAt)} />
-        </dl>
+        <p className="text-sm text-gray-700">
+          <span className="font-medium text-gray-900">
+            {call.lead.name ?? 'Unknown lead'}
+          </span>{' '}
+          ·{' '}
+          <span className="font-mono">{call.lead.phone ?? '—'}</span> ·{' '}
+          <a
+            href={`/orgs/${call.lead.orgId}/leads?leadId=${call.lead.id}`}
+            className="text-gray-900 underline-offset-2 hover:underline"
+          >
+            Open lead →
+          </a>
+        </p>
       </section>
 
       {analysis ? (

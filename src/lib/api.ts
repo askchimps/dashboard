@@ -7,6 +7,9 @@ import type {
   CallDetail,
   CallListQuery,
   CallSummary,
+  LeadDetail,
+  LeadListQuery,
+  LeadSummary,
   LoginResponse,
   Org,
 } from './types';
@@ -111,6 +114,33 @@ export async function getCall(
   if (!token) throw new ApiError(401, 'No session');
   return call<CallDetail>(
     `/v1/orgs/${encodeURIComponent(orgId)}/calls/${encodeURIComponent(callId)}`,
+    { token },
+  );
+}
+
+export async function listLeads(
+  orgId: string,
+  query: LeadListQuery = {},
+): Promise<LeadSummary[]> {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  const search = new URLSearchParams();
+  if (query.q) search.set('q', query.q);
+  if (query.status) search.set('status', query.status);
+  if (query.source) search.set('source', query.source);
+  if (query.sort) search.set('sort', query.sort);
+  const qs = search.toString();
+  return call<LeadSummary[]>(
+    `/v1/orgs/${encodeURIComponent(orgId)}/leads${qs ? `?${qs}` : ''}`,
+    { token },
+  );
+}
+
+export async function getLead(orgId: string, leadId: string): Promise<LeadDetail> {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  return call<LeadDetail>(
+    `/v1/orgs/${encodeURIComponent(orgId)}/leads/${encodeURIComponent(leadId)}`,
     { token },
   );
 }
