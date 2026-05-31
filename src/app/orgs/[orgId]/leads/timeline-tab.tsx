@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import {
   CheckCircle2,
   Inbox,
@@ -113,12 +112,12 @@ export function TimelineTab({ orgId, lead }: Props) {
                   <span className="font-mono">{outcome}</span>
                 ) : null}
                 {callId ? (
-                  <Link
+                  <a
                     href={`/orgs/${orgId}/calls?callId=${callId}`}
                     className="text-gray-900 underline-offset-2 hover:underline"
                   >
                     Open call →
-                  </Link>
+                  </a>
                 ) : null}
               </div>
             </li>
