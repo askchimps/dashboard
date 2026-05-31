@@ -22,7 +22,8 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    // Run on every route except Next internals and static files.
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)).*)',
+    // Run on every route except Next internals and static asset files
+    // (images + audio + video) served from /public.
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp3|wav|ogg|m4a|webm|mp4)).*)',
   ],
 };

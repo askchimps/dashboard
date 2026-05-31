@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# dev-only seed asset, fetched via scripts/fetch-sample-audio.sh
+/public/sample-recording.mp3

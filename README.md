@@ -21,6 +21,14 @@ docker compose up -d
 docker compose exec api npx prisma db seed   # prints credentials
 ```
 
+Fetch the dev-only sample audio used by the Calls page (one-time, ~9 MB,
+gitignored):
+
+```bash
+cd ../dashboard
+bash scripts/fetch-sample-audio.sh
+```
+
 Then in the dashboard hit `http://127.0.0.1:3002`. Default form value
 prefills `admin@askchimps.ai`; password is `Admin@123` per the seed.
 
