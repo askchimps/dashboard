@@ -170,8 +170,10 @@ export type TimelineEventType =
 export interface TimelineEvent {
   id: string;
   at: string;
-  type: TimelineEventType;
+  type: TimelineEventType | string;
   title: string;
+  leadId: string | null;
+  callId: string | null;
   detail?: Record<string, unknown>;
 }
 

@@ -65,8 +65,7 @@ export function TimelineTab({ orgId, lead }: Props) {
       <ol className="relative ml-3 border-l border-gray-200">
         {lead.timeline.map((e) => {
           const detail = e.detail ?? {};
-          const callId =
-            typeof detail.callId === 'string' ? (detail.callId as string) : null;
+          const callId = e.callId;
           const outcome =
             typeof detail.outcome === 'string'
               ? (detail.outcome as string)
