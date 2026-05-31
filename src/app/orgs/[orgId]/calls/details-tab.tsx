@@ -1,6 +1,15 @@
 import type { CallDetail } from '@/lib/types';
 import { formatDateTime, formatDuration } from './format';
 
+// Standard qualification questions used by the default agent. When real
+// per-agent question text lands on the api, swap this map for a per-call
+// lookup served alongside answers.
+const QUESTION_TEXT: Record<string, string> = {
+  q1: 'What kind of property are you looking to design?',
+  q2: "What's your timeline?",
+  q3: 'Do you have a budget range?',
+};
+
 interface Props {
   call: CallDetail;
 }
@@ -99,8 +108,15 @@ export function DetailsTab({ call }: Props) {
                 key={a.id}
                 className="rounded border border-gray-200 bg-white p-3"
               >
-                <div className="text-xs font-mono text-gray-500">{a.qId}</div>
-                <div className="mt-1 text-gray-900">{a.rawText ?? '—'}</div>
+                <div className="flex items-baseline gap-2">
+                  <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-gray-600">
+                    {a.qId}
+                  </span>
+                  <span className="text-gray-700">
+                    {QUESTION_TEXT[a.qId] ?? '(question text unavailable)'}
+                  </span>
+                </div>
+                <div className="mt-1.5 text-gray-900">{a.rawText ?? '—'}</div>
               </li>
             ))}
           </ul>
