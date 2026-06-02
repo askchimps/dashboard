@@ -6,9 +6,10 @@ import { DetailsTab } from './details-tab';
 interface Props {
   orgId: string;
   call: CallDetail | null;
+  canReanalyze?: boolean;
 }
 
-export function CallDetailPane({ orgId, call }: Props) {
+export function CallDetailPane({ orgId, call, canReanalyze = false }: Props) {
   if (!call) {
     return (
       <div className="flex h-full items-center justify-center p-10 text-center text-sm text-gray-500">
@@ -36,7 +37,7 @@ export function CallDetailPane({ orgId, call }: Props) {
       </header>
       <CallTabs
         transcript={<TranscriptTab call={call} />}
-        details={<DetailsTab call={call} />}
+        details={<DetailsTab call={call} canReanalyze={canReanalyze} />}
       />
     </>
   );

@@ -1,4 +1,4 @@
-import { ApiError, getCall, listCalls } from '@/lib/api';
+import { ApiError, getCall, getMe, listCalls } from '@/lib/api';
 import type {
   CallDetail,
   CallListQuery,
@@ -79,6 +79,16 @@ export default async function CallsPage({ params, searchParams }: Props) {
     }
   }
 
+  let canReanalyze = false;
+  try {
+    const me = await getMe();
+    canReanalyze =
+      me.isPlatformAdmin ||
+      me.memberships.some((m) => m.orgId === orgId && m.role === 'OWNER');
+  } catch (e) {
+    if (!(e instanceof ApiError)) throw e;
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-1 gap-4">
       {/* LEFT pane: list with filters/search/sort on top */}
@@ -99,7 +109,7 @@ export default async function CallsPage({ params, searchParams }: Props) {
 
       {/* RIGHT pane: details with two tabs */}
       <section className="flex min-h-0 min-w-0 flex-1 flex-col rounded-lg border border-gray-200 bg-white shadow-sm">
-        <CallDetailPane orgId={orgId} call={selected} />
+        <CallDetailPane orgId={orgId} call={selected} canReanalyze={canReanalyze} />
       </section>
     </div>
   );

@@ -3,10 +3,13 @@ import { getApiBaseUrl } from './env';
 import { getSessionToken } from './session';
 import type {
   Agent,
+  AnalysisStatus,
   AuthUser,
   CallDetail,
   CallListQuery,
   CallSummary,
+  CursorPage,
+  Delivery,
   LeadDetail,
   LeadListQuery,
   LeadSummary,
@@ -16,6 +19,8 @@ import type {
   Paged,
   Schedule,
   ScheduleListQuery,
+  Webhook,
+  WebhookWithSecret,
 } from './types';
 
 export class ApiError extends Error {
@@ -229,5 +234,72 @@ export async function updateAgent(
   return call<Agent>(
     `/v1/orgs/${encodeURIComponent(orgId)}/agents/${encodeURIComponent(agentId)}`,
     { method: 'PATCH', token, body: JSON.stringify(data) },
+  );
+}
+
+export async function reanalyzeCall(orgId: string, callId: string) {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  return call<{ ok: true; callId: string; status: AnalysisStatus }>(
+    `/v1/orgs/${encodeURIComponent(orgId)}/calls/${encodeURIComponent(callId)}/reanalyze`,
+    { token, method: 'POST' },
+  );
+}
+
+export async function listWebhooks(orgId: string): Promise<Webhook[]> {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  return call<Webhook[]>(`/v1/orgs/${encodeURIComponent(orgId)}/webhooks`, { token });
+}
+
+export async function createWebhook(
+  orgId: string,
+  input: { url: string; events: string[]; buckets: string[]; active: boolean },
+): Promise<WebhookWithSecret> {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  return call<WebhookWithSecret>(`/v1/orgs/${encodeURIComponent(orgId)}/webhooks`, {
+    token,
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateWebhook(
+  orgId: string,
+  id: string,
+  input: Partial<{ url: string; events: string[]; buckets: string[]; active: boolean }>,
+): Promise<Webhook> {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  return call<Webhook>(
+    `/v1/orgs/${encodeURIComponent(orgId)}/webhooks/${encodeURIComponent(id)}`,
+    { token, method: 'PATCH', body: JSON.stringify(input) },
+  );
+}
+
+export async function deleteWebhook(orgId: string, id: string) {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  return call<{ ok: true }>(
+    `/v1/orgs/${encodeURIComponent(orgId)}/webhooks/${encodeURIComponent(id)}`,
+    { token, method: 'DELETE' },
+  );
+}
+
+export async function listDeliveries(
+  orgId: string,
+  id: string,
+  opts: { cursor?: string; limit?: number } = {},
+): Promise<CursorPage<Delivery>> {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  const sp = new URLSearchParams();
+  if (opts.cursor) sp.set('cursor', opts.cursor);
+  if (opts.limit) sp.set('limit', String(opts.limit));
+  const qs = sp.toString();
+  return call<CursorPage<Delivery>>(
+    `/v1/orgs/${encodeURIComponent(orgId)}/webhooks/${encodeURIComponent(id)}/deliveries${qs ? `?${qs}` : ''}`,
+    { token },
   );
 }

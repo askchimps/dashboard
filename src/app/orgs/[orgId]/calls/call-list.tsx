@@ -4,6 +4,7 @@ import { CallFilters } from './call-filters';
 import { CallRowLink } from './call-row-link';
 import { formatDuration, formatRelative } from './format';
 import { Pager } from '@/components/pager';
+import { AnalysisStatusPill } from '@/components/analysis-status-pill';
 
 interface Props {
   orgId: string;
@@ -108,6 +109,12 @@ export function CallList({ orgId, calls, selectedId, filters, paging }: Props) {
                       {formatDuration(c.durationSec)}
                       {c.score != null ? ` · score ${c.score}` : ''}
                     </span>
+                  </div>
+                  <div className="mt-1.5">
+                    <AnalysisStatusPill
+                      status={c.analysisStatus}
+                      title={c.analysisError ?? undefined}
+                    />
                   </div>
                 </CallRowLink>
               </li>
