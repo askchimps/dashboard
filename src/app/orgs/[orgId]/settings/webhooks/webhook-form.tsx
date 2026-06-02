@@ -45,7 +45,7 @@ export function WebhookForm({ orgId }: { orgId: string }) {
         </span>
         <div className="mt-1 flex flex-wrap gap-3">
           {ALL_BUCKETS.map((b) => (
-            <label key={b} className="inline-flex items-center gap-1 text-xs">
+            <label key={b} className="inline-flex items-center gap-1 text-xs text-gray-700">
               <input
                 type="checkbox"
                 checked={buckets.includes(b)}
@@ -60,7 +60,7 @@ export function WebhookForm({ orgId }: { orgId: string }) {
           ))}
         </div>
       </div>
-      <label className="inline-flex items-center gap-2 text-sm">
+      <label className="inline-flex items-center gap-2 text-sm text-gray-700">
         <input type="checkbox" name="active" defaultChecked /> Active
       </label>
       <div>

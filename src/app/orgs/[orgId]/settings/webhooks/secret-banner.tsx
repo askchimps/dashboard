@@ -14,7 +14,7 @@ export function SecretBanner({ secret }: { secret: string }) {
         Webhook secret — copy now, it won&apos;t be shown again.
       </p>
       <div className="mt-2 flex items-center gap-2">
-        <code className="block w-full break-all rounded bg-white px-2 py-1 font-mono text-xs">
+        <code className="block w-full break-all rounded bg-white px-2 py-1 font-mono text-xs text-gray-900">
           {secret}
         </code>
         <button
@@ -23,7 +23,7 @@ export function SecretBanner({ secret }: { secret: string }) {
             await navigator.clipboard.writeText(secret);
             setCopied(true);
           }}
-          className="rounded border border-amber-300 bg-white px-2 py-1 text-xs hover:bg-amber-100"
+          className="rounded border border-amber-300 bg-white px-2 py-1 text-xs text-amber-900 hover:bg-amber-100"
         >
           {copied ? 'Copied' : 'Copy'}
         </button>
