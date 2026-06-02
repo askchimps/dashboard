@@ -42,6 +42,8 @@ export interface CallLeadLite {
   source: string | null;
 }
 
+export type AnalysisStatus = 'pending' | 'in_progress' | 'completed' | 'failed';
+
 export interface CallSummary {
   id: string;
   leadId: string;
@@ -55,6 +57,10 @@ export interface CallSummary {
   transcript: string | null;
   recordingUrl: string | null;
   bolnaCallId: string | null;
+  analysisStatus: AnalysisStatus;
+  analysisError: string | null;
+  analysisStartedAt: string | null;
+  analysisFinishedAt: string | null;
   createdAt: string;
   updatedAt: string;
   lead: CallLeadLite;
@@ -255,4 +261,40 @@ export interface Paged<T> {
 export interface LoginResponse {
   accessToken: string;
   user: AuthUser;
+}
+
+export interface Webhook {
+  id: string;
+  orgId: string;
+  url: string;
+  events: string[];
+  buckets: string[];
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WebhookWithSecret extends Webhook {
+  secret: string;
+}
+
+export type DeliveryStatus = 'pending' | 'success' | 'failed' | 'dead';
+
+export interface Delivery {
+  id: string;
+  webhookId: string;
+  callId: string;
+  status: DeliveryStatus;
+  attempts: number;
+  lastError: string | null;
+  nextRetryAt: string | null;
+  responseCode: number | null;
+  responseBody: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CursorPage<T> {
+  items: T[];
+  nextCursor: string | null;
 }
