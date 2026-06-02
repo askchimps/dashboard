@@ -90,8 +90,8 @@ export default async function DeliveriesPage({ params, searchParams }: Props) {
                       {d.status}
                     </span>
                   </td>
-                  <td className="px-3 py-2 text-xs text-gray-700">{d.attempts}</td>
-                  <td className="px-3 py-2 text-xs text-gray-700">{d.responseCode ?? '—'}</td>
+                  <td className="px-3 py-2 text-xs">{d.attempts}</td>
+                  <td className="px-3 py-2 text-xs">{d.responseCode ?? '—'}</td>
                   <td className="px-3 py-2 text-xs text-gray-500 break-all">
                     {d.lastError ?? '—'}
                   </td>
