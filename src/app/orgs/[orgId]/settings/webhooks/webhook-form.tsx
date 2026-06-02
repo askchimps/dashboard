@@ -28,7 +28,7 @@ export function WebhookForm({ orgId }: { orgId: string }) {
           type="url"
           required
           placeholder="https://example.com/hook"
-          className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
         />
       </div>
       <div>
@@ -45,7 +45,7 @@ export function WebhookForm({ orgId }: { orgId: string }) {
         </span>
         <div className="mt-1 flex flex-wrap gap-3">
           {ALL_BUCKETS.map((b) => (
-            <label key={b} className="inline-flex items-center gap-1 text-xs text-gray-700">
+            <label key={b} className="inline-flex items-center gap-1 text-xs">
               <input
                 type="checkbox"
                 checked={buckets.includes(b)}
@@ -60,7 +60,7 @@ export function WebhookForm({ orgId }: { orgId: string }) {
           ))}
         </div>
       </div>
-      <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+      <label className="inline-flex items-center gap-2 text-sm">
         <input type="checkbox" name="active" defaultChecked /> Active
       </label>
       <div>

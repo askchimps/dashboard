@@ -9,17 +9,17 @@ export function WebhookRow({ orgId, hook }: { orgId: string; hook: Webhook }) {
   const [pending, start] = useTransition();
   return (
     <tr className="border-t border-gray-100">
-      <td className="px-3 py-2 font-mono text-xs text-gray-900 break-all">{hook.url}</td>
-      <td className="px-3 py-2 text-xs text-gray-700">{hook.events.join(', ')}</td>
-      <td className="px-3 py-2 text-xs text-gray-700">
+      <td className="px-3 py-2 font-mono text-xs text-gray-700 break-all">{hook.url}</td>
+      <td className="px-3 py-2 text-xs">{hook.events.join(', ')}</td>
+      <td className="px-3 py-2 text-xs">
         {hook.buckets.length === 0 ? (
           <span className="text-gray-400">all</span>
         ) : (
           hook.buckets.join(', ')
         )}
       </td>
-      <td className="px-3 py-2 text-xs text-gray-700">
-        <label className="inline-flex items-center gap-1 text-gray-700">
+      <td className="px-3 py-2 text-xs">
+        <label className="inline-flex items-center gap-1">
           <input
             type="checkbox"
             checked={hook.active}
@@ -31,7 +31,7 @@ export function WebhookRow({ orgId, hook }: { orgId: string; hook: Webhook }) {
           {hook.active ? 'On' : 'Off'}
         </label>
       </td>
-      <td className="px-3 py-2 text-xs text-gray-700">
+      <td className="px-3 py-2 text-xs">
         <Link
           href={`/orgs/${orgId}/settings/webhooks/${hook.id}/deliveries`}
           className="text-gray-700 underline"
