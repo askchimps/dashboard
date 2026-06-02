@@ -1,8 +1,11 @@
 import type { CallAnalysisQuestion, CallDetail } from '@/lib/types';
 import { formatDateTime, formatDuration } from './format';
+import { AnalysisStatusPill } from '@/components/analysis-status-pill';
+import { ReanalyzeButton } from './reanalyze-button';
 
 interface Props {
   call: CallDetail;
+  canReanalyze?: boolean;
 }
 
 function bucketBadge(bucket: string | null | undefined) {
@@ -22,9 +25,11 @@ function bucketBadge(bucket: string | null | undefined) {
   );
 }
 
-export function DetailsTab({ call }: Props) {
+export function DetailsTab({ call, canReanalyze = false }: Props) {
   const analysis = call.analysis ?? null;
   const questions: CallAnalysisQuestion[] = analysis?.questions ?? [];
+  const busy =
+    call.analysisStatus === 'in_progress' || call.analysisStatus === 'pending';
 
   return (
     <div className="space-y-6 px-5 py-5">
@@ -33,6 +38,30 @@ export function DetailsTab({ call }: Props) {
           Call
         </h3>
         <dl className="grid grid-cols-2 gap-y-2 text-sm">
+          <Row
+            label="Analysis"
+            value={
+              <span className="inline-flex items-center gap-2">
+                <AnalysisStatusPill
+                  status={call.analysisStatus}
+                  title={call.analysisError ?? undefined}
+                />
+                {canReanalyze ? (
+                  <ReanalyzeButton
+                    orgId={call.lead.orgId}
+                    callId={call.id}
+                    disabled={busy}
+                  />
+                ) : null}
+              </span>
+            }
+          />
+          {call.analysisStatus === 'failed' && call.analysisError ? (
+            <Row
+              label="Analysis error"
+              value={<span className="text-xs text-red-600">{call.analysisError}</span>}
+            />
+          ) : null}
           <Row label="Outcome" value={<code className="text-gray-800">{call.outcome ?? '—'}</code>} />
           <Row label="Bucket" value={bucketBadge(call.bucket)} />
           <Row label="Score" value={call.score != null ? String(call.score) : '—'} />
