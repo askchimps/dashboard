@@ -33,12 +33,9 @@ export async function createAgentAction(
   _prev: CreateAgentFormState,
   formData: FormData,
 ): Promise<CreateAgentFormState> {
-  console.log('[createAgentAction.entry]', { orgId, keys: Array.from(formData.keys()) });
   try {
     const raw = Object.fromEntries(formData.entries());
-    console.log('[createAgentAction.raw]', JSON.stringify(raw).slice(0, 200));
     const parsed = schema.safeParse(raw);
-    console.log('[createAgentAction.parsed.success]', parsed.success);
     if (!parsed.success) {
       const fieldErrors: Record<string, string> = {};
       for (const issue of parsed.error.issues) {
