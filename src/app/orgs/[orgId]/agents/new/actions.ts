@@ -1,7 +1,6 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { ApiError, createAgent } from '@/lib/api';
 import type { AgentCreateInput } from '@/lib/types';
@@ -42,9 +41,10 @@ const schema = z.object({
 });
 
 export interface CreateAgentFormState {
-  status?: 'error';
+  status?: 'error' | 'ok';
   message?: string;
   fieldErrors?: Record<string, string>;
+  createdId?: string;
 }
 
 function stripEmpty<T extends Record<string, unknown>>(o: T): T {
@@ -99,5 +99,9 @@ export async function createAgentAction(
     return { status: 'error', message: 'Create failed.' };
   }
   revalidatePath(`/orgs/${orgId}/agents`);
-  redirect(`/orgs/${orgId}/agents/${created.id}`);
+  // NOTE: `redirect()` inside this action returns an HTML 303 response that
+  // useActionState ("$ACTION_REF" forms) cannot decode — Vercel surfaces it
+  // as "An unexpected response was received from the server". Return the
+  // created id and let the client navigate via router.push to dodge that.
+  return { status: 'ok', message: 'Agent created.', createdId: created.id };
 }
