@@ -1,6 +1,7 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { createAgentAction, type CreateAgentFormState } from './actions';
 
 interface Props {
@@ -20,11 +21,17 @@ const LANGUAGES: Array<{ code: 'en' | 'hi'; label: string }> = [
 const LLM_MODELS = ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4.1'];
 
 export function CreateAgentForm({ orgId }: Props) {
+  const router = useRouter();
   const [state, action, pending] = useActionState(
     createAgentAction.bind(null, orgId),
     initial,
   );
   const err = state.fieldErrors ?? {};
+  useEffect(() => {
+    if (state.status === 'ok' && state.createdId) {
+      router.push(`/orgs/${orgId}/agents/${state.createdId}`);
+    }
+  }, [state.status, state.createdId, orgId, router]);
   return (
     <form action={action} className="space-y-8">
       <Section
