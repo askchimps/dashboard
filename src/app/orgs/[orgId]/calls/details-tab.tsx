@@ -70,7 +70,7 @@ export function DetailsTab({ call, canReanalyze = false }: Props) {
           <Row label="Started" value={formatDateTime(call.startedAt)} />
           <Row label="Ended" value={formatDateTime(call.endedAt)} />
           <Row
-            label="Bolna call id"
+            label="Voice call id"
             value={
               call.bolnaCallId ? (
                 <span className="font-mono text-xs text-gray-700">{call.bolnaCallId}</span>

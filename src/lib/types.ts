@@ -27,32 +27,10 @@ export interface Agent {
   id: string;
   orgId: string;
   name: string;
-  welcomeMessage: string;
   active: boolean;
-  basePrompt: string;
+  bolnaAgentId: string;
   analysisPrompt: string;
-  knowledge: string;
-  language: string;
-  llmProvider: string;
-  llmModel: string;
-  llmTemperature: number;
-  llmMaxTokens: number;
-  voiceProvider: string;
-  voiceId: string;
-  voiceName: string | null;
-  voiceModel: string;
-  transcriberProvider: string;
-  transcriberModel: string;
-  telephonyProvider: string;
-  callStartHour: number | null;
-  callEndHour: number | null;
-  hangupAfterSilence: number;
-  callTerminateSec: number;
-  bolnaAgentId: string | null;
-  bolnaCreatedAt: string | null;
-  bolnaSyncError: string | null;
-  ingestSecret: string;
-  bolnaCallSecret: string;
+  ingestCode: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -331,34 +309,13 @@ export interface CursorPage<T> {
   nextCursor: string | null;
 }
 
-export type AgentCreateInput = Pick<
-  Agent,
-  | 'name'
-  | 'voiceId'
-> &
-  Partial<
-    Pick<
-      Agent,
-      | 'welcomeMessage'
-      | 'basePrompt'
-      | 'analysisPrompt'
-      | 'knowledge'
-      | 'language'
-      | 'llmProvider'
-      | 'llmModel'
-      | 'llmTemperature'
-      | 'llmMaxTokens'
-      | 'voiceProvider'
-      | 'voiceName'
-      | 'voiceModel'
-      | 'transcriberProvider'
-      | 'transcriberModel'
-      | 'telephonyProvider'
-      | 'callStartHour'
-      | 'callEndHour'
-      | 'hangupAfterSilence'
-      | 'callTerminateSec'
-    >
-  >;
+export type AgentCreateInput = {
+  name: string;
+  bolnaAgentId: string;
+  analysisPrompt?: string;
+};
 
-export type AgentUpdateInput = Partial<AgentCreateInput>;
+export type AgentUpdateInput = {
+  name?: string;
+  analysisPrompt?: string;
+};

@@ -7,7 +7,7 @@ interface Props {
   title: string;
   description: string;
   url: string;
-  secret: string;
+  secret?: string;
   secretHeaderHint?: string;
   exampleCurl?: string;
   agentId?: string;
@@ -44,39 +44,41 @@ export function WebhookPanel({
 
       <Row label="URL" value={url} copyKey="url" onCopy={onCopy} copied={copied} />
 
-      <div>
-        <label className="block text-xs font-medium uppercase tracking-wide text-gray-500">
-          Secret
-        </label>
-        <div className="mt-1 flex items-stretch gap-2">
-          <code className="grow truncate rounded-md border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-xs text-gray-800">
-            {revealed ? secret : '•'.repeat(Math.min(secret.length, 32))}
-          </code>
-          <button
-            type="button"
-            onClick={() => setRevealed((r) => !r)}
-            className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
-          >
-            {revealed ? (
-              <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
-            ) : (
-              <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-            )}
-            {revealed ? 'Hide' : 'Reveal'}
-          </button>
-          <button
-            type="button"
-            onClick={() => onCopy('secret', secret)}
-            className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
-          >
-            <Copy className="h-3.5 w-3.5" aria-hidden="true" />
-            {copied === 'secret' ? 'Copied' : 'Copy'}
-          </button>
+      {secret ? (
+        <div>
+          <label className="block text-xs font-medium uppercase tracking-wide text-gray-500">
+            Secret
+          </label>
+          <div className="mt-1 flex items-stretch gap-2">
+            <code className="grow truncate rounded-md border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-xs text-gray-800">
+              {revealed ? secret : '•'.repeat(Math.min(secret.length, 32))}
+            </code>
+            <button
+              type="button"
+              onClick={() => setRevealed((r) => !r)}
+              className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            >
+              {revealed ? (
+                <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
+              ) : (
+                <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+              )}
+              {revealed ? 'Hide' : 'Reveal'}
+            </button>
+            <button
+              type="button"
+              onClick={() => onCopy('secret', secret)}
+              className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+              {copied === 'secret' ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+          {secretHeaderHint ? (
+            <p className="mt-1 text-xs text-gray-500">{secretHeaderHint}</p>
+          ) : null}
         </div>
-        {secretHeaderHint ? (
-          <p className="mt-1 text-xs text-gray-500">{secretHeaderHint}</p>
-        ) : null}
-      </div>
+      ) : null}
 
       {exampleCurl ? (
         <div>

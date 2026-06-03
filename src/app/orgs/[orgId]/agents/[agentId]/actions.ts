@@ -5,37 +5,9 @@ import { z } from 'zod';
 import { ApiError, setAgentActive, updateAgent } from '@/lib/api';
 import type { AgentUpdateInput } from '@/lib/types';
 
-const optInt = (lo: number, hi: number) =>
-  z.preprocess(
-    (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
-    z.number().int().min(lo).max(hi).optional(),
-  );
-
 const schema = z.object({
   name: z.string().trim().min(1).max(120),
-  welcomeMessage: z.string().max(2_000).optional(),
-  basePrompt: z.string().max(20_000).optional(),
   analysisPrompt: z.string().max(20_000).optional(),
-  knowledge: z.string().max(200_000).optional(),
-  language: z.enum(['en', 'hi']).optional(),
-  llmProvider: z.string().max(60).optional(),
-  llmModel: z.string().max(120).optional(),
-  llmTemperature: z.preprocess(
-    (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
-    z.number().min(0).max(2).optional(),
-  ),
-  llmMaxTokens: optInt(16, 4096),
-  voiceProvider: z.enum(['elevenlabs', 'polly', 'deepgram']).optional(),
-  voiceId: z.string().trim().min(1).max(120),
-  voiceName: z.string().max(120).optional(),
-  voiceModel: z.string().max(120).optional(),
-  transcriberProvider: z.enum(['deepgram', 'bodhi']).optional(),
-  transcriberModel: z.string().max(120).optional(),
-  telephonyProvider: z.enum(['plivo', 'twilio', 'exotel']).optional(),
-  callStartHour: optInt(0, 23),
-  callEndHour: optInt(0, 23),
-  hangupAfterSilence: optInt(2, 120),
-  callTerminateSec: optInt(15, 1800),
 });
 
 export interface AgentFormState {
@@ -48,7 +20,6 @@ function stripEmpty<T extends Record<string, unknown>>(o: T): T {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(o)) {
     if (v === undefined) continue;
-    if (typeof v === 'string' && v.trim() === '') continue;
     out[k] = v;
   }
   return out as T;
@@ -86,7 +57,7 @@ export async function saveAgentAction(
   }
   revalidatePath(`/orgs/${orgId}/agents`);
   revalidatePath(`/orgs/${orgId}/agents/${agentId}`);
-  return { status: 'ok', message: 'Saved. Bolna mirror queued.' };
+  return { status: 'ok', message: 'Saved.' };
 }
 
 export async function toggleActiveAction(

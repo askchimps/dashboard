@@ -11,15 +11,6 @@ interface Props {
 
 const initial: AgentFormState = {};
 
-const VOICE_PROVIDERS = ['elevenlabs', 'polly', 'deepgram'] as const;
-const TRANSCRIBERS = ['deepgram', 'bodhi'] as const;
-const TELEPHONY = ['plivo', 'twilio', 'exotel'] as const;
-const LANGUAGES: Array<{ code: 'en' | 'hi'; label: string }> = [
-  { code: 'en', label: 'English' },
-  { code: 'hi', label: 'Hindi' },
-];
-const LLM_MODELS = ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4.1'];
-
 export function AgentForm({ orgId, agent }: Props) {
   const [state, action, pending] = useActionState(
     saveAgentAction.bind(null, orgId, agent.id),
@@ -28,162 +19,25 @@ export function AgentForm({ orgId, agent }: Props) {
   const err = state.fieldErrors ?? {};
 
   return (
-    <form action={action} className="space-y-8">
-      <Section title="Identity" description="What the agent is called and how it opens calls.">
+    <form action={action} className="space-y-6">
+      <Section
+        title="Agent (admin only)"
+        description="Name + analysis prompt. The voice agent ID is paired at creation and cannot be changed here."
+      >
         <Field label="Name" name="name" defaultValue={agent.name} required error={err.name} />
         <Field
-          label="Welcome message"
-          name="welcomeMessage"
-          defaultValue={agent.welcomeMessage}
-          error={err.welcomeMessage}
-        />
-      </Section>
-
-      <Section title="Voice" description="Synthesizer + voice the agent uses.">
-        <Select
-          label="Provider"
-          name="voiceProvider"
-          options={VOICE_PROVIDERS.map((p) => ({ value: p, label: p }))}
-          defaultValue={agent.voiceProvider}
-        />
-        <Field label="Voice ID" name="voiceId" required defaultValue={agent.voiceId} error={err.voiceId} />
-        <Field
-          label="Voice display name"
-          name="voiceName"
-          defaultValue={agent.voiceName ?? ''}
-          error={err.voiceName}
-        />
-        <Field
-          label="Voice model"
-          name="voiceModel"
-          defaultValue={agent.voiceModel}
-          error={err.voiceModel}
-        />
-      </Section>
-
-      <Section title="Transcription" description="Speech-to-text used during the call.">
-        <Select
-          label="Language"
-          name="language"
-          options={LANGUAGES.map((l) => ({ value: l.code, label: l.label }))}
-          defaultValue={agent.language}
-        />
-        <Select
-          label="Provider"
-          name="transcriberProvider"
-          options={TRANSCRIBERS.map((p) => ({ value: p, label: p }))}
-          defaultValue={agent.transcriberProvider}
-        />
-        <Field
-          label="Model"
-          name="transcriberModel"
-          defaultValue={agent.transcriberModel}
-          error={err.transcriberModel}
-        />
-      </Section>
-
-      <Section title="Conversation" description="LLM and silence handling.">
-        <Select
-          label="LLM model"
-          name="llmModel"
-          options={LLM_MODELS.map((m) => ({ value: m, label: m }))}
-          defaultValue={agent.llmModel}
-        />
-        <Field
-          label="Temperature"
-          name="llmTemperature"
-          type="number"
-          step="0.1"
-          min="0"
-          max="2"
-          defaultValue={String(agent.llmTemperature)}
-          error={err.llmTemperature}
-        />
-        <Field
-          label="Max tokens"
-          name="llmMaxTokens"
-          type="number"
-          step="1"
-          min="16"
-          max="4096"
-          defaultValue={String(agent.llmMaxTokens)}
-          error={err.llmMaxTokens}
-        />
-        <Field
-          label="Hangup after silence (sec)"
-          name="hangupAfterSilence"
-          type="number"
-          step="1"
-          min="2"
-          max="120"
-          defaultValue={String(agent.hangupAfterSilence)}
-          error={err.hangupAfterSilence}
-        />
-        <Field
-          label="Max call duration (sec)"
-          name="callTerminateSec"
-          type="number"
-          step="5"
-          min="15"
-          max="1800"
-          defaultValue={String(agent.callTerminateSec)}
-          error={err.callTerminateSec}
-        />
-      </Section>
-
-      <Section title="Calling hours" description="Optional. Leave blank to allow 24h.">
-        <Field
-          label="Start hour (0-23)"
-          name="callStartHour"
-          type="number"
-          step="1"
-          min="0"
-          max="23"
-          defaultValue={agent.callStartHour == null ? '' : String(agent.callStartHour)}
-          error={err.callStartHour}
-        />
-        <Field
-          label="End hour (0-23)"
-          name="callEndHour"
-          type="number"
-          step="1"
-          min="0"
-          max="23"
-          defaultValue={agent.callEndHour == null ? '' : String(agent.callEndHour)}
-          error={err.callEndHour}
-        />
-        <Select
-          label="Telephony provider"
-          name="telephonyProvider"
-          options={TELEPHONY.map((p) => ({ value: p, label: p }))}
-          defaultValue={agent.telephonyProvider}
-        />
-      </Section>
-
-      <Section
-        title="Prompts"
-        description="Base prompt drives the live call. Analysis prompt extracts structured data after the call ends."
-      >
-        <TextArea
-          label="Base prompt"
-          name="basePrompt"
-          rows={6}
-          defaultValue={agent.basePrompt}
-          error={err.basePrompt}
+          label="Voice Agent ID"
+          name="bolnaAgentId"
+          defaultValue={agent.bolnaAgentId}
+          disabled
+          hint="Set at creation. Recreate the agent if this needs to change."
         />
         <TextArea
           label="Analysis prompt"
           name="analysisPrompt"
-          rows={6}
+          rows={8}
           defaultValue={agent.analysisPrompt}
           error={err.analysisPrompt}
-        />
-        <TextArea
-          label="Knowledge base"
-          name="knowledge"
-          rows={8}
-          defaultValue={agent.knowledge}
-          error={err.knowledge}
         />
       </Section>
 
@@ -225,7 +79,7 @@ function Section({
         <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
         <p className="mt-0.5 text-xs text-gray-500">{description}</p>
       </header>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{children}</div>
+      <div className="grid grid-cols-1 gap-4">{children}</div>
     </section>
   );
 }
@@ -236,9 +90,8 @@ function Field({
   defaultValue,
   required,
   type = 'text',
-  step,
-  min,
-  max,
+  hint,
+  disabled,
   error,
 }: {
   label: string;
@@ -246,9 +99,8 @@ function Field({
   defaultValue?: string;
   required?: boolean;
   type?: string;
-  step?: string;
-  min?: string;
-  max?: string;
+  hint?: string;
+  disabled?: boolean;
   error?: string;
 }) {
   return (
@@ -260,46 +112,17 @@ function Field({
         id={name}
         name={name}
         type={type}
-        step={step}
-        min={min}
-        max={max}
         required={required}
         defaultValue={defaultValue}
-        className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+        disabled={disabled}
+        readOnly={disabled}
+        className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500"
       />
-      {error ? <p className="mt-1 text-xs text-red-600">{error}</p> : null}
-    </div>
-  );
-}
-
-function Select({
-  label,
-  name,
-  options,
-  defaultValue,
-}: {
-  label: string;
-  name: string;
-  options: Array<{ value: string; label: string }>;
-  defaultValue?: string;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700" htmlFor={name}>
-        {label}
-      </label>
-      <select
-        id={name}
-        name={name}
-        defaultValue={defaultValue}
-        className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+      {error ? (
+        <p className="mt-1 text-xs text-red-600">{error}</p>
+      ) : hint ? (
+        <p className="mt-1 text-xs text-gray-500">{hint}</p>
+      ) : null}
     </div>
   );
 }
@@ -318,7 +141,7 @@ function TextArea({
   error?: string;
 }) {
   return (
-    <div className="md:col-span-2">
+    <div>
       <label className="block text-sm font-medium text-gray-700" htmlFor={name}>
         {label}
       </label>

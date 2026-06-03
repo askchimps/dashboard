@@ -43,8 +43,8 @@ export default async function AgentsPage({ params }: Props) {
           <h1 className="text-xl font-semibold text-gray-900">Agents</h1>
           <p className="text-sm text-gray-500">
             {me.isPlatformAdmin
-              ? 'Configure agents and sync them to Bolna. Each agent ingests leads and runs calls under its own settings.'
-              : 'Active agents available to this org. Click an agent to see its lead-ingestion webhook.'}
+              ? 'Each agent has a name, a voice agent ID, and an analysis prompt. Owners copy the lead ingestion URL into their CRM.'
+              : 'Active agents available to this org. Click an agent to see its lead-ingestion URL.'}
           </p>
         </div>
         {me.isPlatformAdmin ? (
@@ -67,9 +67,8 @@ export default async function AgentsPage({ params }: Props) {
             <thead className="bg-gray-50 text-gray-500">
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th>
-                <th className="px-4 py-2 font-medium">Voice</th>
                 <th className="px-4 py-2 font-medium">Active</th>
-                <th className="px-4 py-2 font-medium">Bolna</th>
+                <th className="px-4 py-2 font-medium">Ingest code</th>
                 <th className="px-4 py-2 font-medium">Updated</th>
                 <th className="px-4 py-2 font-medium" />
               </tr>
@@ -78,10 +77,6 @@ export default async function AgentsPage({ params }: Props) {
               {agents.map((a) => (
                 <tr key={a.id} className="border-t border-gray-100">
                   <td className="px-4 py-2 text-gray-900">{a.name}</td>
-                  <td className="px-4 py-2 text-gray-600">
-                    {a.voiceName ? `${a.voiceName} · ` : ''}
-                    <span className="font-mono text-xs text-gray-500">{a.voiceProvider}</span>
-                  </td>
                   <td className="px-4 py-2 text-gray-700">
                     <span
                       className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -93,14 +88,8 @@ export default async function AgentsPage({ params }: Props) {
                       {a.active ? 'on' : 'off'}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-xs text-gray-500">
-                    {a.bolnaAgentId ? (
-                      <span className="font-mono">{a.bolnaAgentId.slice(0, 12)}…</span>
-                    ) : a.bolnaSyncError ? (
-                      <span className="text-red-600">sync error</span>
-                    ) : (
-                      <span className="text-amber-600">not synced</span>
-                    )}
+                  <td className="px-4 py-2 font-mono text-xs text-gray-700">
+                    {a.ingestCode}
                   </td>
                   <td className="px-4 py-2 text-gray-500">
                     {new Date(a.updatedAt).toLocaleString()}

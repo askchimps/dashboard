@@ -5,39 +5,10 @@ import { z } from 'zod';
 import { ApiError, createAgent } from '@/lib/api';
 import type { AgentCreateInput } from '@/lib/types';
 
-const optInt = (lo: number, hi: number) =>
-  z
-    .preprocess(
-      (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
-      z.number().int().min(lo).max(hi).optional(),
-    );
-
 const schema = z.object({
   name: z.string().trim().min(1).max(120),
-  welcomeMessage: z.string().max(2_000).optional(),
-  basePrompt: z.string().max(20_000).optional(),
+  bolnaAgentId: z.string().trim().min(1).max(120),
   analysisPrompt: z.string().max(20_000).optional(),
-  knowledge: z.string().max(200_000).optional(),
-  language: z.enum(['en', 'hi']).optional(),
-  llmProvider: z.string().max(60).optional(),
-  llmModel: z.string().max(120).optional(),
-  llmTemperature: z
-    .preprocess(
-      (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
-      z.number().min(0).max(2).optional(),
-    ),
-  llmMaxTokens: optInt(16, 4096),
-  voiceProvider: z.enum(['elevenlabs', 'polly', 'deepgram']).optional(),
-  voiceId: z.string().trim().min(1).max(120),
-  voiceName: z.string().max(120).optional(),
-  voiceModel: z.string().max(120).optional(),
-  transcriberProvider: z.enum(['deepgram', 'bodhi']).optional(),
-  transcriberModel: z.string().max(120).optional(),
-  telephonyProvider: z.enum(['plivo', 'twilio', 'exotel']).optional(),
-  callStartHour: optInt(0, 23),
-  callEndHour: optInt(0, 23),
-  hangupAfterSilence: optInt(2, 120),
-  callTerminateSec: optInt(15, 1800),
 });
 
 export interface CreateAgentFormState {
@@ -73,7 +44,7 @@ export async function createAgentAction(
       }
       return {
         status: 'error',
-        message: `Some fields need attention. (raw keys: ${Object.keys(raw).slice(0,8).join(',')})`,
+        message: 'Some fields need attention.',
         fieldErrors,
       };
     }
@@ -83,26 +54,19 @@ export async function createAgentAction(
     } catch (e) {
       if (e instanceof ApiError) {
         if (e.status === 409) {
-          return { status: 'error', message: `An agent with that name already exists.` };
+          return { status: 'error', message: 'An agent with that name or voice agent ID already exists.' };
         }
         if (e.status === 403) {
           return { status: 'error', message: 'Only platform admins can create agents.' };
         }
-        if (e.status === 503) {
-          return {
-            status: 'error',
-            message:
-              `Bolna sync failed. ${JSON.stringify(e.body).slice(0, 200)}`,
-          };
-        }
         return {
           status: 'error',
-          message: `Create failed (${e.status}). body=${JSON.stringify(e.body).slice(0, 200)}`,
+          message: `Create failed (${e.status}). ${JSON.stringify(e.body).slice(0, 200)}`,
         };
       }
       return {
         status: 'error',
-        message: `Create failed (non-API). ${(e as Error).message?.slice(0, 200) ?? String(e).slice(0, 200)}`,
+        message: `Create failed. ${(e as Error).message?.slice(0, 200) ?? String(e).slice(0, 200)}`,
       };
     }
     revalidatePath(`/orgs/${orgId}/agents`);
