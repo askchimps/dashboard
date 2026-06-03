@@ -38,6 +38,7 @@ async function call<T>(
   init: RequestInit & { token?: string | undefined } = {},
 ): Promise<T> {
   const url = `${getApiBaseUrl()}${path}`;
+  console.log('[api.call]', init.method ?? 'GET', url, 'hasToken=', Boolean(init.token));
   const headers = new Headers(init.headers);
   if (!headers.has('Content-Type') && init.body) {
     headers.set('Content-Type', 'application/json');
@@ -50,6 +51,7 @@ async function call<T>(
     headers,
     cache: 'no-store',
   });
+  console.log('[api.call.res]', res.status, 'redirected=', res.redirected, 'finalUrl=', res.url);
   if (!res.ok) {
     let body: unknown;
     try {
