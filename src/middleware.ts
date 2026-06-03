@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const SESSION_COOKIE_NAME =
   process.env.SESSION_COOKIE_NAME ?? 'askchimps_session';
 
-const PUBLIC_PATHS = ['/login'];
+const PUBLIC_PATHS = ['/login', '/api/debug-env'];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
