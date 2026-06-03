@@ -34,8 +34,8 @@ export default async function NewAgentPage({ params }: Props) {
         </Link>
         <h1 className="mt-2 text-xl font-semibold text-gray-900">New agent</h1>
         <p className="mt-1 text-sm text-gray-500">
-          A webhook URL + secret is generated automatically on create. Use them
-          to send leads at this agent.
+          A 6-digit lead-ingestion code is generated on create. Share it with
+          the client to wire into their CRM.
         </p>
       </div>
 
