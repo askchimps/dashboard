@@ -1,15 +1,13 @@
 'use client';
 
 import { useActionState } from 'react';
-import { saveAgentAction, type AgentFormState } from './actions';
-import type { Agent } from '@/lib/types';
+import { createAgentAction, type CreateAgentFormState } from './actions';
 
 interface Props {
   orgId: string;
-  agent: Agent;
 }
 
-const initial: AgentFormState = {};
+const initial: CreateAgentFormState = {};
 
 const VOICE_PROVIDERS = ['elevenlabs', 'polly', 'deepgram'] as const;
 const TRANSCRIBERS = ['deepgram', 'bodhi'] as const;
@@ -18,76 +16,105 @@ const LANGUAGES: Array<{ code: 'en' | 'hi'; label: string }> = [
   { code: 'en', label: 'English' },
   { code: 'hi', label: 'Hindi' },
 ];
+
 const LLM_MODELS = ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4.1'];
 
-export function AgentForm({ orgId, agent }: Props) {
+export function CreateAgentForm({ orgId }: Props) {
   const [state, action, pending] = useActionState(
-    saveAgentAction.bind(null, orgId, agent.id),
+    createAgentAction.bind(null, orgId),
     initial,
   );
   const err = state.fieldErrors ?? {};
-
   return (
     <form action={action} className="space-y-8">
-      <Section title="Identity" description="What the agent is called and how it opens calls.">
-        <Field label="Name" name="name" defaultValue={agent.name} required error={err.name} />
+      <Section
+        title="Identity"
+        description="What the agent is called and how it opens every call."
+      >
+        <Field
+          label="Name"
+          name="name"
+          required
+          hint="Unique within this org. Shown on the agents list."
+          error={err.name}
+        />
         <Field
           label="Welcome message"
           name="welcomeMessage"
-          defaultValue={agent.welcomeMessage}
+          hint="First line the agent speaks on every call."
+          defaultValue="Hello! This is Riya from AskChimps. Is now a good time to talk?"
           error={err.welcomeMessage}
         />
       </Section>
 
-      <Section title="Voice" description="Synthesizer + voice the agent uses.">
+      <Section
+        title="Voice"
+        description="Synthesizer + voice the agent uses. Get the voice_id from your provider dashboard."
+      >
         <Select
           label="Provider"
           name="voiceProvider"
           options={VOICE_PROVIDERS.map((p) => ({ value: p, label: p }))}
-          defaultValue={agent.voiceProvider}
+          defaultValue="elevenlabs"
         />
-        <Field label="Voice ID" name="voiceId" required defaultValue={agent.voiceId} error={err.voiceId} />
+        <Field
+          label="Voice ID"
+          name="voiceId"
+          required
+          hint="e.g. ElevenLabs voice_id: V9LCAAi4tTlqe9JadbCo (Nila)."
+          defaultValue="V9LCAAi4tTlqe9JadbCo"
+          error={err.voiceId}
+        />
         <Field
           label="Voice display name"
           name="voiceName"
-          defaultValue={agent.voiceName ?? ''}
+          hint="Optional — shown next to the agent on the list."
+          defaultValue="Nila"
           error={err.voiceName}
         />
         <Field
           label="Voice model"
           name="voiceModel"
-          defaultValue={agent.voiceModel}
+          hint="e.g. eleven_turbo_v2_5, eleven_flash_v2_5."
+          defaultValue="eleven_turbo_v2_5"
           error={err.voiceModel}
         />
       </Section>
 
-      <Section title="Transcription" description="Speech-to-text used during the call.">
+      <Section
+        title="Transcription"
+        description="What converts the caller's audio into text."
+      >
         <Select
           label="Language"
           name="language"
           options={LANGUAGES.map((l) => ({ value: l.code, label: l.label }))}
-          defaultValue={agent.language}
+          defaultValue="en"
         />
         <Select
           label="Provider"
           name="transcriberProvider"
           options={TRANSCRIBERS.map((p) => ({ value: p, label: p }))}
-          defaultValue={agent.transcriberProvider}
+          defaultValue="deepgram"
         />
         <Field
           label="Model"
           name="transcriberModel"
-          defaultValue={agent.transcriberModel}
+          hint="deepgram: nova-3, nova-2 · bodhi: hi-general-v2-8khz, etc."
+          defaultValue="nova-3"
           error={err.transcriberModel}
         />
       </Section>
 
-      <Section title="Conversation" description="LLM and silence handling.">
+      <Section
+        title="Conversation"
+        description="LLM driving the conversation and how it behaves on silence."
+      >
         <Select
           label="LLM model"
           name="llmModel"
           options={LLM_MODELS.map((m) => ({ value: m, label: m }))}
-          defaultValue={agent.llmModel}
+          defaultValue="gpt-4o-mini"
         />
         <Field
           label="Temperature"
@@ -96,7 +123,8 @@ export function AgentForm({ orgId, agent }: Props) {
           step="0.1"
           min="0"
           max="2"
-          defaultValue={String(agent.llmTemperature)}
+          hint="0 = deterministic, 1 = creative. Default 0.1."
+          defaultValue="0.1"
           error={err.llmTemperature}
         />
         <Field
@@ -106,7 +134,7 @@ export function AgentForm({ orgId, agent }: Props) {
           step="1"
           min="16"
           max="4096"
-          defaultValue={String(agent.llmMaxTokens)}
+          defaultValue="150"
           error={err.llmMaxTokens}
         />
         <Field
@@ -116,7 +144,7 @@ export function AgentForm({ orgId, agent }: Props) {
           step="1"
           min="2"
           max="120"
-          defaultValue={String(agent.hangupAfterSilence)}
+          defaultValue="10"
           error={err.hangupAfterSilence}
         />
         <Field
@@ -126,12 +154,15 @@ export function AgentForm({ orgId, agent }: Props) {
           step="5"
           min="15"
           max="1800"
-          defaultValue={String(agent.callTerminateSec)}
+          defaultValue="90"
           error={err.callTerminateSec}
         />
       </Section>
 
-      <Section title="Calling hours" description="Optional. Leave blank to allow 24h.">
+      <Section
+        title="Calling hours (optional)"
+        description="Bolna will refuse to dial outside this window. Leave blank to allow 24h."
+      >
         <Field
           label="Start hour (0-23)"
           name="callStartHour"
@@ -139,7 +170,6 @@ export function AgentForm({ orgId, agent }: Props) {
           step="1"
           min="0"
           max="23"
-          defaultValue={agent.callStartHour == null ? '' : String(agent.callStartHour)}
           error={err.callStartHour}
         />
         <Field
@@ -149,40 +179,39 @@ export function AgentForm({ orgId, agent }: Props) {
           step="1"
           min="0"
           max="23"
-          defaultValue={agent.callEndHour == null ? '' : String(agent.callEndHour)}
           error={err.callEndHour}
         />
         <Select
           label="Telephony provider"
           name="telephonyProvider"
           options={TELEPHONY.map((p) => ({ value: p, label: p }))}
-          defaultValue={agent.telephonyProvider}
+          defaultValue="plivo"
         />
       </Section>
 
       <Section
         title="Prompts"
-        description="Base prompt drives the live call. Analysis prompt extracts structured data after the call ends."
+        description="Base prompt drives the call. Analysis prompt runs locally on the transcript after the call ends."
       >
         <TextArea
           label="Base prompt"
           name="basePrompt"
           rows={6}
-          defaultValue={agent.basePrompt}
+          hint="System prompt used during the call."
           error={err.basePrompt}
         />
         <TextArea
           label="Analysis prompt"
           name="analysisPrompt"
           rows={6}
-          defaultValue={agent.analysisPrompt}
+          hint="Used post-call to extract structured answers + score intent."
           error={err.analysisPrompt}
         />
         <TextArea
           label="Knowledge base"
           name="knowledge"
           rows={8}
-          defaultValue={agent.knowledge}
+          hint="Free-form context appended to the base prompt (FAQs, product info)."
           error={err.knowledge}
         />
       </Section>
@@ -190,7 +219,7 @@ export function AgentForm({ orgId, agent }: Props) {
       {state.message ? (
         <p
           className={`text-sm ${
-            state.status === 'ok' ? 'text-emerald-700' : 'text-red-600'
+            state.status === 'error' ? 'text-red-600' : 'text-emerald-700'
           }`}
         >
           {state.message}
@@ -203,7 +232,7 @@ export function AgentForm({ orgId, agent }: Props) {
           disabled={pending}
           className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {pending ? 'Saving…' : 'Save changes'}
+          {pending ? 'Creating agent on Bolna…' : 'Create agent'}
         </button>
       </div>
     </form>
@@ -233,8 +262,9 @@ function Section({
 function Field({
   label,
   name,
-  defaultValue,
+  hint,
   required,
+  defaultValue,
   type = 'text',
   step,
   min,
@@ -243,8 +273,9 @@ function Field({
 }: {
   label: string;
   name: string;
-  defaultValue?: string;
+  hint?: string;
   required?: boolean;
+  defaultValue?: string;
   type?: string;
   step?: string;
   min?: string;
@@ -255,6 +286,7 @@ function Field({
     <div>
       <label className="block text-sm font-medium text-gray-700" htmlFor={name}>
         {label}
+        {required ? <span className="ml-0.5 text-red-500">*</span> : null}
       </label>
       <input
         id={name}
@@ -267,7 +299,11 @@ function Field({
         defaultValue={defaultValue}
         className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
       />
-      {error ? <p className="mt-1 text-xs text-red-600">{error}</p> : null}
+      {error ? (
+        <p className="mt-1 text-xs text-red-600">{error}</p>
+      ) : hint ? (
+        <p className="mt-1 text-xs text-gray-500">{hint}</p>
+      ) : null}
     </div>
   );
 }
@@ -307,14 +343,16 @@ function Select({
 function TextArea({
   label,
   name,
-  defaultValue,
+  hint,
   rows,
+  defaultValue,
   error,
 }: {
   label: string;
   name: string;
-  defaultValue?: string;
+  hint?: string;
   rows: number;
+  defaultValue?: string;
   error?: string;
 }) {
   return (
@@ -325,11 +363,15 @@ function TextArea({
       <textarea
         id={name}
         name={name}
-        defaultValue={defaultValue}
         rows={rows}
+        defaultValue={defaultValue}
         className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 font-mono text-xs text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
       />
-      {error ? <p className="mt-1 text-xs text-red-600">{error}</p> : null}
+      {error ? (
+        <p className="mt-1 text-xs text-red-600">{error}</p>
+      ) : hint ? (
+        <p className="mt-1 text-xs text-gray-500">{hint}</p>
+      ) : null}
     </div>
   );
 }

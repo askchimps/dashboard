@@ -227,13 +227,38 @@ export async function updateSettings(
 export async function updateAgent(
   orgId: string,
   agentId: string,
-  data: Partial<Pick<Agent, 'name' | 'basePrompt' | 'analysisPrompt' | 'knowledge'>>,
+  data: import('./types').AgentUpdateInput,
 ): Promise<Agent> {
   const token = await getSessionToken();
   if (!token) throw new ApiError(401, 'No session');
   return call<Agent>(
     `/v1/orgs/${encodeURIComponent(orgId)}/agents/${encodeURIComponent(agentId)}`,
     { method: 'PATCH', token, body: JSON.stringify(data) },
+  );
+}
+
+export async function createAgent(
+  orgId: string,
+  data: import('./types').AgentCreateInput,
+): Promise<Agent> {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  return call<Agent>(
+    `/v1/orgs/${encodeURIComponent(orgId)}/agents`,
+    { method: 'POST', token, body: JSON.stringify(data) },
+  );
+}
+
+export async function setAgentActive(
+  orgId: string,
+  agentId: string,
+  active: boolean,
+): Promise<Agent> {
+  const token = await getSessionToken();
+  if (!token) throw new ApiError(401, 'No session');
+  return call<Agent>(
+    `/v1/orgs/${encodeURIComponent(orgId)}/agents/${encodeURIComponent(agentId)}/active`,
+    { method: 'PATCH', token, body: JSON.stringify({ active }) },
   );
 }
 

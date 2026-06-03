@@ -6,7 +6,7 @@ import { Pager } from '@/components/pager';
 
 interface Props {
   params: Promise<{ orgId: string }>;
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; window?: 'upcoming' | 'past' | 'all' }>;
 }
 
 export const dynamic = 'force-dynamic';
@@ -25,6 +25,7 @@ export default async function SchedulePage({ params, searchParams }: Props) {
   const sp = await searchParams;
   const q = sp.q?.trim() || undefined;
   const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1);
+  const window = sp.window ?? 'upcoming';
 
   const me = await getMe();
   const canCancel =
@@ -34,7 +35,7 @@ export default async function SchedulePage({ params, searchParams }: Props) {
   let response: Paged<Schedule> = EMPTY;
   try {
     response = await listSchedules(orgId, {
-      window: 'upcoming',
+      window,
       q,
       page,
       pageSize: PAGE_SIZE,

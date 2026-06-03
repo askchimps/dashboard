@@ -77,6 +77,7 @@ export function ScheduleTable({ orgId, schedules, canCancel }: Props) {
           <th className="px-4 py-2 font-medium">Priority</th>
           <th className="px-4 py-2 font-medium">Lead</th>
           <th className="px-4 py-2 font-medium">Phone</th>
+          <th className="px-4 py-2 font-medium">Agent</th>
           <th className="px-4 py-2 font-medium">Attempt</th>
           <th className="px-4 py-2 font-medium">Reason</th>
           <th className="px-4 py-2 font-medium">Status</th>
@@ -101,6 +102,18 @@ export function ScheduleTable({ orgId, schedules, canCancel }: Props) {
             </td>
             <td className="px-4 py-2 font-mono text-gray-700">
               {s.lead.phone ?? '—'}
+            </td>
+            <td className="px-4 py-2 text-gray-700">
+              {s.agent ? (
+                <Link
+                  href={`/orgs/${orgId}/agents/${s.agent.id}`}
+                  className="text-gray-900 underline-offset-2 hover:underline"
+                >
+                  {s.agent.name}
+                </Link>
+              ) : (
+                <span className="text-xs text-gray-400">—</span>
+              )}
             </td>
             <td className="px-4 py-2 text-gray-700">#{s.attemptNo}</td>
             <td className="px-4 py-2 font-mono text-xs text-gray-700">

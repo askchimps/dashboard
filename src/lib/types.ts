@@ -27,12 +27,39 @@ export interface Agent {
   id: string;
   orgId: string;
   name: string;
+  welcomeMessage: string;
+  active: boolean;
   basePrompt: string;
   analysisPrompt: string;
   knowledge: string;
-  active: boolean;
+  language: string;
+  llmProvider: string;
+  llmModel: string;
+  llmTemperature: number;
+  llmMaxTokens: number;
+  voiceProvider: string;
+  voiceId: string;
+  voiceName: string | null;
+  voiceModel: string;
+  transcriberProvider: string;
+  transcriberModel: string;
+  telephonyProvider: string;
+  callStartHour: number | null;
+  callEndHour: number | null;
+  hangupAfterSilence: number;
+  callTerminateSec: number;
+  bolnaAgentId: string | null;
+  bolnaCreatedAt: string | null;
+  bolnaSyncError: string | null;
+  ingestSecret: string;
+  bolnaCallSecret: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AgentLite {
+  id: string;
+  name: string;
 }
 
 export interface CallLeadLite {
@@ -184,6 +211,7 @@ export interface TimelineEvent {
   title: string;
   leadId: string | null;
   callId: string | null;
+  agent?: AgentLite | null;
   detail?: Record<string, unknown>;
 }
 
@@ -192,6 +220,8 @@ export interface LeadDetail
     LeadSummary,
     'callCount' | 'completedCount' | 'lastCallAt' | 'lastOutcome' | 'bestBucket' | 'bestScore'
   > {
+  agentId: string;
+  agent: AgentLite | null;
   calls: LeadCall[];
   timeline: TimelineEvent[];
 }
@@ -210,6 +240,7 @@ export interface Schedule {
   id: string;
   orgId: string;
   leadId: string;
+  agentId: string;
   scheduledAt: string;
   section: ScheduleSection | null;
   priority: SchedulePriority | string;
@@ -223,6 +254,7 @@ export interface Schedule {
   createdAt: string;
   updatedAt: string;
   lead: ScheduleLeadLite;
+  agent: AgentLite | null;
 }
 
 export interface ScheduleListQuery {
@@ -298,3 +330,35 @@ export interface CursorPage<T> {
   items: T[];
   nextCursor: string | null;
 }
+
+export type AgentCreateInput = Pick<
+  Agent,
+  | 'name'
+  | 'voiceId'
+> &
+  Partial<
+    Pick<
+      Agent,
+      | 'welcomeMessage'
+      | 'basePrompt'
+      | 'analysisPrompt'
+      | 'knowledge'
+      | 'language'
+      | 'llmProvider'
+      | 'llmModel'
+      | 'llmTemperature'
+      | 'llmMaxTokens'
+      | 'voiceProvider'
+      | 'voiceName'
+      | 'voiceModel'
+      | 'transcriberProvider'
+      | 'transcriberModel'
+      | 'telephonyProvider'
+      | 'callStartHour'
+      | 'callEndHour'
+      | 'hangupAfterSilence'
+      | 'callTerminateSec'
+    >
+  >;
+
+export type AgentUpdateInput = Partial<AgentCreateInput>;
