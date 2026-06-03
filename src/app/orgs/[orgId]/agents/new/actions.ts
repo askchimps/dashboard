@@ -62,46 +62,55 @@ export async function createAgentAction(
   _prev: CreateAgentFormState,
   formData: FormData,
 ): Promise<CreateAgentFormState> {
-  const raw = Object.fromEntries(formData.entries());
-  const parsed = schema.safeParse(raw);
-  if (!parsed.success) {
-    const fieldErrors: Record<string, string> = {};
-    for (const issue of parsed.error.issues) {
-      const path = issue.path.join('.');
-      if (path) fieldErrors[path] = issue.message;
-    }
-    return {
-      status: 'error',
-      message: 'Some fields need attention.',
-      fieldErrors,
-    };
-  }
-  let created;
   try {
-    created = await createAgent(orgId, stripEmpty(parsed.data) as AgentCreateInput);
-  } catch (e) {
-    if (e instanceof ApiError) {
-      if (e.status === 409) {
-        return { status: 'error', message: 'An agent with that name already exists.' };
+    const raw = Object.fromEntries(formData.entries());
+    const parsed = schema.safeParse(raw);
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const path = issue.path.join('.');
+        if (path) fieldErrors[path] = issue.message;
       }
-      if (e.status === 403) {
-        return { status: 'error', message: 'Only platform admins can create agents.' };
-      }
-      if (e.status === 503) {
+      return {
+        status: 'error',
+        message: `Some fields need attention. (raw keys: ${Object.keys(raw).slice(0,8).join(',')})`,
+        fieldErrors,
+      };
+    }
+    let created;
+    try {
+      created = await createAgent(orgId, stripEmpty(parsed.data) as AgentCreateInput);
+    } catch (e) {
+      if (e instanceof ApiError) {
+        if (e.status === 409) {
+          return { status: 'error', message: `An agent with that name already exists.` };
+        }
+        if (e.status === 403) {
+          return { status: 'error', message: 'Only platform admins can create agents.' };
+        }
+        if (e.status === 503) {
+          return {
+            status: 'error',
+            message:
+              `Bolna sync failed. ${JSON.stringify(e.body).slice(0, 200)}`,
+          };
+        }
         return {
           status: 'error',
-          message:
-            'Bolna sync failed. Check BOLNA_API_KEY on the api and the form values, then retry.',
+          message: `Create failed (${e.status}). body=${JSON.stringify(e.body).slice(0, 200)}`,
         };
       }
-      return { status: 'error', message: `Create failed (${e.status}).` };
+      return {
+        status: 'error',
+        message: `Create failed (non-API). ${(e as Error).message?.slice(0, 200) ?? String(e).slice(0, 200)}`,
+      };
     }
-    return { status: 'error', message: 'Create failed.' };
+    revalidatePath(`/orgs/${orgId}/agents`);
+    return { status: 'ok', message: 'Agent created.', createdId: created.id };
+  } catch (outer) {
+    return {
+      status: 'error',
+      message: `OUTER error: ${(outer as Error).message?.slice(0, 200) ?? String(outer).slice(0, 200)}`,
+    };
   }
-  revalidatePath(`/orgs/${orgId}/agents`);
-  // NOTE: `redirect()` inside this action returns an HTML 303 response that
-  // useActionState ("$ACTION_REF" forms) cannot decode — Vercel surfaces it
-  // as "An unexpected response was received from the server". Return the
-  // created id and let the client navigate via router.push to dodge that.
-  return { status: 'ok', message: 'Agent created.', createdId: created.id };
 }
