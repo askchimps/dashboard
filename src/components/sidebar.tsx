@@ -53,7 +53,7 @@ export function Sidebar({ orgId, collapsed, user }: Props) {
       href: `/orgs/${orgId}/agents`,
       label: 'Agent',
       icon: <Bot className="h-4 w-4" aria-hidden="true" />,
-      show: user.isPlatformAdmin,
+      show: hasOwnerOrAdmin(user, orgId),
     },
     {
       href: `/orgs/${orgId}/settings`,

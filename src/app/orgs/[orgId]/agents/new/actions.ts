@@ -1,15 +1,17 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { ApiError, setAgentActive, updateAgent } from '@/lib/api';
-import type { AgentUpdateInput } from '@/lib/types';
+import { ApiError, createAgent } from '@/lib/api';
+import type { AgentCreateInput } from '@/lib/types';
 
 const optInt = (lo: number, hi: number) =>
-  z.preprocess(
-    (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
-    z.number().int().min(lo).max(hi).optional(),
-  );
+  z
+    .preprocess(
+      (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
+      z.number().int().min(lo).max(hi).optional(),
+    );
 
 const schema = z.object({
   name: z.string().trim().min(1).max(120),
@@ -20,10 +22,11 @@ const schema = z.object({
   language: z.enum(['en', 'hi']).optional(),
   llmProvider: z.string().max(60).optional(),
   llmModel: z.string().max(120).optional(),
-  llmTemperature: z.preprocess(
-    (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
-    z.number().min(0).max(2).optional(),
-  ),
+  llmTemperature: z
+    .preprocess(
+      (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
+      z.number().min(0).max(2).optional(),
+    ),
   llmMaxTokens: optInt(16, 4096),
   voiceProvider: z.enum(['elevenlabs', 'polly', 'deepgram']).optional(),
   voiceId: z.string().trim().min(1).max(120),
@@ -38,8 +41,8 @@ const schema = z.object({
   callTerminateSec: optInt(15, 1800),
 });
 
-export interface AgentFormState {
-  status?: 'ok' | 'error';
+export interface CreateAgentFormState {
+  status?: 'error';
   message?: string;
   fieldErrors?: Record<string, string>;
 }
@@ -54,12 +57,11 @@ function stripEmpty<T extends Record<string, unknown>>(o: T): T {
   return out as T;
 }
 
-export async function saveAgentAction(
+export async function createAgentAction(
   orgId: string,
-  agentId: string,
-  _prev: AgentFormState,
+  _prev: CreateAgentFormState,
   formData: FormData,
-): Promise<AgentFormState> {
+): Promise<CreateAgentFormState> {
   const raw = Object.fromEntries(formData.entries());
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
@@ -68,42 +70,34 @@ export async function saveAgentAction(
       const path = issue.path.join('.');
       if (path) fieldErrors[path] = issue.message;
     }
-    return { status: 'error', message: 'Some fields need attention.', fieldErrors };
+    return {
+      status: 'error',
+      message: 'Some fields need attention.',
+      fieldErrors,
+    };
   }
+  let created;
   try {
-    await updateAgent(orgId, agentId, stripEmpty(parsed.data) as AgentUpdateInput);
+    created = await createAgent(orgId, stripEmpty(parsed.data) as AgentCreateInput);
   } catch (e) {
     if (e instanceof ApiError) {
-      if (e.status === 403) {
-        return { status: 'error', message: 'Only platform admins can edit agents.' };
-      }
       if (e.status === 409) {
-        return { status: 'error', message: 'Another agent with that name already exists.' };
+        return { status: 'error', message: 'An agent with that name already exists.' };
       }
-      return { status: 'error', message: `Save failed (${e.status}).` };
+      if (e.status === 403) {
+        return { status: 'error', message: 'Only platform admins can create agents.' };
+      }
+      if (e.status === 503) {
+        return {
+          status: 'error',
+          message:
+            'Bolna sync failed. Check BOLNA_API_KEY on the api and the form values, then retry.',
+        };
+      }
+      return { status: 'error', message: `Create failed (${e.status}).` };
     }
-    return { status: 'error', message: 'Save failed.' };
+    return { status: 'error', message: 'Create failed.' };
   }
   revalidatePath(`/orgs/${orgId}/agents`);
-  revalidatePath(`/orgs/${orgId}/agents/${agentId}`);
-  return { status: 'ok', message: 'Saved. Bolna mirror queued.' };
-}
-
-export async function toggleActiveAction(
-  orgId: string,
-  agentId: string,
-  active: boolean,
-): Promise<{ ok: true } | { error: string }> {
-  try {
-    await setAgentActive(orgId, agentId, active);
-  } catch (e) {
-    if (e instanceof ApiError) {
-      if (e.status === 403) return { error: 'Not allowed' };
-      return { error: `Toggle failed (${e.status})` };
-    }
-    return { error: 'Toggle failed' };
-  }
-  revalidatePath(`/orgs/${orgId}/agents`);
-  revalidatePath(`/orgs/${orgId}/agents/${agentId}`);
-  return { ok: true };
+  redirect(`/orgs/${orgId}/agents/${created.id}`);
 }

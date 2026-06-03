@@ -1,4 +1,6 @@
+import Link from 'next/link';
 import {
+  Bot,
   CheckCircle2,
   Inbox,
   PhoneCall,
@@ -103,6 +105,15 @@ export function TimelineTab({ orgId, lead }: Props) {
                 </p>
               ) : null}
               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                {e.agent ? (
+                  <Link
+                    href={`/orgs/${orgId}/agents/${e.agent.id}`}
+                    className="inline-flex items-center gap-1 rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-700 hover:bg-indigo-100"
+                  >
+                    <Bot className="h-3 w-3" aria-hidden="true" />
+                    {e.agent.name}
+                  </Link>
+                ) : null}
                 {bucketBadge(bucket)}
                 {score != null ? <span>score {score}</span> : null}
                 {durationSec != null && durationSec > 0 ? (
