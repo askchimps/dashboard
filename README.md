@@ -2,7 +2,7 @@
 
 AskChimps web dashboard. Next.js 15 (App Router), Tailwind v4, TypeScript strict.
 
-> Backend lives in [`askchimps/api`](https://github.com/askchimps/api). System architecture + ADRs in [`askchimps/askchimps`](https://github.com/askchimps/askchimps).
+> Backend lives in [`askchimps/api`](https://github.com/askchimps/api). System architecture + ADRs in [`askchimps/askchimps`](https://github.com/askchimps/askchimps). 
 
 ## Quick start
 
