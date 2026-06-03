@@ -102,6 +102,6 @@ export async function createAgentAction(
   // NOTE: `redirect()` inside this action returns an HTML 303 response that
   // useActionState ("$ACTION_REF" forms) cannot decode — Vercel surfaces it
   // as "An unexpected response was received from the server". Return the
-  // created id and let the client navigate via window.location to dodge that.
+  // created id and let the client navigate via router.push to dodge that.
   return { status: 'ok', message: 'Agent created.', createdId: created.id };
 }
