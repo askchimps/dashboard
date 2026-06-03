@@ -8,7 +8,18 @@ const requireServer = () => {
 
 export function getApiBaseUrl(): string {
   requireServer();
-  return process.env.API_BASE_URL ?? 'http://127.0.0.1:3000';
+  const raw = process.env.API_BASE_URL;
+  // On Vercel production, anchor to the upstream API host. The env var has
+  // been mis-set to the dashboard's own origin in the past — Sensitive
+  // editing makes that hard to detect. Only accept values that point at an
+  // `api.*` host; otherwise fall back to the canonical URL.
+  if (process.env.VERCEL_ENV === 'production') {
+    if (!raw || !raw.startsWith('https://api.')) {
+      return 'https://api.askchimps.ai';
+    }
+    return raw;
+  }
+  return raw ?? 'http://127.0.0.1:3000';
 }
 
 export function getSessionCookieName(): string {
