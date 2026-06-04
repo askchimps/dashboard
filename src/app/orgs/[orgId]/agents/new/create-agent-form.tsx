@@ -37,10 +37,10 @@ export function CreateAgentForm({ orgId }: Props) {
         />
         <Field
           label="Voice Agent ID"
-          name="bolnaAgentId"
+          name="voiceAgentId"
           required
           hint="Paste the agent ID from the voice provider dashboard."
-          error={err.bolnaAgentId}
+          error={err.voiceAgentId}
         />
         <TextArea
           label="Analysis prompt"

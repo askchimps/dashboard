@@ -7,7 +7,7 @@ import type { AgentCreateInput } from '@/lib/types';
 
 const schema = z.object({
   name: z.string().trim().min(1).max(120),
-  bolnaAgentId: z.string().trim().min(1).max(120),
+  voiceAgentId: z.string().trim().min(1).max(120),
   analysisPrompt: z.string().max(20_000).optional(),
 });
 

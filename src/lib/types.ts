@@ -28,7 +28,7 @@ export interface Agent {
   orgId: string;
   name: string;
   active: boolean;
-  bolnaAgentId: string;
+  voiceAgentId: string;
   analysisPrompt: string;
   ingestCode: string;
   createdAt: string;
@@ -61,7 +61,7 @@ export interface CallSummary {
   score: number | null;
   transcript: string | null;
   recordingUrl: string | null;
-  bolnaCallId: string | null;
+  voiceCallId: string | null;
   analysisStatus: AnalysisStatus;
   analysisError: string | null;
   analysisStartedAt: string | null;
@@ -170,7 +170,7 @@ export interface LeadCall {
   transcript: string | null;
   recordingUrl: string | null;
   analysis: CallAnalysis | null;
-  bolnaCallId: string | null;
+  voiceCallId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -311,7 +311,7 @@ export interface CursorPage<T> {
 
 export type AgentCreateInput = {
   name: string;
-  bolnaAgentId: string;
+  voiceAgentId: string;
   analysisPrompt?: string;
 };
 

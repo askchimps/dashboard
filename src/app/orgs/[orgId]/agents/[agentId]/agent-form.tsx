@@ -27,8 +27,8 @@ export function AgentForm({ orgId, agent }: Props) {
         <Field label="Name" name="name" defaultValue={agent.name} required error={err.name} />
         <Field
           label="Voice Agent ID"
-          name="bolnaAgentId"
-          defaultValue={agent.bolnaAgentId}
+          name="voiceAgentId"
+          defaultValue={agent.voiceAgentId}
           disabled
           hint="Set at creation. Recreate the agent if this needs to change."
         />

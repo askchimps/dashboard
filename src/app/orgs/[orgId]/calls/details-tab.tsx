@@ -72,8 +72,8 @@ export function DetailsTab({ call, canReanalyze = false }: Props) {
           <Row
             label="Voice call id"
             value={
-              call.bolnaCallId ? (
-                <span className="font-mono text-xs text-gray-700">{call.bolnaCallId}</span>
+              call.voiceCallId ? (
+                <span className="font-mono text-xs text-gray-700">{call.voiceCallId}</span>
               ) : (
                 '—'
               )
